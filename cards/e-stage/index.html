@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>E · centered stage</title>
+<style>
+:root{
+  --crust:#11111b;--mantle:#181825;--base:#1e1e2e;--s0:#313244;--s1:#45475a;--s2:#585b70;
+  --o0:#6c7086;--o1:#7f849c;--sub0:#a6adc8;--sub1:#bac2de;--text:#cdd6f4;
+  --lav:#b4befe;--green:#a6e3a1;--red:#f38ba8;
+  --tw:108px;--th:72px;--gap:6px;--u:16px;--cw:680px;--ch:520px;
+  font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (min-width:2400px){:root{--tw:124px;--th:80px;--gap:7px;--u:21px;--cw:900px;--ch:680px}}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%;background:var(--crust);color:var(--text);overflow:hidden}
+body{display:flex;flex-direction:column}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+input{font:inherit}
+.bar{flex:none;height:40px;display:flex;align-items:center;gap:16px;padding:0 20px;background:var(--mantle);border-bottom:1px solid var(--crust);font-size:12px;color:var(--o1)}
+.bar .t{letter-spacing:.14em;text-transform:uppercase}
+.bar b{color:var(--text);font-weight:500;font-variant-numeric:tabular-nums}
+.bar em{font-style:normal;color:var(--green);font-variant-numeric:tabular-nums}
+.bar .sp{flex:1}
+kbd{font:inherit;color:var(--sub1);background:var(--s0);border-radius:3px;padding:0 5px}
+.scroll{flex:1;overflow-y:auto;padding:20px;scrollbar-width:thin;scrollbar-color:var(--s0) transparent;transition:filter .28s,opacity .28s}
+body.stage .scroll,body.stage .bar{filter:blur(3px) brightness(.55);pointer-events:none}
+.bar{transition:filter .28s}
+#grid{display:grid;grid-template-columns:repeat(auto-fill,var(--tw));grid-auto-rows:var(--th);gap:var(--gap)}
+.tile{position:relative;background:var(--base);border:1px solid var(--s0);border-radius:5px;text-align:left;padding:9px 10px;color:var(--o1);font-size:16px;outline:none;overflow:hidden;display:flex;align-items:flex-end}
+.tile .rk{position:absolute;top:6px;right:8px;font-size:10px;color:var(--o0);font-variant-numeric:tabular-nums}
+.tile:hover{border-color:var(--s2);color:var(--sub1)}
+.tile:focus-visible{border-color:var(--lav)}
+.tile.L{color:var(--green);background:#1e2a2a;border-color:#2f4a40}
+.tile.L:hover{border-color:var(--green)}
+.tile.L .rk{color:#5f8a6c}
+.tile.frontier{color:var(--text);border-color:var(--s1)}
+.tile.cur{border-color:var(--lav);color:var(--text)}
+.tile.lit{animation:lit 1.1s ease-out}
+@keyframes lit{0%{box-shadow:0 0 0 0 #a6e3a1aa;background:#2f5a45}40%{box-shadow:0 0 28px 6px #a6e3a155}100%{box-shadow:0 0 0 0 #a6e3a100}}
+.tip{position:fixed;z-index:30;pointer-events:none;display:none;background:var(--mantle);border:1px solid var(--s1);border-radius:3px;padding:3px 8px;font-size:13px}
+.tip small{color:var(--o0);margin-left:6px}
+
+/* stage */
+#veil{position:fixed;inset:0;z-index:10;display:none;align-items:center;justify-content:center;background:#11111b66}
+body.stage #veil{display:flex}
+#card{width:var(--cw);height:var(--ch);font-size:var(--u);background:var(--mantle);border:1px solid var(--s1);border-radius:10px;box-shadow:0 30px 90px #000a;display:flex;flex-direction:column;padding:1.6em 2.4em 1.4em;position:relative;animation:in .22s cubic-bezier(.2,.8,.2,1)}
+#card.done{border-color:#4f7a62}
+#card.out{animation:out .2s ease-in forwards}
+@keyframes in{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:none}}
+@keyframes out{to{opacity:0;transform:scale(1.04);filter:blur(6px)}}
+.top{display:flex;align-items:center;gap:.8em;font-size:.68em;letter-spacing:.14em;text-transform:uppercase;color:var(--o0);height:1.6em}
+.top i{font-style:normal;color:var(--lav)}.top i.g{color:var(--green)}
+.top .sp{flex:1}
+.dots{display:flex;gap:.5em}
+.dots b{width:.55em;height:.55em;border-radius:50%;background:var(--s1)}
+.dots b.on{background:var(--lav)}.dots b.ok{background:var(--green)}
+.main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:0}
+.fade{animation:fd .16s ease-out}
+@keyframes fd{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.fade-out{opacity:0;transition:opacity .1s}
+.word{font-size:3.6em;font-weight:600;letter-spacing:-.02em;line-height:1.1}
+.word.mask{color:var(--s2);letter-spacing:.25em}
+.gl{font-size:1.25em;color:var(--sub1);margin-top:.35em;min-height:1.4em}
+.gl.cue{font-size:1.9em;color:var(--text);margin-top:.1em}
+.sent{font-size:1.45em;line-height:1.4;margin-top:1.1em;max-width:90%}
+.sent mark{background:none;color:var(--lav);font-weight:600}
+.sent .blank{display:inline-block;min-width:3.4ch;border-bottom:2px solid var(--lav);transform:translateY(-2px)}
+.en{display:block;font-size:.72em;color:var(--o1);margin-top:.25em}
+.en.w{color:var(--o0);font-style:italic}
+.note{font-size:.78em;color:var(--o1);margin-top:1em;max-width:80%;line-height:1.45}
+.said{font-size:.8em;color:var(--o1);margin-top:.9em}
+.said b{font-weight:500;color:var(--sub1)}.said .ok{color:var(--green)}
+.res{font-size:1em;margin-top:1em}
+.res.bad{color:var(--red)}.res b{color:var(--text);font-weight:600}.res.good{color:var(--green)}
+.foot{height:5.2em;display:flex;flex-direction:column;justify-content:flex-end;align-items:center}
+.ans{width:100%;background:var(--base);border:1px solid var(--s0);border-radius:6px;padding:.55em .8em;font-size:1.35em;color:var(--text);text-align:center}
+.ans:focus{outline:none;border-color:var(--lav)}
+.ans::placeholder{color:var(--o0)}
+.hint{font-size:.72em;color:var(--o0);margin-top:.7em;height:1.2em}
+.cta{font-size:1.1em;color:var(--lav);padding:.55em 0}
+.cta kbd{color:var(--lav)}
+.cta .alt{color:var(--o1);font-size:.8em;margin-left:1em}
+.deep{height:6em;width:100%;border-top:1px solid var(--s0);margin-top:.8em;padding-top:.7em;display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:1.2em;text-align:left;font-size:.78em;color:var(--sub0);line-height:1.5;opacity:0;transition:opacity .18s}
+.deep.on{opacity:1}
+.deep small{display:block;font-size:.78em;letter-spacing:.12em;text-transform:uppercase;color:var(--o0)}
+.deep b{color:var(--text);font-weight:500}
+.rate{display:flex;gap:1.4em;font-size:.95em;color:var(--o1);padding:.55em 0}
+.rate .pick{color:var(--green)}
+</style>
+</head>
+<body>
+<div class="bar"><span class="t">Atlas · Spanish</span><span id="cnt"></span><span class="sp"></span><span id="keys"></span></div>
+<div class="scroll" id="sc"><div id="grid"></div></div>
+<div id="veil"><div id="card"></div></div>
+<div class="tip" id="tip"></div>
+<script>
+// [lemma, pos, gloss, sentence with [form], english, others (lemmas), grammar, irregular present forms]
+const W=[
+["de","prep","of, from","El libro [de] Ana.","Ana's book.","libro",""],
+["la","art","the (feminine)","[La] casa es grande.","The house is big.","casa ser grande","Nouns are masculine or feminine; the article agrees."],
+["que","conj","that, which","Creo [que] sí.","I think so.","creer sí",""],
+["el","art","the (masculine)","[El] perro come.","The dog eats.","perro comer",""],
+["y","conj","and","Pan [y] agua.","Bread and water.","pan agua","Becomes e before a word starting with i-."],
+["a","prep","to, at","Voy [a] casa.","I'm going home.","ir casa","Before a person as object: Veo a Ana."],
+["en","prep","in, on","Vivo [en] Madrid.","I live in Madrid.","vivir",""],
+["ser","verb","to be (what something is)","Ella [es] médica.","She is a doctor.","ella médica","Identity, origin, profession: ser. State or place: estar.","soy|eres|es|somos"],
+["un","art","a, one","Tengo [un] gato.","I have a cat.","tener gato",""],
+["no","adv","no, not","[No] sé.","I don't know.","saber","Goes right before the verb."],
+["se","pron","oneself (reflexive)","Ella [se] llama Ana.","Her name is Ana.","ella llamar","Reflexive: the action returns to the subject."],
+["haber","aux","to have (auxiliary); there is","[Hay] pan.","There is bread.","pan","Hay = there is / there are.","he|has|ha|hemos"],
+["por","prep","for, by, through","Gracias [por] todo.","Thanks for everything.","gracias todo","Por = reason or route. Para = purpose or recipient."],
+["con","prep","with","Café [con] leche.","Coffee with milk.","café leche","con + mí = conmigo."],
+["su","det","his, her, their","[Su] casa es azul.","Their house is blue.","casa ser azul","Su does not show the owner's gender."],
+["para","prep","for, in order to","Es [para] ti.","It's for you.","ser tú",""],
+["estar","verb","to be (state or place)","Yo [estoy] aquí.","I am here.","yo aquí","State or place: estar. Identity: ser.","estoy|estás|está|estamos"],
+["tener","verb","to have","[Tengo] hambre.","I'm hungry.","hambre","Tener + noun for many states: hambre, sed, frío.","tengo|tienes|tiene|tenemos"],
+["hacer","verb","to do, to make","¿Qué [haces]?","What are you doing?","qué","","hago|haces|hace|hacemos"],
+["poder","verb","can, to be able to","No [puedo] ir.","I can't go.","no ir","poder + infinitive.","puedo|puedes|puede|podemos"],
+["decir","verb","to say, to tell","Ella [dice] la verdad.","She tells the truth.","ella verdad","","digo|dices|dice|decimos"],
+["ir","verb","to go","[Voy] al mercado.","I'm going to the market.","mercado","ir a + infinitive = going to do.","voy|vas|va|vamos"],
+["ver","verb","to see","[Veo] el mar.","I see the sea.","mar","","veo|ves|ve|vemos"],
+["dar","verb","to give","Te [doy] el libro.","I give you the book.","libro","","doy|das|da|damos"],
+["saber","verb","to know (facts, how to)","Yo [sé] la respuesta.","I know the answer.","respuesta","Saber = facts. Conocer = people, places.","sé|sabes|sabe|sabemos"],
+["querer","verb","to want, to love","[Quiero] agua.","I want water.","agua","Quiero + noun or + infinitive.","quiero|quieres|quiere|queremos"],
+["llegar","verb","to arrive","El tren [llega] hoy.","The train arrives today.","tren hoy"],
+["pasar","verb","to pass, to happen","¿Qué [pasa]?","What's happening?","qué"],
+["deber","verb","should, must; to owe","[Debes] dormir.","You should sleep.","dormir","deber + infinitive = should."],
+["poner","verb","to put, to place","Voy a [poner] la mesa.","I'm going to set the table.","ir mesa","","pongo|pones|pone|ponemos"],
+["parecer","verb","to seem","[Parece] fácil.","It seems easy.","fácil","","parezco|pareces|parece|parecemos"],
+["quedar","verb","to stay, to remain","Me [quedo] en casa.","I'm staying home.","yo casa en"],
+["hablar","verb","to speak","Ella [habla] español.","She speaks Spanish.","ella español"],
+["llevar","verb","to carry, to wear","[Llevo] una chaqueta.","I'm wearing a jacket.","chaqueta"],
+["dejar","verb","to leave (behind), to let","[Deja] la llave aquí.","Leave the key here.","llave aquí"],
+["seguir","verb","to follow, to continue","[Sigue] recto.","Keep going straight.","recto","","sigo|sigues|sigue|seguimos"],
+["encontrar","verb","to find","No [encuentro] mi llave.","I can't find my key.","llave","","encuentro|encuentras|encuentra|encontramos"],
+["llamar","verb","to call","Te [llamo] mañana.","I'll call you tomorrow.","mañana"],
+["venir","verb","to come","¿[Vienes] conmigo?","Are you coming with me?","conmigo","","vengo|vienes|viene|venimos"],
+["pensar","verb","to think","[Pienso] en ti.","I'm thinking of you.","ti","","pienso|piensas|piensa|pensamos"],
+["salir","verb","to go out, to leave","[Salimos] a las ocho.","We leave at eight.","ocho","","salgo|sales|sale|salimos"],
+["volver","verb","to return","[Vuelvo] pronto.","I'll be back soon.","pronto","","vuelvo|vuelves|vuelve|volvemos"],
+["tomar","verb","to take, to drink","Voy a [tomar] un café.","I'm going to have a coffee.","ir café"],
+["conocer","verb","to know (people, places)","[Conozco] a tu hermana.","I know your sister.","hermana","Conocer + a before a person.","conozco|conoces|conoce|conocemos"],
+["vivir","verb","to live","[Vivimos] en Madrid.","We live in Madrid.","Madrid"],
+["sentir","verb","to feel","[Siento] frío.","I feel cold.","frío","","siento|sientes|siente|sentimos"],
+["tratar","verb","to try; to treat","[Trato] de dormir.","I'm trying to sleep.","dormir","tratar de + infinitive = to try to."],
+["mirar","verb","to look at","[Mira] el cielo.","Look at the sky.","cielo"],
+["contar","verb","to count; to tell","Voy a [contar] hasta diez.","I'm going to count to ten.","ir diez","","cuento|cuentas|cuenta|contamos"],
+["empezar","verb","to begin","La clase [empieza] ya.","Class starts now.","clase ya","","empiezo|empiezas|empieza|empezamos"],
+["esperar","verb","to wait; to hope","[Espero] el autobús.","I'm waiting for the bus.","autobús"],
+["buscar","verb","to look for","[Busco] trabajo.","I'm looking for work.","trabajo"],
+["entrar","verb","to enter","[Entra], por favor.","Come in, please.","favor"],
+["trabajar","verb","to work","[Trabajo] en casa.","I work from home.","casa"],
+["escribir","verb","to write","[Escribo] una carta.","I'm writing a letter.","carta"],
+["perder","verb","to lose","No quiero [perder].","I don't want to lose.","querer","","pierdo|pierdes|pierde|perdemos"],
+["recibir","verb","to receive","[Recibo] un mensaje.","I get a message.","mensaje"],
+["comer","verb","to eat","[Comemos] a las dos.","We eat at two.","dos"],
+["abrir","verb","to open","[Abre] la puerta.","Open the door.","puerta"],
+["leer","verb","to read","[Leo] un libro.","I'm reading a book.","libro"]
+].map((a,i)=>({i,r:i+1,l:a[0],pos:a[1],g:a[2],es:a[3],en:a[4],o:a[5].split(' '),gr:a[6]||'',f:a[7]?a[7].split('|'):null,form:(a[3].match(/\[(.+?)\]/)||[])[1]}));
+const idx={};W.forEach(w=>idx[w.l]=w);
+
+const learned=new Set([0,1,2,3,4,5,6,7,8,9,10,11,13,14,15,16,17,18,19,21,22,24,32,37]);
+const S={open:null,mode:null,stage:null,guess:'',said:'',deep:false,rated:null,missed:false};
+const $=s=>document.querySelector(s), grid=$('#grid'), card_=$('#card'), tip=$('#tip');
+const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const norm=s=>s.toLowerCase().trim().replace(/[¿?¡!.,]/g,'');
+const strip=s=>norm(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+const tiles=W.map(w=>{const b=document.createElement('button');b.className='tile';b.dataset.i=w.i;grid.appendChild(b);return b});
+function known(l){const w=idx[l];return !w||learned.has(w.i)}
+function enOK(w){return w.o.every(known)}
+function lit(w){return esc(w.es).replace(/\[(.+?)\]/,'<mark>$1</mark>')}
+function cloze(w){return esc(w.es).replace(/\[(.+?)\]/,'<span class="blank"></span>')}
+function plain(w){return esc(w.es).replace(/\[(.+?)\]/,'$1')}
+function cols(){return getComputedStyle(grid).gridTemplateColumns.split(' ').length}
+function frontierSet(){const f=new Set();W.forEach(w=>{if(!learned.has(w.i)&&enOK(w)&&f.size<4)f.add(w.i)});return f}
+function paint(){
+  const fr=frontierSet();
+  tiles.forEach((t,i)=>{
+    t.className='tile'+(learned.has(i)?' L':'')+(!learned.has(i)&&fr.has(i)?' frontier':'')+(S.open===i?' cur':'');
+    t.innerHTML=`<span class="rk">${W[i].r}</span>${esc(W[i].l)}`;
+  });
+  $('#cnt').innerHTML=`<b>${learned.size}</b> <em>learned</em> of ${W.length}`;
+  $('#keys').innerHTML=S.open==null?'<kbd>←↑↓→</kbd> move <kbd>Enter</kbd> open':'<kbd>Esc</kbd> close';
+}
+const STEPS=['guess','meet','recall','done'];
+function card(fade){
+  const w=W[S.open],L=S.mode==='learn',st=S.stage;
+  let top,main='',foot='';
+  if(L){
+    const k=st==='miss'?2:STEPS.indexOf(st);
+    const dots='<span class="dots">'+STEPS.map((s,j)=>`<b class="${st==='done'?'ok':j===k?'on':j<k?'ok':''}"></b>`).join('')+'</span>';
+    top=`<span>#${w.r}</span><span>${w.pos}</span><i class="${st==='done'?'g':''}">${st==='done'?'learned':'new word'}</i><span class="sp"></span>${dots}`;
+    if(st==='guess'){
+      main=`<div class="word">${esc(w.l)}</div><div class="sent">${lit(w)}</div>`;
+      foot=`<input class="ans" id="in" autocomplete="off" spellcheck="false" placeholder="what might it mean?"><div class="hint"><kbd>Enter</kbd> guess · empty <kbd>Enter</kbd> = no idea</div>`;
+    }else if(st==='meet'){
+      const ok=S.guess&&matches(S.guess,w.g);
+      main=`<div class="word">${esc(w.l)}</div><div class="gl">${esc(w.g)}</div>
+        <div class="said">${S.guess?`you guessed <b>${esc(S.guess)}</b> ${ok?'<span class="ok">✓</span>':''}`:'no idea, fine'}</div>
+        <div class="sent">${lit(w)}${enOK(w)?`<span class="en">${esc(w.en)}</span>`:`<span class="en w">english held back: it has words you haven't met</span>`}</div>
+        ${w.gr?`<div class="note">${esc(w.gr)}</div>`:''}`;
+      foot=`<div class="cta"><kbd>Enter</kbd> now recall it</div>`;
+    }else if(st==='recall'||st==='miss'){
+      main=`<div class="word mask">${st==='miss'?esc(w.l):'· · ·'}</div><div class="gl cue">${esc(w.g)}</div>
+        <div class="sent">${cloze(w)}${enOK(w)?`<span class="en">${esc(w.en)}</span>`:''}</div>`;
+      if(st==='miss'){
+        main+=`<div class="res bad">✗ you wrote ${esc(S.said||'nothing')} — it is <b>${esc(w.l)}</b></div>`;
+        foot=`<div class="cta"><kbd>Enter</kbd> try again</div>`;
+      }else foot=`<input class="ans" id="in" autocomplete="off" spellcheck="false" placeholder="type the Spanish"><div class="hint"><kbd>Enter</kbd> check</div>`;
+    }else{
+      const nx=nextIdx();
+      main=`<div class="word">${esc(w.l)}</div><div class="gl">${esc(w.g)}</div>
+        <div class="sent">${plain(w)}<span class="en">${esc(w.en)}</span></div>
+        <div class="res good">✓ ${esc(w.l)} is yours · ${S.rated}</div>`;
+      foot=`<div class="cta">${nx!=null?`<kbd>Enter</kbd> next: <b>${esc(W[nx].l)}</b>`:''}<span class="alt"><kbd>Esc</kbd> back to the atlas</span></div>`;
+    }
+  }else{
+    top=`<span>#${w.r}</span><span>${w.pos}</span><i class="g">learned</i><span class="sp"></span><span>review</span>`;
+    if(st==='ask'){
+      main=`<div class="word">${esc(w.l)}</div><div class="said">say it in your head, then type it</div>`;
+      foot=`<input class="ans" id="in" autocomplete="off" spellcheck="false" placeholder="meaning in English"><div class="hint"><kbd>Enter</kbd> reveal · empty = not sure</div>`;
+    }else{
+      const ok=S.guess&&matches(S.guess,w.g);
+      let forms='';
+      if(w.pos==='verb'){const f=w.f||regular(w.l);forms=`<div><small>present</small>yo <b>${f[0]}</b> · tú <b>${f[1]}</b><br>él <b>${f[2]}</b> · nosotros <b>${f[3]}</b></div>`}
+      else forms=`<div><small>present</small>–</div>`;
+      main=`<div class="word">${esc(w.l)}</div><div class="gl">${esc(w.g)}</div>
+        <div class="said">${S.guess?`you said <b>${esc(S.guess)}</b> ${ok?'<span class="ok">✓</span>':''}`:'not sure'}</div>
+        <div class="sent">${lit(w)}${enOK(w)?`<span class="en">${esc(w.en)}</span>`:''}</div>
+        <div class="deep ${S.deep?'on':''}">${forms}<div><small>grammar</small>${esc(w.gr||'nothing special')}</div><div><small>also</small>${esc(more(w))}</div></div>`;
+      foot=S.rated?`<div class="rate"><span class="pick">${S.rated}</span><span><kbd>↓</kbd> ${S.deep?'less':'deepen'}</span><span><kbd>Enter</kbd> close</span></div>`
+        :`<div class="rate"><span><kbd>1</kbd> again</span><span><kbd>Enter</kbd> good</span><span><kbd>↓</kbd> ${S.deep?'less':'deepen'}</span></div>`;
+    }
+  }
+  card_.className=(st==='done'?'done':'');
+  card_.innerHTML=`<div class="top">${top}</div><div class="main ${fade?'fade':''}">${main}</div><div class="foot ${fade?'fade':''}">${foot}</div>`;
+  const inp=card_.querySelector('input');
+  if(inp)inp.focus({preventScroll:true});
+}
+function more(w){const o=w.o.filter(x=>idx[x]).map(x=>idx[x].l);return o.length?'seen with: '+o.join(', '):'no more to add yet; this is a full-fledged word already'}
+function regular(l){
+  const s=l.slice(0,-2),t=l.slice(-2);
+  if(t==='ar')return[s+'o',s+'as',s+'a',s+'amos'];
+  if(t==='er')return[s+'o',s+'es',s+'e',s+'emos'];
+  return[s+'o',s+'es',s+'e',s+'imos'];
+}
+function matches(g,gloss){
+  const stop=new Set(['to','the','a','an','of','be','in','on','is']);
+  const words=x=>norm(x.replace(/\(.*?\)/g,' ')).split(/[^a-z']+/).filter(y=>y&&!stop.has(y));
+  const gw=new Set(words(gloss).concat(norm(gloss).split(/[^a-z']+/)));
+  return words(g).some(x=>gw.has(x));
+}
+
+function nextIdx(){
+  const cand=W.filter(x=>!learned.has(x.i)&&x.i!==S.open);
+  const x=cand.find(x=>enOK(x)&&x.i>S.open)||cand.find(x=>enOK(x))||cand[0];
+  return x?x.i:null;
+}
+function openTile(i,quick){
+  tip.style.display='none';
+  const go=()=>{
+    S.open=i;S.deep=false;S.rated=null;S.guess='';S.said='';S.missed=false;
+    if(learned.has(i)){S.mode='review';S.stage='ask'}else{S.mode='learn';S.stage='guess'}
+    document.body.classList.add('stage');paint();card(true);
+  };
+  if(quick&&S.open!=null){
+    const m=card_.querySelectorAll('.main,.foot,.top');m.forEach(e=>e.classList.add('fade-out'));
+    setTimeout(go,110);
+  }else{go();card_.style.animation='none';card_.offsetWidth;card_.style.animation=''}
+}
+let closing=false;
+function closeTile(){
+  if(S.open==null||closing)return;const i=S.open;closing=true;
+  card_.classList.add('out');
+  document.body.classList.remove('stage');
+  setTimeout(()=>{
+    closing=false;S.open=null;card_.classList.remove('out');paint();
+    tiles.forEach(t=>t.tabIndex=-1);tiles[i].tabIndex=0;tiles[i].focus({preventScroll:true});
+    if(S.lightOnClose){S.lightOnClose=false;tiles[i].classList.add('lit')}
+  },210);
+}
+function setStage(s){S.stage=s;card(true)}
+function submit(v){
+  const w=W[S.open];
+  if(S.mode==='learn'){
+    if(S.stage==='guess'){S.guess=v.trim();setStage('meet')}
+    else if(S.stage==='recall'){
+      const a=strip(v),ok=a===strip(w.l)||(w.form&&a===strip(w.form));
+      if(ok){
+        S.rated=S.missed?'hard':'good';
+        if(norm(v)!==norm(w.l)&&!(w.form&&norm(v)===norm(w.form)))S.rated='hard · mind the accent';
+        learned.add(S.open);S.lightOnClose=true;
+        paint();tiles[S.open].classList.add('lit');
+        setStage('done');
+      }else{S.said=v.trim();S.missed=true;setStage('miss')}
+    }
+  }else if(S.stage==='ask'){S.guess=v.trim();setStage('reveal')}
+}
+function rate(r){S.rated=r==='good'?'good · back in 4 days':'again · back in 10 min';card(false)}
+document.addEventListener('keydown',e=>{
+  const inInput=e.target.tagName==='INPUT';
+  if(S.open!=null){
+    if(e.key==='Escape'){e.preventDefault();closeTile();return}
+    if(closing)return;
+    if(inInput){if(e.key==='Enter'){e.preventDefault();submit(e.target.value)}return}
+    if(S.mode==='learn'){
+      if(e.key==='Enter'){
+        e.preventDefault();
+        if(S.stage==='meet'||S.stage==='miss')setStage('recall');
+        else if(S.stage==='done'){const n=nextIdx();if(n==null)closeTile();else openTile(n,true)}
+      }
+    }else if(S.stage==='reveal'){
+      if(e.key==='1'&&!S.rated)rate('again');
+      else if(e.key==='Enter'){e.preventDefault();if(S.rated)closeTile();else rate('good')}
+      else if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();S.deep=e.key==='ArrowDown';card(false)}
+    }
+    return;
+  }
+  const f=document.activeElement;
+  if(f&&f.classList&&f.classList.contains('tile')){
+    const i=+f.dataset.i,c=cols();let n=null;
+    if(e.key==='ArrowRight')n=i+1;else if(e.key==='ArrowLeft')n=i-1;else if(e.key==='ArrowDown')n=i+c;else if(e.key==='ArrowUp')n=i-c;
+    if(n!=null&&n>=0&&n<W.length){e.preventDefault();tiles.forEach(t=>t.tabIndex=-1);tiles[n].tabIndex=0;tiles[n].focus();return}
+    if(e.key==='Enter'||e.key===' '){e.preventDefault();openTile(i)}
+  }
+});
+grid.addEventListener('click',e=>{const t=e.target.closest('.tile');if(t&&S.open==null)openTile(+t.dataset.i)});
+$('#veil').addEventListener('mousedown',e=>{if(e.target.id==='veil')closeTile()});
+grid.addEventListener('mousemove',e=>{
+  const t=e.target.closest('.tile');
+  if(!t||S.open!=null){tip.style.display='none';return}
+  const w=W[+t.dataset.i];tip.innerHTML=`${esc(w.l)}<small>#${w.r}</small>`;tip.style.display='block';
+  tip.style.left=Math.min(e.clientX+14,innerWidth-140)+'px';tip.style.top=(e.clientY+16)+'px';
+});
+grid.addEventListener('mouseleave',()=>tip.style.display='none');
+tiles.forEach(t=>t.tabIndex=-1);tiles[0].tabIndex=0;
+paint();
+window.__S=S;window.__learned=learned;
+</script>
+</body>
+</html>

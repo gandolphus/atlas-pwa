@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cards G · focus takeover</title>
+<style>
+:root{
+  --crust:#11111b; --mantle:#181825; --base:#1e1e2e;
+  --surface0:#313244; --surface1:#45475a; --surface2:#585b70;
+  --overlay0:#6c7086; --overlay1:#7f849c; --subtext0:#a6adc8; --subtext1:#bac2de; --text:#cdd6f4;
+  --lavender:#b4befe; --green:#a6e3a1; --red:#f38ba8;
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%;background:var(--crust);color:var(--text);overflow:hidden}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+input{font:inherit;color:inherit}
+.bar{height:44px;display:flex;align-items:center;gap:18px;padding:0 20px;background:var(--mantle);border-bottom:1px solid var(--crust);font-size:12px;color:var(--overlay1)}
+.bar .lang{letter-spacing:.14em;text-transform:uppercase}
+.bar b{color:var(--text);font-weight:500}.bar em{font-style:normal;color:var(--green)}
+.bar .sp{flex:1}
+.atlas{width:min(2600px,calc(100% - 48px));margin:28px auto 0;display:grid;grid-template-columns:repeat(auto-fill,minmax(clamp(104px,5vw,170px),1fr));gap:6px;transition:opacity .35s,filter .35s}
+.t{height:clamp(60px,3.6vw,100px);border-radius:4px;background:var(--base);border:1px solid var(--surface0);display:flex;flex-direction:column;justify-content:space-between;padding:6px 9px;text-align:left}
+.t small{font-size:10px;color:var(--overlay0);font-variant-numeric:tabular-nums}
+.t span{font-size:clamp(15px,.95vw,22px);color:var(--green);min-height:18px}
+.t:hover{border-color:var(--surface2)}
+.t.on{background:#a6e3a11a;border-color:#a6e3a155}
+.t.lock{background:var(--mantle);border-color:transparent;cursor:default}
+.t.lock small{color:var(--surface1)}
+.tip{position:fixed;z-index:40;pointer-events:none;display:none;background:var(--mantle);border:1px solid var(--surface1);border-radius:3px;padding:3px 8px;font-size:13px}
+.tip:after{content:"";position:absolute;left:50%;top:100%;margin-left:-5px;border:5px solid transparent;border-top-color:var(--surface1)}
+body.fx .atlas{opacity:.07;filter:blur(2px);pointer-events:none}
+body.fx .bar{opacity:.2}
+
+/* focus page */
+.fo{position:fixed;inset:0;z-index:20;background:rgba(17,17,27,.9);display:none;opacity:0;transition:opacity .3s}
+.fo.open{display:grid;opacity:1}
+.fo{grid-template-columns:minmax(0,1fr) minmax(620px,clamp(700px,42vw,1280px)) minmax(0,1fr);grid-template-rows:1fr auto;column-gap:clamp(24px,3.5vw,120px);padding:0 clamp(28px,3vw,80px)}
+.back{position:absolute;left:clamp(20px,2vw,48px);top:22px;font-size:12px;color:var(--overlay0);letter-spacing:.06em;display:flex;gap:8px;align-items:center;padding:4px 6px;border-radius:4px}
+.back:hover{color:var(--text);background:var(--surface0)}
+.back kbd{font:inherit;font-size:11px;border:1px solid var(--surface1);border-radius:3px;padding:0 5px;color:var(--overlay1)}
+.mm{position:absolute;right:clamp(20px,2vw,48px);top:20px;display:grid;grid-template-columns:repeat(11,9px);gap:3px}
+.mm i{width:9px;height:9px;border-radius:2px;background:var(--surface0);display:block;opacity:.7}
+.mm i.on{background:#a6e3a1aa;opacity:1}
+.mm i.lk{background:var(--mantle)}
+.mm i.cur{background:var(--lavender);opacity:1;box-shadow:0 0 0 2px #b4befe44;animation:pu 1.8s ease-in-out infinite}
+.mm i.cur.on{background:var(--green);box-shadow:0 0 0 3px #a6e3a144;animation:none}
+@keyframes pu{50%{box-shadow:0 0 0 5px #b4befe11}}
+.side{align-self:center;min-width:0;display:flex;flex-direction:column;gap:clamp(18px,1.6vw,36px);padding-top:30px}
+.side.l{text-align:right;align-items:flex-end}
+.side .it{max-width:clamp(260px,20vw,460px);animation:in .5s ease both}
+@keyframes in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.side h4{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--overlay0);font-weight:500;margin-bottom:8px}
+.side p{font-size:clamp(15px,1.05vw,24px);line-height:1.5;color:var(--subtext0)}
+.side p mark{background:none;color:var(--lavender)}
+.side p.ghost{color:var(--overlay0)}
+.side .s{margin-bottom:12px}
+.side .s .e{font-size:clamp(16px,1.15vw,26px);color:var(--subtext1);line-height:1.4}
+.side .s .tr{font-size:clamp(13px,.9vw,20px);color:var(--overlay1);margin-top:2px}
+.side .s .tr mark{background:none;color:var(--lavender)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.side.l .chips{justify-content:flex-end}
+.chip{font-size:clamp(12px,.85vw,18px);padding:3px 10px;border-radius:12px;background:var(--base);border:1px solid var(--surface0);color:var(--subtext1)}
+.chip.gr{color:var(--lavender);border-color:#b4befe33}
+.ctr{align-self:center;display:flex;flex-direction:column;align-items:center;text-align:center;padding-top:30px;min-width:0}
+.rk{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--overlay0);margin-bottom:clamp(28px,3vw,64px)}
+.rk i{font-style:normal;color:var(--lavender)} .rk.g i{color:var(--green)}
+.es{font-size:clamp(34px,2.9vw,92px);line-height:1.3;letter-spacing:-.01em;font-weight:400}
+.w{border-radius:3px;position:relative}
+.w.k{cursor:default}
+.w.k:hover{background:var(--surface0)}
+.w.k:hover:after{content:attr(data-l);position:absolute;left:50%;bottom:calc(100% + 6px);transform:translateX(-50%);background:var(--base);border:1px solid var(--surface1);border-radius:3px;padding:1px 7px;font-size:13px;line-height:1.5;color:var(--subtext1);white-space:nowrap;z-index:3;letter-spacing:0}
+.w.u{color:var(--overlay0)}
+.w.t0{color:var(--lavender);font-weight:600;border-bottom:3px solid var(--lavender)}
+.w.flip{color:var(--lavender);font-style:italic;font-weight:500;animation:fl .45s ease}
+@keyframes fl{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.w.ok{color:var(--green);font-weight:600}
+.w.rev{color:var(--overlay1);font-weight:500;border-bottom:3px dashed var(--overlay0)}
+.gap{background:var(--base);border:0;border-bottom:3px solid var(--lavender);border-radius:4px 4px 0 0;padding:0 6px;text-align:center;font-weight:600;color:var(--lavender);outline:none;letter-spacing:0}
+.gap.miss{border-color:var(--red)}
+.note{margin-top:clamp(26px,2.4vw,54px);font-size:clamp(14px,.95vw,20px);color:var(--overlay1);min-height:24px;line-height:1.5}
+.note b{color:var(--subtext1);font-weight:500}.note .g{color:var(--green)}.note .r{color:var(--red)}
+.guess{margin-top:clamp(22px,2vw,44px);display:flex;gap:10px;align-items:center;justify-content:center}
+.guess input{width:min(420px,60vw);height:44px;background:var(--base);border:1px solid var(--surface0);border-radius:5px;padding:0 14px;font-size:17px;text-align:center}
+.guess input:focus{outline:none;border-color:var(--lavender)}
+.hint{margin-top:14px;font-size:12px;color:var(--overlay0)}
+kbd.k{font:inherit;font-size:11px;border:1px solid var(--surface1);border-radius:3px;padding:0 5px;color:var(--overlay1);margin:0 2px}
+.ft{grid-column:1/-1;grid-row:2;display:flex;justify-content:center;align-items:center;gap:14px;height:64px;font-size:13px;color:var(--overlay0)}
+.ft .nx{color:var(--subtext1)} .ft .nx b{color:var(--lavender);font-weight:500}
+.ft button:hover{color:var(--text)}
+</style>
+</head>
+<body>
+<div class="bar"><span class="lang">Español</span><span id="cov"></span><span class="sp"></span><span>click a tile · a word opens full screen · <b>Enter</b> continues · <b>Esc</b> back to atlas</span></div>
+<div class="atlas" id="atlas"></div>
+<div class="tip" id="tip"></div>
+<div class="fo" id="fo"></div>
+<script>
+// ---------- data ----------
+// sentence: "*target*" marks the target; {..} in English marks the matching chunk.
+const FORM={soy:'ser',eres:'ser',es:'ser',está:'estar',estoy:'estar',estás:'estar',están:'estar',tengo:'tener',tienes:'tener',tiene:'tener',
+ quiero:'querer',quieres:'querer',quiere:'querer',voy:'ir',vas:'ir',veo:'ver',ves:'ver',hablo:'hablar',hablas:'hablar',como:'comer',comes:'comer',
+ bebo:'beber',buena:'bueno',buen:'bueno',mala:'malo',pequeña:'pequeño',mucha:'mucho',hago:'hacer',haces:'hacer',qué:'que',
+ hombres:'hombre'};
+const D={}; const ORDER=[];
+function w(l,pos,gloss,s,x){D[l]=Object.assign({l,pos,gloss,s},x||{});}
+// learned at start
+w('el','article','the (m.)',[['*El* mundo es grande.','{The} world is big.'],['*El* agua.','{The} water.']],{g:'el + masculine noun'});
+w('la','article','the (f.)',[['*La* casa es grande.','{The} house is big.'],['*La* noche.','{The} night.']],{g:'la + feminine noun'});
+w('de','preposition','of, from',[['El agua *de* la casa.','The water {from} the house.'],['La casa *de* un hombre.','The house {of} a man.']],{h:'de + el contracts to del'});
+w('que','conjunction, pronoun','that, what',[['¿*Qué* tienes?','{What} do you have?'],['¿*Qué* haces en casa?','{What} are you doing at home?']],{g:'qué with an accent = a question'});
+w('y','conjunction','and',[['Tú *y* yo.','You {and} I.'],['El día *y* la noche.','The day {and} the night.']]);
+w('en','preposition','in, on, at',[['Estoy *en* casa.','I\'m {at} home.'],['Tú estás *en* la casa.','You are {in} the house.']]);
+w('a','preposition','to, at',[['Voy *a* la casa.','I\'m going {to} the house.']],{g:'ir a = to go to'});
+w('un','article','a, one (m.)',[['Yo soy *un* niño.','I am {a} boy.'],['*Un* día en casa.','{A} day at home.']]);
+w('no','adverb','no, not',[['Yo *no* soy tú.','I am {not} you.'],['*No* tengo agua.','I {don\'t} have water.']],{g:'no goes right before the verb'});
+w('ser','verb','to be (what you are)',[['Yo *soy* un niño.','I {am} a boy.'],['La casa *es* grande.','The house {is} big.']],{f:['soy','eres','es','somos','son'],g:'ser = identity, traits',h:'soy = I am, es = it is'});
+w('sí','adverb','yes',[['¿Tienes agua? *Sí*.','Do you have water? {Yes}.']],{g:'sí with an accent = yes; si = if'});
+w('estar','verb','to be (where/how you are)',[['*Estoy* en casa.','I {am} at home.'],['El agua *está* aquí.','The water {is} here.']],{f:['estoy','estás','está','estamos','están'],g:'estar = place, state'});
+w('tener','verb','to have',[['*Tengo* agua.','I {have} water.'],['Tú *tienes* mucha agua.','You {have} a lot of water.']],{f:['tengo','tienes','tiene','tenemos','tienen'],g:'yo-form tengo: irregular'});
+w('yo','pronoun','I',[['*Yo* estoy en casa.','{I} am at home.'],['*Yo* tengo agua.','{I} have water.']],{g:'often dropped: tengo agua'});
+w('tú','pronoun','you (informal)',[['¿*Tú* estás en casa?','Are {you} at home?'],['*Tú* tienes agua.','{You} have water.']],{g:'tú = you, tu = your'});
+w('con','preposition','with',[['Yo como *con* el niño.','I eat {with} the boy.'],['¿Hablas *con* el hombre?','Do you speak {with} the man?']]);
+w('hola','interjection','hello',[['*Hola*, mundo.','{Hello}, world.'],['*Hola*, ¿estás en casa?','{Hello}, are you at home?']],{h:'h is silent: "OH-la"'});
+w('mundo','noun (m.)','world',[['Hola, *mundo*.','Hello, {world}.'],['Un *mundo* grande.','A big {world}.']],{h:'mundane = of this world'});
+w('casa','noun (f.)','house, home',[['Estoy en *casa*.','I\'m at {home}.'],['La *casa* es grande.','The {house} is big.']],{h:'casino began as "little house"'});
+w('agua','noun (f.)','water',[['Yo bebo *agua*.','I drink {water}.'],['El *agua* es buena.','The {water} is good.']],{h:'aquarium, aquatic',g:'el agua: feminine, but takes el'});
+// to learn
+w('hacer','verb','to do, to make',[['¿Qué *haces* en casa?','What {are you doing} at home?'],['Tú *haces* un buen día.','You {make} a good day.']],{f:['hago','haces','hace','hacemos','hacen'],g:'yo-form hago: irregular',h:'fact, factory: things made'});
+w('ir','verb','to go',[['Yo *voy* a casa.','I\'m {going} home.'],['¿Tú *vas* a la casa?','{Are you going} to the house?']],{f:['voy','vas','va','vamos','van'],g:'ir a + place',h:'no resemblance, so learn it by use'});
+w('ver','verb','to see',[['Yo *veo* el mundo.','I {see} the world.'],['¿Tú *ves* la casa?','Do you {see} the house?']],{f:['veo','ves','ve','vemos','ven'],h:'vision, video'});
+w('querer','verb','to want',[['*Quiero* agua.','I {want} water.'],['¿Tú *quieres* agua?','Do you {want} water?']],{f:['quiero','quieres','quiere','queremos','quieren'],g:'e becomes ie: quiero',h:'query: you ask for something'});
+w('muy','adverb','very',[['Tú eres *muy* grande.','You are {very} big.'],['La casa es *muy* pequeña.','The house is {very} small.']],{g:'never changes: muy grande, muy grandes'});
+w('todo','adjective, pronoun','all, every',[['Tengo *todo* en casa.','I have {everything} at home.'],['Yo como *todo* el día.','I eat {all} day.']],{g:'agrees: todo, toda, todos'});
+w('aquí','adverb','here',[['Estoy *aquí*.','I am {here}.'],['El agua está *aquí*.','The water is {here}.']]);
+w('ahora','adverb','now',[['Estoy en casa *ahora*.','I\'m at home {now}.'],['¿Quieres agua *ahora*?','Do you want water {now}?']],{h:'a + hora (hour): "at this hour"'});
+w('mucho','adjective, adverb','a lot, much',[['Tengo *mucha* agua.','I have {a lot of} water.'],['Tú no hablas *mucho*.','You don\'t talk {much}.']],{g:'agrees: mucho, mucha, muchos',h:'much'});
+w('también','adverb','also, too',[['Tú tienes agua y yo *también*.','You have water and {so do} I.'],['Yo *también* estoy en casa.','I\'m {also} at home.']],{h:'tan + bien: "so well"'});
+w('día','noun (m.)','day',[['Un *día* en casa.','A {day} at home.'],['Hola, buen *día*.','Hello, good {day}.']],{g:'masculine despite the -a',h:'diary'});
+w('hombre','noun (m.)','man',[['Yo soy un *hombre*.','I am a {man}.'],['El *hombre* tiene agua.','The {man} has water.']],{h:'hombre: also the Spanish "human"'});
+w('mujer','noun (f.)','woman',[['La *mujer* tiene agua.','The {woman} has water.'],['El hombre y la *mujer* están en casa.','The man and the {woman} are at home.']]);
+w('niño','noun (m.)','boy, child',[['Yo soy un *niño*.','I am a {boy}.'],['El *niño* quiere agua.','The {boy} wants water.']],{g:'niña = girl; ñ is its own letter'});
+w('año','noun (m.)','year',[['Un *año* y un día.','A {year} and a day.'],['Un buen *año*.','A good {year}.']],{h:'annual'});
+w('tiempo','noun (m.)','time, weather',[['Yo no tengo *tiempo*.','I don\'t have {time}.'],['El *tiempo* es bueno.','The {weather} is good.']],{h:'temporal'});
+w('noche','noun (f.)','night',[['El día y la *noche*.','The day and the {night}.'],['Yo no como de *noche*.','I don\'t eat {at night}.']],{h:'nocturnal'});
+w('bueno','adjective','good',[['El agua es *buena*.','The water is {good}.'],['Tú eres *bueno*.','You are {good}.']],{g:'buen before a masculine noun: buen día',h:'bonus, bonbon'});
+w('malo','adjective','bad',[['La casa no es *mala*.','The house isn\'t {bad}.'],['Yo no soy *malo*.','I\'m not {bad}.']],{h:'malice, malady'});
+w('grande','adjective','big, large',[['La casa es *grande*.','The house is {big}.'],['Un mundo *grande*.','A {big} world.']],{g:'one form for both genders',h:'grand'});
+w('pequeño','adjective','small',[['La casa es *pequeña*.','The house is {small}.'],['El mundo es grande y yo soy *pequeño*.','The world is big and I am {small}.']],{g:'pequeño, pequeña'});
+w('hablar','verb','to speak, to talk',[['Yo *hablo* y tú no.','I {speak} and you don\'t.'],['¿Tú *hablas* con el hombre?','Do you {speak} with the man?']],{f:['hablo','hablas','habla','hablamos','hablan'],h:'fable, fabulous'});
+w('comer','verb','to eat',[['Yo *como* en casa.','I {eat} at home.'],['Tú *comes* y yo no.','You {eat} and I don\'t.']],{f:['como','comes','come','comemos','comen'],h:'comestible'});
+w('beber','verb','to drink',[['Yo *bebo* agua.','I {drink} water.'],['¿Quieres *beber* agua?','Do you want to {drink} water?']],{f:['bebo','bebes','bebe','bebemos','beben'],h:'beverage, imbibe'});
+
+const RANK='el la de que y en a un no ser sí estar tener yo tú con hacer ir ver querer muy todo aquí ahora mucho también hola mundo casa agua día hombre mujer niño año tiempo noche bueno malo grande pequeño hablar comer beber'.split(' ');
+while(RANK.length<61)RANK.push(null);
+const learned=new Set('el la de que y en a un no ser sí estar tener yo tú con hola mundo casa agua'.split(' '));
+const cnt={}; // reps per lemma
+
+// ---------- helpers ----------
+const $=s=>document.querySelector(s);
+const norm=s=>s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-zñ ]/g,'').trim();
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function toks(es){ // -> [{pre,core,post,lemma,t}]
+  return es.split(' ').map(p=>{
+    const m=p.match(/^([¡¿]*)(.*?)([.,?!;:]*)$/); let core=m[2],t=false;
+    if(core.startsWith('*')){t=true;core=core.slice(1,-1);}
+    const low=core.toLowerCase();
+    return {pre:m[1],core,post:m[3],t,lemma:FORM[low]||low};
+  });
+}
+function unknownOthers(sent,target){return toks(sent[0]).filter(k=>!k.t&&!learned.has(k.lemma)).length;}
+function pick(l,i){ // sentence choice: +1 rule, rotate among equals
+  const ss=D[l].s.map((s,ix)=>({s,ix,u:unknownOthers(s,l)}));
+  const best=Math.min(...ss.map(x=>x.u)); const c=ss.filter(x=>x.u===best);
+  return c[(i||0)%c.length];
+}
+function chunk(en){const m=en.match(/\{(.*?)\}/);return m?m[1]:'';}
+function enHtml(en,hide){ return esc(en).replace(/\{(.*?)\}/g,hide?'<mark>$1</mark>':'<mark>$1</mark>'); }
+// render spanish; mode: guess | flip | gap | ok | rev | plain
+function es(sent,mode,opts){
+  opts=opts||{};
+  const en=sent[1];
+  return toks(sent[0]).map(k=>{
+    let core=esc(k.core),h;
+    if(k.t){
+      if(mode==='guess'||mode==='plain')h=`<span class="w t0">${core}</span>`;
+      else if(mode==='flip')h=`<span class="w flip">${esc(chunk(en))}</span>`;
+      else if(mode==='ok')h=`<span class="w ok">${core}</span>`;
+      else if(mode==='rev')h=`<span class="w rev">${core}</span>`;
+      else if(mode==='gap')h=`<input class="gap${opts.miss?' miss':''}" id="ans" autocomplete="off" spellcheck="false" style="width:${k.core.length*.62+2.4}em" ${opts.dis?'disabled':''}>`;
+    }else if(learned.has(k.lemma))h=`<span class="w k" data-l="${esc(k.lemma)}">${core}</span>`;
+    else h=`<span class="w u">${core}</span>`;
+    return k.pre+h+k.post;
+  }).join(' ');
+}
+function sharedWord(a,b){
+  const stop=new Set('to the a an of and is'.split(' '));
+  const A=norm(a).split(' ').filter(x=>x&&!stop.has(x)), B=norm(b).split(' ').filter(x=>x&&!stop.has(x));
+  return A.some(x=>B.some(y=>y.slice(0,4)===x.slice(0,4)&&Math.min(x.length,y.length)>=3));
+}
+function nextNew(from){const i0=RANK.indexOf(from);
+  for(let k=1;k<=RANK.length;k++){const l=RANK[(i0+k)%RANK.length];if(l&&D[l]&&!learned.has(l))return l;}return null;}
+function nextRev(from){const i0=RANK.indexOf(from);
+  for(let k=1;k<=RANK.length;k++){const l=RANK[(i0+k)%RANK.length];if(l&&learned.has(l)&&l!==from)return l;}return null;}
+
+// ---------- atlas ----------
+function drawAtlas(){
+  $('#atlas').innerHTML=RANK.map((l,i)=>{
+    if(!l)return `<div class="t lock"><small>${i+1}</small><span></span></div>`;
+    const on=learned.has(l);
+    return `<button class="t${on?' on':''}" data-l="${l}"><small>${i+1}</small><span>${on?l:''}</span></button>`;
+  }).join('');
+  $('#cov').innerHTML=`<b>${learned.size}</b> of ${RANK.length} words · <em>${learned.size}</em> learned`;
+}
+$('#atlas').addEventListener('click',e=>{const b=e.target.closest('.t[data-l]');if(b)open(b.dataset.l);});
+const tip=$('#tip');
+$('#atlas').addEventListener('mousemove',e=>{const b=e.target.closest('.t[data-l]');if(!b||S){tip.style.display='none';return;}
+  const r=b.getBoundingClientRect();tip.textContent=b.dataset.l;tip.style.display='block';
+  tip.style.left=(r.left+r.width/2-tip.offsetWidth/2)+'px';tip.style.top=(r.top-tip.offsetHeight-8)+'px';});
+$('#atlas').addEventListener('mouseleave',()=>tip.style.display='none');
+
+// ---------- focus ----------
+const fo=$('#fo'); let S=null;
+function open(l){
+  if(!l){closeFocus();return;}
+  tip.style.display='none';
+  const rv=learned.has(l);
+  S={l,mode:rv?'review':'learn',phase:rv?'ask':'guess',guess:'',hard:false,missMsg:'',rev:false};
+  const p=pick(l,cnt[l]||0); S.sent=Object.assign([p.s[0],p.s[1]],{ix:p.ix});
+  document.body.classList.add('fx'); fo.classList.add('open'); render();
+}
+function closeFocus(){S=null;fo.classList.remove('open');document.body.classList.remove('fx');drawAtlas();}
+function minimap(){
+  return `<div class="mm" title="where this word sits">${RANK.map((l,i)=>`<i class="${!l?'lk':learned.has(l)?'on':''}${l===S.l?' cur':''}"></i>`).join('')}</div>`;
+}
+function item(h,body){return `<div class="it"><h4>${h}</h4>${body}</div>`;}
+function formsHtml(d){return (d.f?`<div class="chips">${d.f.map(f=>`<span class="chip">${f}</span>`).join('')}</div>`:'')+(d.g?`<div class="chips" style="margin-top:8px"><span class="chip gr">${esc(d.g)}</span></div>`:'');}
+function render(){
+  const d=D[S.l], rank=RANK.indexOf(S.l)+1, un=unknownOthers(S.sent,S.l), isNew=S.mode==='learn';
+  let L='',C='',R='',F='',rk=`<div class="rk${S.phase==='done'||S.phase==='shown'?' g':''}"><i>${isNew?'new':'known'}</i> · #${rank}${S.phase==='guess'||S.phase==='recall'||S.phase==='ask'?'':' · '+esc(d.l)}</div>`;
+  const enLine=un===0?`<p>${enHtml(S.sent[1])}</p>`:`<p class="ghost">English appears once the other words are yours.</p>`;
+  const hook=d.h?item('hook',`<p>${esc(d.h)}</p>`):'';
+  if(isNew&&S.phase==='guess'){
+    C=`${rk}<div class="es">${es(S.sent,'guess')}</div>
+      <div class="note">${un===0?'Every other word is yours. Hover one for its lemma.':`<b>${un}</b> muted word${un>1?'s':''} still unknown.`}</div>
+      <form class="guess" id="gf"><input id="g" autocomplete="off" spellcheck="false" placeholder="what might the lit word mean?"></form>
+      <div class="hint"><kbd class="k">⏎</kbd> guess &nbsp; <kbd class="k">⏎</kbd> on empty = no idea</div>`;
+  }else if(isNew&&S.phase==='meet'){
+    const g=S.guess.trim(), ok=g&&sharedWord(g,d.gloss+' '+chunk(S.sent[1]));
+    C=`${rk}<div class="es">${es(S.sent,'flip')}</div>
+      <div class="note">${g?`you guessed <b>${esc(g)}</b>${ok?' <span class="g">· close</span>':''} · `:''}<b>${esc(d.l)}</b> = ${esc(d.gloss)}</div>`;
+    L=item('in english',enLine); R=hook;
+    F=`<span><kbd class="k">⏎</kbd> type it back</span>`;
+  }else if(isNew&&S.phase==='recall'){
+    C=`${rk}<div class="es">${es(S.sent,S.rev?'rev':'gap',{miss:S.missMsg&&!S.rev})}</div>
+      <div class="note">${S.missMsg||'Type the missing word from memory.'}</div>`;
+    L=item('in english',enLine); R=hook;
+    F=`<span>recall until it is right</span>`;
+  }else if(isNew&&S.phase==='done'){
+    const nx=nextNew(S.l);
+    C=`${rk}<div class="es">${es(S.sent,'ok')}</div>
+      <div class="note"><span class="g">✓</span> ${S.hard?'needed a second look · back tomorrow':'recalled · back in 2 days'} · ${esc(d.gloss)}</div>`;
+    L=item('in english',`<p>${enHtml(S.sent[1])}</p>`)+otherSents();
+    R=hook+(d.f||d.g?item('forms',formsHtml(d)):'');
+    F=nx?`<span class="nx"><kbd class="k">⏎</kbd> next new word <b>#${RANK.indexOf(nx)+1}</b></span>`:`<span class="nx">all words learned</span>`;
+  }else if(S.phase==='ask'){
+    C=`${rk}<div class="es">${es(S.sent,'gap',{miss:!!S.missMsg})}</div>
+      <div class="note">${S.missMsg||'Type the missing word. Enter on an empty gap shows it.'}</div>`;
+    L=item('in english',`<p>${enHtml(S.sent[1])}</p>`);
+    F=`<span>recall first, then it opens up</span>`;
+  }else{ // shown (review)
+    C=`${rk}<div class="es">${es(S.sent,S.right?'ok':'rev')}</div>
+      <div class="note">${S.right?`<span class="g">✓</span> ${S.hard?'accent slip · back in 3 days':'recalled · back in '+(2+(cnt[S.l]||0)*3)+' days'}`:`it is <b>${esc(d.l)}</b>; marked again, back tomorrow`} · ${esc(d.gloss)}</div>`;
+    L=item('in english',`<p>${enHtml(S.sent[1])}</p>`)+otherSents();
+    R=hook+(d.f||d.g?item('forms',formsHtml(d)):'');
+    const nr=nextRev(S.l);
+    F=nr?`<span class="nx"><kbd class="k">⏎</kbd> next review <b>#${RANK.indexOf(nr)+1}</b></span>`:`<span class="nx"><kbd class="k">⏎</kbd> back to atlas</span>`;
+  }
+  fo.innerHTML=`<button class="back" onclick="closeFocus()"><kbd>esc</kbd> atlas</button>${minimap()}
+    <div class="side l">${L}</div><div class="ctr">${C}</div><div class="side r">${R}</div><div class="ft">${F}</div>`;
+  bind();
+}
+function otherSents(){
+  const d=D[S.l], o=d.s.map((s,i)=>({s,i})).filter(x=>x.i!==S.sent.ix);
+  return o.length?item('also in use',o.map(x=>`<div class="s"><div class="e">${es(x.s,'plain')}</div><div class="tr">${enHtml(x.s[1])}</div></div>`).join('')):'';
+}
+function bind(){
+  const a=$('#ans'),g=$('#g');
+  if(g){g.focus();$('#gf').onsubmit=e=>{e.preventDefault();S.guess=g.value;S.phase='meet';render();};}
+  if(a){a.focus();a.onkeydown=e=>{if(e.key!=='Enter')return;e.preventDefault();e.stopPropagation();check(a.value);};}
+}
+function check(v){
+  const d=D[S.l], tgt=toks(S.sent[0]).find(k=>k.t).core;
+  if(S.mode==='review'){
+    if(!v.trim()){S.right=false;S.phase='shown';}
+    else if(v.trim().toLowerCase()===tgt.toLowerCase()){S.right=true;S.hard=false;S.phase='shown';}
+    else if(norm(v)===norm(tgt)){S.right=true;S.hard=true;S.phase='shown';}
+    else{S.missMsg=`<span class="r">✗</span> not “${esc(v.trim())}”. Try again, or Enter on empty to show it.`;render();return;}
+    cnt[S.l]=(cnt[S.l]||0)+(S.right?1:0); S.missMsg=''; render(); return;
+  }
+  const ok=v.trim().toLowerCase()===tgt.toLowerCase(), slip=!ok&&norm(v)===norm(tgt);
+  if(ok||slip){if(slip)S.hard=true;learned.add(S.l);S.phase='done';S.missMsg='';drawAtlas();render();}
+  else{
+    S.hard=true;S.rev=true;S.missMsg=`<span class="r">✗</span> you wrote “${esc(v.trim()||'—')}”. It is <b>${esc(tgt)}</b>`;render();
+    const cur=S;setTimeout(()=>{if(S!==cur||S.phase!=='recall')return;S.rev=false;S.missMsg='Hidden again. Type it from memory.';render();},1500);
+  }
+}
+function advance(){
+  if(S.phase==='meet'){S.phase='recall';render();}
+  else if(S.phase==='done')open(nextNew(S.l));
+  else if(S.phase==='shown')open(nextRev(S.l));
+}
+document.addEventListener('keydown',e=>{
+  if(!S)return;
+  if(e.key==='Escape'){closeFocus();return;}
+  if(e.key==='Enter'&&document.activeElement.tagName!=='INPUT'){e.preventDefault();advance();}
+});
+// first guess input: Enter on empty is a valid "no idea" (form submit handles it)
+drawAtlas();
+</script>
+</body>
+</html>
