@@ -11065,10 +11065,10 @@ cv.addEventListener("touchend",e=>{
   if(pinch){if(e.touches.length<2)pinch=null;return}
   if(!tt)return;clearTimeout(tt.timer);const t=e.changedTouches[0];
   if(step&&step.kind==="probe"){tip.style.display="none";hov=-1;tt=null;req();return}
-  if(tt.loupe){tip.style.display="none";hov=-1;if(tt.i>=0){if(walk)stopWalk();openStep(tt.i,null,false)}}
-  else if(performance.now()-tt.t<400){const i=hit(...local(t));if(i>=0){if(walk&&i!==sel)stopWalk();if(!walk)openStep(i,null,false)}}
+  if(tt.loupe){tip.style.display="none";hov=-1;if(tt.i>=0){e.preventDefault();if(walk)stopWalk();openStep(tt.i,null,false)}}
+  else if(performance.now()-tt.t<400){const i=hit(...local(t));if(i>=0){e.preventDefault();if(walk&&i!==sel)stopWalk();if(!walk)openStep(i,null,false)}}  // preventDefault: no synthesized click may land on the sheet that just opened
   tt=null;
-});
+},{passive:false});
 let sw=null;
 pop.addEventListener("touchstart",e=>{const t=e.touches[0];sw={x:t.clientX,y:t.clientY}},{passive:true});
 pop.addEventListener("touchend",e=>{if(!sw||walk)return;const t=e.changedTouches[0],dx=t.clientX-sw.x,dy=t.clientY-sw.y;sw=null;

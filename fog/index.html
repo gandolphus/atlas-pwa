@@ -5459,10 +5459,11 @@ function revealCell(i,via){const k=K(i);if(k.vis)return false;k.vis=1;k.via=via;
 function flushAppear(parent){if(!pendingAppear.length)return;const now=performance.now();if(appearUntil<now)appearUntil=0;const base=Math.max(now+(RM?0:260),appearUntil?appearUntil+55:0);
   const pp=parent>=0?pos[parent]:-1,list=pendingAppear.slice().sort((a,b)=>pp<0?a-b:Math.abs(pos[a]-pp)-Math.abs(pos[b]-pp));
   list.forEach((i,j)=>{const t=base+(RM?0:Math.min(j,24)*55);appear.set(i,t);appearUntil=Math.max(appearUntil,t)});pendingAppear=[];req()}
-// a word becomes yours: it turns green and opens one sentence; the seed pair is hand-ordered (hola → mundo)
-function turnGreen(i){const k=K(i);k.green=1;repaint(i);
-  if(i===HOLA&&!K(MUNDO).vis){openedS.add(SEED0.key);k.opened.push(SEED0.key);revealCell(MUNDO,SEED0.key);flushAppear(i);return{s:SEED0,g:[MUNDO],nw:[MUNDO]}}
-  return branch(i)}
+// a word becomes yours: it turns green and opens one sentence — except the seed pair, which opens nothing until the first sentence has been typed
+function turnGreen(i){const k=K(i);k.green=1;repaint(i);if(!seeded&&(i===HOLA||i===MUNDO))return null;return branch(i)}
+const seedDone=()=>!seeded&&!probed&&K(HOLA).green&&K(MUNDO).green;
+// the first cascade: typing ¡Hola, mundo! opens two sentences from each seed word (six tiles)
+function seedCascade(){seeded=1;openedS.add(SEED0.key);const op=[];for(let r=0;r<2;r++)for(const i of [HOLA,MUNDO]){const b=branch(i);if(b)op.push(b)}return op}
 // after a probe or at a dead end: reveal the words that stand alone (or nearly) between you and a sentence
 function revealFrontier(max){const c=new Map();for(let gl=1;gl<=3&&c.size<max;gl++)bank.forEach(s=>{if(openedS.has(s.key))return;const g=gapOf(s,-1);if(g.length!==gl)return;g.forEach(x=>{if(!K(x).vis&&!c.has(x))c.set(x,s.key)})});
   const list=[...c].sort((a,b)=>a[0]-b[0]).slice(0,max);list.forEach(([x,key])=>{revealCell(x,key);openedS.add(key)});
@@ -5487,7 +5488,7 @@ function stats(){
 }
 function msg(t){clearTimeout(msgT);$("covt").innerHTML=t;msgT=setTimeout(()=>{msgT=0;$("covt").innerHTML=covText},3500)}
 // one-time hints: bit n shown once ever
-const TIP=["One word is on the board. Click it — or press <kbd>space</kbd>.","Green means yours. It opened a sentence: the new tile is a word from it.","Every green word opens a sentence; its words appear around it. Pick any tile, or press <kbd>space</kbd> and the board picks for you.","A hollow tile is due: recall it and it fills again."];
+const TIP=["Two words are on the board. Click one — or press <kbd>space</kbd>.","Green means yours. Make the other one yours too, then type the sentence they make.","Every green word opens a sentence; its words appear around it. Pick any tile, or press <kbd>space</kbd> and the board picks for you.","A hollow tile is due: recall it and it fills again."];
 function showTip(n){if(tips&(1<<n))return;tips|=1<<n;hint.innerHTML=TIP[n];hint.classList.add("on");save()}
 function hideTip(){hint.classList.remove("on")}
 
@@ -5642,7 +5643,7 @@ function pick(){
   if(relearn.length)return{kind:"again",i:relearn.shift().i};
   return null;
 }
-function startWalk(){steps=0;relearn=[];walk={};hideTip();next()}
+function startWalk(){steps=0;relearn=[];walk={};hideTip();if(seedDone()){openSentence();return}next()}
 function next(){steps++;const s=pick();if(!s){endWalk();return}openStep(s.i,s.kind,true)}
 function endWalk(){walk=null;closePop();stats();msg(narrow()?'✓ done':'✓ done for today · <b>'+plan().due.length+'</b> left for tomorrow')}
 function stopWalk(){walk=null;probe=null;closePop();stats()}
@@ -5698,7 +5699,7 @@ function reveal(){
 function toSpell(){if(!step||step.phase!=="reveal")return;step.phase="spell";if(!auto)render()}
 function spelled(){
   if(!step||step.phase!=="spell")return;const ai=pop.querySelector("[data-ans]");step.typed=ai?ai.value:"";
-  if(step.kind==="sentence"){const ok=flat(step.typed)===flat(SEED0.es);step.verdict={ok};if(ok){seeded=1;step.opened=[branch(HOLA),branch(MUNDO)].filter(Boolean);step.phase="after";plan();save();stats();reorder();layout();if(!auto){render();showTip(2)}}else{step.phase="spell";step.wrong=1;if(!auto)render()}return}
+  if(step.kind==="sentence"){const ok=flat(step.typed)===flat(SEED0.es);step.verdict={ok};if(ok){step.opened=seedCascade();step.phase="after";plan();save();stats();reorder();layout();if(!auto){render();showTip(2)}}else{step.phase="spell";step.wrong=1;if(!auto)render()}return}
   if(!norm(step.typed)){step.phase="spell";if(!auto)render();return}
   step.verdict=check(words[step.i],step.typed,step.sent?surfaceOf(step.sent,step.i):null);
   step.phase="rate";if(!auto)render();
@@ -5719,10 +5720,9 @@ function answer(r){
   repaint(i);stats();save();
   step.r=r;step.opened=op?[op]:null;step.readNew=nRead-before;step.phase="after";
   if(auto)return;
-  const seedNext=k.green&&(i===HOLA||i===MUNDO)&&!seeded&&K(HOLA).green&&K(MUNDO).green;
-  if(seedNext){openSentence();return}
+  if(seedDone()){openSentence();return}
   if(!op&&!step.readNew&&r>1&&step.inWalk&&walk){next();return}
-  render();if(op&&!(tips&2))showTip(1);
+  render();if(!seeded&&k.green&&(i===HOLA||i===MUNDO))showTip(1);
 }
 function openSentence(){step={kind:"sentence",i:MUNDO,phase:"spell",sent:SEED0,gap:[],typed:"",verdict:null,inWalk:!!walk,opened:null};sel=MUNDO;link.clear();SEED0.ids.forEach(x=>link.add(x));render();select(MUNDO,true)}
 function continueStep(){if(!step)return;if(step.inWalk&&walk){next();return}closePop();sc.focus()}
@@ -5783,13 +5783,13 @@ function render(){
     }
     else if(phase==="rate")h+=rateRow(i,suggested());
     else if(phase==="after"){
-      if(kind==="sentence")h+='<div class="open ok"><b>✓ '+esc(SEED0.es)+'</b> — your first sentence is readable. Both words opened another one.</div>'+openedHTML(step.opened);
+      if(kind==="sentence")h+='<div class="open ok"><b>✓ '+esc(SEED0.es)+'</b> — your first sentence is readable, and both words opened sentences of their own.</div>'+openedHTML(step.opened);
       else{
         if(k.green&&step.r>1)h+='<div class="open ok"><b>✓ '+esc(w.w)+'</b> is yours'+(step.readNew>0?' · <b>+'+step.readNew+'</b> sentence'+(step.readNew>1?'s':'')+' readable':'')+'.</div>';
         else if(step.r===1)h+='<div class="open">Not yet — '+(step.inWalk&&walk?'it comes back in a few steps.':'it stays on the board as learning; try it again any time.')+'</div>';
         else if(step.readNew>0)h+='<div class="open ok">+<b>'+step.readNew+'</b> sentence'+(step.readNew>1?'s':'')+' readable.</div>';
         h+=openedHTML(step.opened);
-        if(k.green&&!step.opened&&step.r>1)h+='<div class="q">No new sentence this time.</div>';
+        if(k.green&&!step.opened&&step.r>1){const other=i===HOLA?MUNDO:i===MUNDO?HOLA:-1;h+=!seeded&&other>=0&&!K(other).green?'<div class="q">Now the other one: <button class="chip new" data-go="'+other+'">'+esc(words[other].w)+'</button> — then you will type your first sentence.</div>':'<div class="q">No new sentence this time.</div>'}
       }
       h+='<button class="big" data-act="cont">'+(step.inWalk&&walk?'continue':'close')+'<small>enter</small></button>';
     }
@@ -5941,7 +5941,7 @@ function autoLearn(n){
     let c=P.cands;if(!c.length){revealFrontier(6);c=candidates()}if(!c.length)break;
     let bs=-1;c.forEach(x=>{const s=bestSent(x),g=s?gapOf(s,x).length:9,sc=share(x)*(g<=1?2:g===2?1.3:1)*(x===HOLA||x===MUNDO?100:1);if(sc>bs){bs=sc;i=x}});
     rate(i,3);P.L.new++;turnGreen(i);
-    if(!seeded&&K(HOLA).green&&K(MUNDO).green){seeded=1;branch(HOLA);branch(MUNDO)}
+    if(seedDone())seedCascade();
   }
   auto=false;reorder();layout();for(let i=0;i<N;i++)repaint(i);stats();save();draw();
 }
@@ -5957,7 +5957,7 @@ $("sr").onclick=()=>{stopWalk();localStorage.removeItem("atlas-fog");location.se
 if(Q.has("reset"))localStorage.removeItem("atlas-fog");
 const had=load();if(Q.has("day"))day=+Q.get("day");
 if(Q.has("z"))zoom=+Q.get("z");
-if(!had){revealCell(HOLA,SEED0.key);K(HOLA).via=SEED0.key}
+if(!had){auto=true;revealCell(HOLA,SEED0.key);revealCell(MUNDO,SEED0.key);auto=false}
 if(Q.has("all")){auto=true;for(let i=0;i<N;i++)revealCell(i,"all");auto=false}
 for(let i=0;i<N;i++)repaint(i);
 if(Q.has("sim"))$("sim").classList.add("on");
@@ -5967,8 +5967,10 @@ if(Q.has("probe")&&Q.get("probe")==="auto"&&!probed){auto=true;startProbe();let 
 sel=HOLA;
 if(Q.has("open")){const o=Q.get("open");openStep(IDX.has(o)?IDX.get(o):+o,null,false)}
 else if(Q.has("walk"))startWalk();
+else if(seedDone())openSentence();
 else if(!nYours&&!probed)showTip(0);
 draw();sc.focus({preventScroll:true});
+{const ai=pop.querySelector("[data-ans]");if(ai&&!matchMedia("(hover:none)").matches)ai.focus()}  // a card opened at load (reload mid-ritual, ?open) keeps its input focused
 window.__fog={L:()=>L,cellXY,hit,sc,surfaceOf,setZoom,draw,N,words,K,IDX,bank,step:()=>step,walk:()=>walk,startWalk,answer,reveal,toSpell,spelled,continueStep,openStep,autoLearn,advance,select,stats,candidates,order:()=>order,fresh,appear,glide,yours,gapOf,day:()=>day,nRead:()=>nRead,openedS,branch,startProbe,probe:()=>probe};
 </script>
 </body>
