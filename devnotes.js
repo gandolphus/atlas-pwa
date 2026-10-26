@@ -2,7 +2,7 @@
 (()=>{'use strict';
 if(window.__devnotesLoaded)return;window.__devnotesLoaded=1;
 const D=(document.currentScript||{}).dataset||{};
-const C={endpoint:D.endpoint||'http://localhost:7799/notes',project:D.project||location.hostname||'local',hotkey:(D.hotkey||'ctrl+alt+j').toLowerCase(),accent:D.accent||'#b4befe'};
+const C={endpoint:D.endpoint||'http://localhost:7799/notes',project:D.project||location.hostname||'local',hotkey:(D.hotkey||'ctrl+alt+j').toLowerCase(),accent:D.accent||'#b4befe',always:'always' in D};
 const K='devnotes:'+C.project+':';
 const ls={get(k,d){try{const v=localStorage.getItem(K+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(K+k,JSON.stringify(v))}catch(e){status='local storage failed: '+e.name}}};
 let notes=ls.get('notes',[]),seq=ls.get('seq',0),on=ls.get('on',false),side=ls.get('side','r'),panel=ls.get('panel',true);
@@ -10,6 +10,7 @@ let annot=false,stream=null,video=null,shotMsg='',status='',fb=null,lastBatch=nu
 const mem={},$=s=>R.querySelector(s);
 const q=new URLSearchParams(location.search);
 if(q.has('notes')){on=q.get('notes')!=='0';ls.set('on',on)}
+let hid=C.always&&ls.get('hid',false);if(C.always&&q.get('notes')!=='0')on=true;
 const HK=C.hotkey.split('+'),HKEY=HK.pop();
 const hk=e=>e.ctrlKey===HK.includes('ctrl')&&e.altKey===HK.includes('alt')&&e.shiftKey===HK.includes('shift')&&e.metaKey===HK.includes('meta')&&((e.key||'').toLowerCase()===HKEY||(e.code||'').toLowerCase()==='key'+HKEY||(e.code||'').toLowerCase()===HKEY);
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -207,19 +208,19 @@ function openEditor(r){const e=$('.ed'),W=300,h=110,vw=innerWidth,vh=innerHeight
 function hideEditor(){if(!R)return;const a=R.activeElement;if(a)a.blur();$('.ed').style.display='none';showSel(null)}
 async function general(){if(busy)return;busy=true;try{const n=capture(null,null,'general'),shot=await grab(null);draft={note:n,shot};openEditor(null)}finally{busy=false}}
 function tick(){if(!H)return;const s=view().sig;if(s!==curSig){curSig=s;draw()}}
-function drawMarks(){if(!R)return;$('.mk').innerHTML=openNotes().filter(n=>n.rect&&n.view.sig===curSig).map(n=>{
+function drawMarks(){if(!R)return;$('.mk').innerHTML=hid?'':openNotes().filter(n=>n.rect&&n.view.sig===curSig).map(n=>{
   const x=n.rect.x+n.viewport.scrollX-scrollX,y=n.rect.y+n.viewport.scrollY-scrollY;
   return`<div class="m${y<18?' in':''}" style="left:${x}px;top:${y}px;width:${n.rect.w}px;height:${n.rect.h}px"><i>${n.n}</i></div>`}).join('')}
 function draw(){if(!R)return;curSig=view().sig;$('.w').className='w'+(side==='l'?' l':'');
   const o=openNotes(),ov=$('.ov'),pl=$('.pill'),pn=$('.pn');
   ov.classList.toggle('on',annot);if(!annot)$('.hl').style.display='none';
   pl.className='pill'+(annot?' a':'');pl.textContent=(annot?'● drawing · ':'✎ notes ')+o.length;pl.title=`devnotes (${C.hotkey} to draw)`;
-  drawMarks();pn.style.display=panel?'flex':'none';pn.className='pn'+(side==='l'?' l':'');if(!panel)return;ping();
+  if(hid){pl.textContent='✎ show';pl.style.opacity='.55'}else pl.style.opacity='';drawMarks();pn.style.display=panel&&!hid?'flex':'none';pn.className='pn'+(side==='l'?' l':'');if(!panel||hid)return;ping();
   const groups=[];for(const n of o){let g=groups.find(g=>g.sig===n.view.sig);if(!g)groups.push(g={sig:n.view.sig,n:n.view,list:[]});g.list.push(n)}
   groups.sort((a,b)=>(b.sig===curSig)-(a.sig===curSig));
   const path=u=>u.split(/[?#]/)[0].split('/').filter(Boolean).slice(-2).join('/')||'/';
   const ns=notes.length-o.length;
-  pn.innerHTML=`<div class="hd"><b>devnotes</b><span class="sp"></span><button data-a="annot" class="${annot?'on':''}" title="${C.hotkey}">✎ draw</button><button data-a="general">+ note</button><button data-a="side" title="move panel">⇆</button><button data-a="min" title="collapse">–</button><button data-a="off" title="turn devnotes off (?notes brings it back)">×</button></div>
+  pn.innerHTML=`<div class="hd"><b>devnotes</b><span class="sp"></span><button data-a="annot" class="${annot?'on':''}" title="${C.hotkey}">✎ draw</button><button data-a="general">+ note</button><button data-a="side" title="move panel">⇆</button><button data-a="min" title="collapse">–</button><button data-a="${C.always?'hide':'off'}" title="${C.always?'hide devnotes (the pill stays)':'turn devnotes off (?notes brings it back)'}">${C.always?'hide':'×'}</button></div>
   <div class="sh">${stream?'<span class="ok">● screenshots on</span>':`<button data-a="shots">enable screenshots</button><span>${esc(shotMsg||'once per page load: share this tab')}</span>`}</div>
   <div class="ls">${groups.length?groups.map(g=>`<div class="g${g.sig===curSig?' cur':''}">${g.sig===curSig?'this view · ':''}${esc(path(g.n.url))} ${esc(g.n.label)}</div>`+g.list.map(n=>`<div class="nt" data-id="${n.id}"><i>${n.n}</i>${editing===n.id?`<textarea data-e="1">${esc(n.text)}</textarea>`:`<span data-a="edit" title="click to edit">${esc(n.text)}</span>`}<button data-a="del" title="delete">×</button></div>`).join('')).join(''):'<div class="muted">No open notes. Press ✎ draw, then drag a box over anything.</div>'}
   ${ns?`<div class="muted">${ns} sent · ${lastBatch?'<button data-a="undo">undo last</button>':''}<button data-a="clear">clear sent</button></div>`:''}</div>
@@ -230,7 +231,7 @@ function draw(){if(!R)return;curSig=view().sig;$('.w').className='w'+(side==='l'
     t.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();done(t.value)}else if(e.key==='Escape'){e.preventDefault();done(null)}});
     t.addEventListener('blur',()=>editing&&done(t.value))}}
 function onClick(e){const b=e.target.closest('[data-a]');if(!b)return;const a=b.dataset.a,nt=b.closest('[data-id]'),id=nt&&nt.dataset.id;
-  if(a==='pill'){panel=!panel;ls.set('panel',panel);draw()}else if(a==='annot')setAnnot(!annot);else if(a==='general')general();else if(a==='shots')enableShots();
+  if(a==='pill'){if(hid){hid=false;ls.set('hid',false);panel=true;ls.set('panel',true)}else{panel=!panel;ls.set('panel',panel)}draw()}else if(a==='hide'){hid=true;ls.set('hid',true);setAnnot(false);draw()}else if(a==='annot')setAnnot(!annot);else if(a==='general')general();else if(a==='shots')enableShots();
   else if(a==='min'){panel=false;ls.set('panel',false);draw()}else if(a==='side'){side=side==='l'?'r':'l';ls.set('side',side);draw()}
   else if(a==='off')setOn(false);else if(a==='submit')submit();else if(a==='copy')copyJSON();else if(a==='dl')download();
   else if(a==='undo')undo();else if(a==='clear')clearSent();else if(a==='edit'){editing=id;draw()}
