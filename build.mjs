@@ -1,0 +1,81 @@
+// Regenerates the PWA bundle from ../atlas-v1/index.html. Usage: node build.mjs
+import fs from 'node:fs'; import zlib from 'node:zlib'; import path from 'node:path'; import {fileURLToPath} from 'node:url';
+import crypto from 'node:crypto';
+const dir = path.dirname(fileURLToPath(import.meta.url));
+const src = fs.readFileSync(path.join(dir,'../atlas-v1/index.html'),'utf8');
+
+// ---- icons: raw PNG via zlib
+const crcT=new Uint32Array(256).map((_,n)=>{let c=n;for(let k=0;k<8;k++)c=c&1?0xedb88320^(c>>>1):c>>>1;return c>>>0});
+const crc=b=>{let c=~0;for(const x of b)c=crcT[(c^x)&255]^(c>>>8);return ~c>>>0};
+const chunk=(t,d)=>{const l=Buffer.alloc(4);l.writeUInt32BE(d.length);const td=Buffer.concat([Buffer.from(t),d]);const c=Buffer.alloc(4);c.writeUInt32BE(crc(td));return Buffer.concat([l,td,c])};
+function png(size,frac){ // frac = grid extent as fraction of canvas
+  const base=[0x1e,0x1e,0x2e], lav=[0xb4,0xbe,0xfe], N=10;
+  const g=Math.round(size*frac), x0=Math.round((size-g)/2), cell=g/N, pad=cell*0.14;
+  const tint=(i,j)=>{const h=Math.sin(i*12.9898+j*78.233)*43758.5453;const r=h-Math.floor(h);
+    const edge=Math.hypot(i-4.5,j-4.5)/6.4; return Math.max(0.1,Math.min(1,(1-edge)*0.9+r*0.55-0.2))};
+  const raw=Buffer.alloc((size*3+1)*size);
+  for(let y=0;y<size;y++){raw[y*(size*3+1)]=0;for(let x=0;x<size;x++){
+    let px=base; const gx=x-x0, gy=y-x0;
+    if(gx>=0&&gy>=0&&gx<g&&gy<g){const i=Math.floor(gx/cell),j=Math.floor(gy/cell),fx=gx-i*cell,fy=gy-j*cell;
+      if(fx>=pad&&fx<cell-pad&&fy>=pad&&fy<cell-pad){const t=tint(i,j);px=base.map((b,k)=>Math.round(b+(lav[k]-b)*t))}}
+    raw.set(px,y*(size*3+1)+1+x*3)}}
+  const ihdr=Buffer.alloc(13);ihdr.writeUInt32BE(size,0);ihdr.writeUInt32BE(size,4);ihdr[8]=8;ihdr[9]=2;
+  return Buffer.concat([Buffer.from([137,80,78,71,13,10,26,10]),chunk('IHDR',ihdr),chunk('IDAT',zlib.deflateSync(raw,{level:9})),chunk('IEND',Buffer.alloc(0))]);
+}
+fs.mkdirSync(path.join(dir,'icons'),{recursive:true});
+const icons={'icon-192.png':[192,.64],'icon-512.png':[512,.64],'icon-maskable-512.png':[512,.52],'apple-touch-icon.png':[180,.64]};
+for(const [n,[s,f]] of Object.entries(icons)) fs.writeFileSync(path.join(dir,'icons',n),png(s,f));
+
+// ---- manifest
+fs.writeFileSync(path.join(dir,'manifest.webmanifest'),JSON.stringify({
+  name:'Atlas',short_name:'Atlas',description:'A map of Spanish by frequency.',
+  display:'standalone',orientation:'any',background_color:'#11111b',theme_color:'#11111b',start_url:'./',scope:'./',
+  icons:[{src:'icons/icon-192.png',sizes:'192x192',type:'image/png',purpose:'any'},
+         {src:'icons/icon-512.png',sizes:'512x512',type:'image/png',purpose:'any'},
+         {src:'icons/icon-maskable-512.png',sizes:'512x512',type:'image/png',purpose:'maskable'}]},null,2)+'\n');
+
+// ---- index.html
+const headTags=`<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#11111b">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Atlas">
+<style>
+/* PWA: safe areas for standalone / notch */
+body{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right);min-height:100dvh;height:100dvh}
+.bar{height:calc(44px + env(safe-area-inset-top));padding-top:env(safe-area-inset-top)}
+.sim{height:calc(28px + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom)}
+.lang,.cov{-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+</style>
+`;
+const hash=crypto.createHash('sha256').update(src).update(fs.readFileSync(import.meta.filename)).digest('hex').slice(0,10);
+const tail=`<script>
+// triple-tap the language label / coverage text to toggle the simulation strip
+(function(){var n=0,t=0;document.querySelector('.bar').addEventListener('click',function(e){
+  if(!e.target.closest('.lang,.cov'))return;var now=Date.now();n=now-t<500?n+1:1;t=now;
+  if(n>=3){n=0;var s=document.getElementById('sim');if(s)s.classList.toggle('on');window.dispatchEvent(new Event('resize'))}})})();
+// service worker (https or localhost only)
+if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost'||location.hostname==='127.0.0.1')){
+  addEventListener('load',function(){navigator.serviceWorker.register('./sw.js').catch(function(e){console.warn('sw',e)})})}
+</script>
+`;
+if(!src.includes('</head>')||!src.includes('</body>')) throw new Error('prototype structure changed');
+let out=src.replace('</head>',()=>headTags+'</head>');
+const bi=out.lastIndexOf('</body>'); out=out.slice(0,bi)+tail+out.slice(bi);
+fs.writeFileSync(path.join(dir,'index.html'),out);
+
+// ---- sw.js
+fs.writeFileSync(path.join(dir,'sw.js'),`// generated by build.mjs
+const CACHE='atlas-${hash}';
+const SHELL=['./','index.html','manifest.webmanifest','icons/icon-192.png','icons/icon-512.png','icons/icon-maskable-512.png','icons/apple-touch-icon.png'];
+self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL)))}); // no skipWaiting: new version activates on next load
+self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k.startsWith('atlas-')&&k!==CACHE).map(k=>caches.delete(k)))))});
+self.addEventListener('fetch',e=>{
+  if(e.request.method!=='GET'||new URL(e.request.url).origin!==location.origin)return;
+  e.respondWith(caches.match(e.request,{ignoreSearch:true}).then(r=>r||fetch(e.request)));
+});
+`);
+console.log('built, cache atlas-'+hash);
