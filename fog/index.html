@@ -9501,6 +9501,9 @@ else if(!nYours&&!probed)showTip(0);
 draw();sc.focus({preventScroll:true});
 {const ai=pop.querySelector("[data-ans]");if(ai&&!matchMedia("(hover:none)").matches)ai.focus()}  // a card opened at load (reload mid-ritual, ?open) keeps its input focused
 window.__fog={revealCell,reorder,repaint,flushAppear,goWord,back,trail:()=>trail,nextLearned,nextUp,ML:()=>ML,L:()=>L,cellXY,hit,sc,surfaceOf,setZoom,draw,N,words,K,IDX,bank,step:()=>step,walk:()=>walk,startWalk,answer,reveal,toSpell,spelled,commitGuess,toRecall,recalled,continueStep,openStep,autoLearn,advance,select,stats,candidates,order:()=>order,fresh,appear,glide,yours,gapOf,day:()=>day,nRead:()=>nRead,openedS,branch,startProbe,probe:()=>probe};
+window.__devnotesState=()=>!step?{screen:"atlas",sel:sel>=0?words[sel].w:null}
+  :{screen:step.kind==="sentence"?"seed":step.kind==="probe"?"probe":step.kind==="page"?"focus-word":step.learn?"focus-learn":"review",kind:step.kind,word:words[step.i].w,step:step.phase,walk:!!step.inWalk};
 </script>
+<script src="../devnotes.js" data-project="language-board" defer></script>
 </body>
 </html>
