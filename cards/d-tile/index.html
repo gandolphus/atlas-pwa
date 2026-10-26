@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>D · the tile is the card</title>
+<style>
+:root{
+  --crust:#11111b;--mantle:#181825;--base:#1e1e2e;--s0:#313244;--s1:#45475a;--s2:#585b70;
+  --o0:#6c7086;--o1:#7f849c;--sub0:#a6adc8;--sub1:#bac2de;--text:#cdd6f4;
+  --lav:#b4befe;--green:#a6e3a1;--red:#f38ba8;
+  --tw:108px;--th:72px;--gap:6px;
+  font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (min-width:2400px){:root{--tw:124px;--th:80px;--gap:7px}}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%;background:var(--crust);color:var(--text);overflow:hidden}
+body{display:flex;flex-direction:column}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+input{font:inherit}
+.bar{flex:none;height:40px;display:flex;align-items:center;gap:16px;padding:0 20px;background:var(--mantle);border-bottom:1px solid var(--crust);font-size:12px;color:var(--o1)}
+.bar .t{letter-spacing:.14em;text-transform:uppercase}
+.bar b{color:var(--text);font-weight:500;font-variant-numeric:tabular-nums}
+.bar em{font-style:normal;color:var(--green);font-variant-numeric:tabular-nums}
+.bar .sp{flex:1}
+kbd{font:inherit;color:var(--sub1);background:var(--s0);border-radius:3px;padding:0 5px}
+.scroll{flex:1;overflow-y:auto;padding:20px 20px 40vh;scrollbar-width:thin;scrollbar-color:var(--s0) transparent}
+#grid{display:grid;grid-template-columns:repeat(auto-fill,var(--tw));grid-auto-rows:var(--th);grid-auto-flow:row dense;gap:var(--gap)}
+.tile{position:relative;background:var(--base);border:1px solid var(--s0);border-radius:5px;text-align:left;padding:9px 10px;color:var(--o1);font-size:16px;outline:none;overflow:hidden;display:flex;align-items:flex-end}
+.tile .rk{position:absolute;top:6px;right:8px;font-size:10px;color:var(--o0);font-variant-numeric:tabular-nums}
+.tile:hover{border-color:var(--s2);color:var(--sub1)}
+.tile:focus-visible{border-color:var(--lav)}
+.tile.L{color:var(--green);background:#1e2a2a;border-color:#2f4a40}
+.tile.L:hover{border-color:var(--green)}
+.tile.L .rk{color:#5f8a6c}
+.tile.frontier{color:var(--text);border-color:var(--s1)}
+/* the open tile */
+.tile.open{cursor:default;display:flex;flex-direction:column;align-items:stretch;padding:14px 16px 12px;background:var(--mantle);border-color:var(--lav);color:var(--text);z-index:2;box-shadow:0 10px 40px #0008}
+.tile.open.L,.tile.open.done{border-color:var(--green)}
+.tile.open:hover{color:var(--text)}
+.hd{display:flex;align-items:baseline;gap:10px}
+.hd h2{font-size:30px;font-weight:600;letter-spacing:-.01em}
+.hd h2.mask{color:var(--s2);letter-spacing:.2em}
+.meta{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--o0);display:flex;gap:10px;margin-bottom:2px}
+.meta i{font-style:normal;color:var(--lav)}
+.meta .g{color:var(--green)}
+.gl{font-size:15px;color:var(--sub1);margin-top:4px}
+.gl.cue{font-size:20px;color:var(--text)}
+.sent{font-size:19px;line-height:1.45;margin-top:12px}
+.sent mark{background:none;color:var(--lav);font-weight:600}
+.sent .blank{display:inline-block;min-width:3.4ch;border-bottom:2px solid var(--lav);transform:translateY(-2px)}
+.en{display:block;font-size:13px;color:var(--o1);margin-top:2px}
+.en.w{color:var(--o0);font-style:italic}
+.note{font-size:12px;color:var(--o1);margin-top:8px;border-left:2px solid var(--s0);padding-left:9px;line-height:1.45}
+.said{font-size:12px;color:var(--o1);margin-top:6px}
+.said b{font-weight:500;color:var(--sub1)}
+.said .ok{color:var(--green)}
+.res{font-size:14px;margin-top:10px}
+.res.bad{color:var(--red)}
+.res b{color:var(--text);font-weight:600}
+.res.good{color:var(--green)}
+.foot{margin-top:auto;padding-top:10px}
+.ans{width:100%;background:var(--base);border:1px solid var(--s0);border-radius:3px;padding:8px 10px;font-size:15px;color:var(--text)}
+.ans:focus{outline:none;border-color:var(--lav)}
+.ans::placeholder{color:var(--o0)}
+.hint{font-size:11px;color:var(--o0);margin-top:6px}
+.hint kbd{font-size:11px}
+.cta{font-size:14px;color:var(--lav)}
+.cta kbd{color:var(--lav)}
+.deep{overflow:hidden;max-height:0;opacity:0;transition:max-height .25s,opacity .25s}
+.deep.on{max-height:220px;opacity:1}
+.deep .row{font-size:13px;color:var(--sub0);margin-top:8px;line-height:1.5}
+.deep .row small{display:block;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--o0)}
+.deep .forms{display:flex;gap:16px;flex-wrap:wrap;font-variant-numeric:tabular-nums}
+.deep .forms span b{color:var(--text);font-weight:500}
+.rate{display:flex;gap:8px;align-items:center;font-size:13px;margin-top:10px;color:var(--o1)}
+.rate span.pick{color:var(--green)}
+/* popped out */
+.tile.open.pop{padding:22px 28px 18px}
+.pop .hd h2{font-size:48px}
+.pop .gl{font-size:20px}.pop .gl.cue{font-size:30px}
+.pop .sent{font-size:28px;margin-top:20px}
+.pop .en{font-size:17px}
+.pop .note{font-size:15px}.pop .said{font-size:15px}.pop .res{font-size:18px}
+.pop .ans{font-size:20px;padding:12px 14px}
+.pop .hint{font-size:13px}.pop .deep .row{font-size:16px}.pop .cta{font-size:18px}
+.tip{position:fixed;z-index:30;pointer-events:none;display:none;background:var(--mantle);border:1px solid var(--s1);border-radius:3px;padding:3px 8px;font-size:13px}
+.tip small{color:var(--o0);margin-left:6px}
+</style>
+</head>
+<body>
+<div class="bar"><span class="t">Atlas · Spanish</span><span id="cnt"></span><span class="sp"></span><span id="keys"></span></div>
+<div class="scroll" id="sc"><div id="grid"></div></div>
+<div class="tip" id="tip"></div>
+<script>
+// [lemma, pos, gloss, sentence with [form], english, others (lemmas), grammar, irregular present forms yo|tú|él|nosotros]
+const W=[
+["de","prep","of, from","El libro [de] Ana.","Ana's book.","libro",""],
+["la","art","the (feminine)","[La] casa es grande.","The house is big.","casa ser grande","Nouns are masculine or feminine; the article agrees."],
+["que","conj","that, which","Creo [que] sí.","I think so.","creer sí",""],
+["el","art","the (masculine)","[El] perro come.","The dog eats.","perro comer",""],
+["y","conj","and","Pan [y] agua.","Bread and water.","pan agua","Becomes e before a word starting with i-."],
+["a","prep","to, at","Voy [a] casa.","I'm going home.","ir casa","Before a person as object: Veo a Ana."],
+["en","prep","in, on","Vivo [en] Madrid.","I live in Madrid.","vivir",""],
+["ser","verb","to be (what something is)","Ella [es] médica.","She is a doctor.","ella médica","Identity, origin, profession: ser. State or place: estar.","soy|eres|es|somos"],
+["un","art","a, one","Tengo [un] gato.","I have a cat.","tener gato",""],
+["no","adv","no, not","[No] sé.","I don't know.","saber","Goes right before the verb."],
+["se","pron","oneself (reflexive)","Ella [se] llama Ana.","Her name is Ana.","ella llamar","Reflexive: the action returns to the subject."],
+["haber","aux","to have (auxiliary); there is","[Hay] pan.","There is bread.","pan","Hay = there is / there are.","he|has|ha|hemos"],
+["por","prep","for, by, through","Gracias [por] todo.","Thanks for everything.","gracias todo","Por = reason or route. Para = purpose or recipient."],
+["con","prep","with","Café [con] leche.","Coffee with milk.","café leche","con + mí = conmigo."],
+["su","det","his, her, their","[Su] casa es azul.","Their house is blue.","casa ser azul","Su does not show the owner's gender."],
+["para","prep","for, in order to","Es [para] ti.","It's for you.","ser tú",""],
+["estar","verb","to be (state or place)","Yo [estoy] aquí.","I am here.","yo aquí","State or place: estar. Identity: ser.","estoy|estás|está|estamos"],
+["tener","verb","to have","[Tengo] hambre.","I'm hungry.","hambre","Tener + noun for many states: hambre, sed, frío.","tengo|tienes|tiene|tenemos"],
+["hacer","verb","to do, to make","¿Qué [haces]?","What are you doing?","qué","","hago|haces|hace|hacemos"],
+["poder","verb","can, to be able to","No [puedo] ir.","I can't go.","no ir","poder + infinitive.","puedo|puedes|puede|podemos"],
+["decir","verb","to say, to tell","Ella [dice] la verdad.","She tells the truth.","ella verdad","","digo|dices|dice|decimos"],
+["ir","verb","to go","[Voy] al mercado.","I'm going to the market.","mercado","ir a + infinitive = going to do.","voy|vas|va|vamos"],
+["ver","verb","to see","[Veo] el mar.","I see the sea.","mar","","veo|ves|ve|vemos"],
+["dar","verb","to give","Te [doy] el libro.","I give you the book.","libro","","doy|das|da|damos"],
+["saber","verb","to know (facts, how to)","Yo [sé] la respuesta.","I know the answer.","respuesta","Saber = facts. Conocer = people, places.","sé|sabes|sabe|sabemos"],
+["querer","verb","to want, to love","[Quiero] agua.","I want water.","agua","Quiero + noun or + infinitive.","quiero|quieres|quiere|queremos"],
+["llegar","verb","to arrive","El tren [llega] hoy.","The train arrives today.","tren hoy"],
+["pasar","verb","to pass, to happen","¿Qué [pasa]?","What's happening?","qué"],
+["deber","verb","should, must; to owe","[Debes] dormir.","You should sleep.","dormir","deber + infinitive = should."],
+["poner","verb","to put, to place","Voy a [poner] la mesa.","I'm going to set the table.","ir mesa","","pongo|pones|pone|ponemos"],
+["parecer","verb","to seem","[Parece] fácil.","It seems easy.","fácil","","parezco|pareces|parece|parecemos"],
+["quedar","verb","to stay, to remain","Me [quedo] en casa.","I'm staying home.","yo casa en"],
+["hablar","verb","to speak","Ella [habla] español.","She speaks Spanish.","ella español"],
+["llevar","verb","to carry, to wear","[Llevo] una chaqueta.","I'm wearing a jacket.","chaqueta"],
+["dejar","verb","to leave (behind), to let","[Deja] la llave aquí.","Leave the key here.","llave aquí"],
+["seguir","verb","to follow, to continue","[Sigue] recto.","Keep going straight.","recto","","sigo|sigues|sigue|seguimos"],
+["encontrar","verb","to find","No [encuentro] mi llave.","I can't find my key.","llave","","encuentro|encuentras|encuentra|encontramos"],
+["llamar","verb","to call","Te [llamo] mañana.","I'll call you tomorrow.","mañana"],
+["venir","verb","to come","¿[Vienes] conmigo?","Are you coming with me?","conmigo","","vengo|vienes|viene|venimos"],
+["pensar","verb","to think","[Pienso] en ti.","I'm thinking of you.","ti","","pienso|piensas|piensa|pensamos"],
+["salir","verb","to go out, to leave","[Salimos] a las ocho.","We leave at eight.","ocho","","salgo|sales|sale|salimos"],
+["volver","verb","to return","[Vuelvo] pronto.","I'll be back soon.","pronto","","vuelvo|vuelves|vuelve|volvemos"],
+["tomar","verb","to take, to drink","Voy a [tomar] un café.","I'm going to have a coffee.","ir café"],
+["conocer","verb","to know (people, places)","[Conozco] a tu hermana.","I know your sister.","hermana","Conocer + a before a person.","conozco|conoces|conoce|conocemos"],
+["vivir","verb","to live","[Vivimos] en Madrid.","We live in Madrid.","Madrid"],
+["sentir","verb","to feel","[Siento] frío.","I feel cold.","frío","","siento|sientes|siente|sentimos"],
+["tratar","verb","to try; to treat","[Trato] de dormir.","I'm trying to sleep.","dormir","tratar de + infinitive = to try to."],
+["mirar","verb","to look at","[Mira] el cielo.","Look at the sky.","cielo"],
+["contar","verb","to count; to tell","Voy a [contar] hasta diez.","I'm going to count to ten.","ir diez","","cuento|cuentas|cuenta|contamos"],
+["empezar","verb","to begin","La clase [empieza] ya.","Class starts now.","clase ya","","empiezo|empiezas|empieza|empezamos"],
+["esperar","verb","to wait; to hope","[Espero] el autobús.","I'm waiting for the bus.","autobús"],
+["buscar","verb","to look for","[Busco] trabajo.","I'm looking for work.","trabajo"],
+["entrar","verb","to enter","[Entra], por favor.","Come in, please.","favor"],
+["trabajar","verb","to work","[Trabajo] en casa.","I work from home.","casa"],
+["escribir","verb","to write","[Escribo] una carta.","I'm writing a letter.","carta"],
+["perder","verb","to lose","No quiero [perder].","I don't want to lose.","querer","","pierdo|pierdes|pierde|perdemos"],
+["recibir","verb","to receive","[Recibo] un mensaje.","I get a message.","mensaje"],
+["comer","verb","to eat","[Comemos] a las dos.","We eat at two.","dos"],
+["abrir","verb","to open","[Abre] la puerta.","Open the door.","puerta"],
+["leer","verb","to read","[Leo] un libro.","I'm reading a book.","libro"]
+].map((a,i)=>({i,r:i+1,l:a[0],pos:a[1],g:a[2],es:a[3],en:a[4],o:a[5].split(' '),gr:a[6]||'',f:a[7]?a[7].split('|'):null,form:(a[3].match(/\[(.+?)\]/)||[])[1]}));
+const idx={};W.forEach(w=>idx[w.l]=w);
+const learned=new Set([0,1,2,3,4,5,6,7,8,9,10,11,13,14,15,16,17,18,19,21,22,24,32,37]);
+const S={open:null,mode:null,stage:null,guess:'',said:'',pop:false,deep:false,rated:null,first:true};
+const $=s=>document.querySelector(s), grid=$('#grid'), sc=$('#sc'), tip=$('#tip');
+const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const norm=s=>s.toLowerCase().trim().replace(/[¿?¡!.,]/g,'');
+const strip=s=>norm(s).normalize('NFD').replace(/[̀-ͯ]/g,'');
+const tiles=W.map(w=>{const b=document.createElement('button');b.className='tile';b.dataset.i=w.i;grid.appendChild(b);return b});
+function known(l){const w=idx[l];return !w||learned.has(w.i)}
+function enOK(w){return w.o.every(known)}
+function lit(w){return esc(w.es).replace(/\[(.+?)\]/,'<mark>$1</mark>')}
+function cloze(w){return esc(w.es).replace(/\[(.+?)\]/,'<span class="blank"></span>')}
+function plain(w){return esc(w.es).replace(/\[(.+?)\]/,'$1')}
+function cols(){return getComputedStyle(grid).gridTemplateColumns.split(' ').length}
+function span(){
+  const c=cols(),st=S.stage;
+  let r=({guess:3,ask:3,done:3,deep:5})[st]||4;
+  if(S.mode==='review'&&S.deep)r=5;
+  if(S.pop)r+=2;
+  return [Math.min(S.pop?8:5,c),r,c];
+}
+function place(){
+  tiles.forEach(t=>{t.style.gridColumn=t.style.gridRow=''});
+  if(S.open==null) return;
+  const t=tiles[S.open],[w,h,c]=span();
+  const col=Math.min(S.open%c,c-w)+1, row=Math.floor(S.open/c)+1;
+  t.style.gridColumn=col+' / span '+w; t.style.gridRow=row+' / span '+h;
+}
+// FLIP: neighbours glide, the open tile reveals with a clip
+function flip(fn){
+  const before=tiles.map(t=>t.getBoundingClientRect());
+  const prevOpen=S.open;
+  fn();
+  tiles.forEach((t,i)=>{
+    const a=before[i],b=t.getBoundingClientRect();
+    const dx=a.left-b.left,dy=a.top-b.top;
+    if(t.classList.contains('open')&&(Math.abs(a.width-b.width)>2||Math.abs(a.height-b.height)>2)){
+      const ins=`inset(${a.top-b.top}px ${b.right-a.right}px ${b.bottom-a.bottom}px ${a.left-b.left}px round 5px)`;
+      t.animate([{clipPath:ins},{clipPath:'inset(0 0 0 0 round 5px)'}],{duration:260,easing:'cubic-bezier(.2,.8,.2,1)'});
+    }else if(dx||dy){
+      t.animate([{transform:`translate(${dx}px,${dy}px)`},{transform:'none'}],{duration:260,easing:'cubic-bezier(.2,.8,.2,1)'});
+    }
+  });
+}
+function frontierSet(){const f=new Set();W.forEach(w=>{if(!learned.has(w.i)&&enOK(w)&&f.size<4)f.add(w.i)});return f}
+function paint(){
+  const fr=frontierSet();
+  tiles.forEach((t,i)=>{
+    const w=W[i],isOpen=S.open===i;
+    t.className='tile'+(learned.has(i)?' L':'')+(!learned.has(i)&&fr.has(i)?' frontier':'')+(isOpen?' open'+(S.pop?' pop':'')+(S.stage==='done'?' done':''):'');
+    if(!isOpen){t.innerHTML=`<span class="rk">${w.r}</span>${esc(w.l)}`;t.removeAttribute('aria-expanded')}
+  });
+  $('#cnt').innerHTML=`<b>${learned.size}</b> <em>learned</em> of ${W.length}`;
+  $('#keys').innerHTML=S.open==null?'<kbd>←↑↓→</kbd> move <kbd>Enter</kbd> open':'<kbd>Tab</kbd> pop out <kbd>Esc</kbd> close';
+}
+function card(){
+  const w=W[S.open],t=tiles[S.open];
+  const L=S.mode==='learn',st=S.stage;
+  const state=L?(st==='done'?'<span class="g">learned</span>':'new word'):'<span class="g">learned</span>';
+  let h=`<div class="meta"><span>#${w.r}</span><span>${w.pos}</span><i>${state}</i></div>`;
+  let body='',foot='';
+  if(L){
+    if(st==='guess'){
+      h+=`<div class="hd"><h2>${esc(w.l)}</h2></div>`;
+      body=`<div class="sent">${lit(w)}</div>`;
+      foot=`<input class="ans" id="in" autocomplete="off" spellcheck="false" placeholder="what might it mean? type a guess"><div class="hint"><kbd>Enter</kbd> guess · empty <kbd>Enter</kbd> = no idea</div>`;
+    }else if(st==='meet'){
+      h+=`<div class="hd"><h2>${esc(w.l)}</h2></div><div class="gl">${esc(w.g)}</div>`;
+      const ok=S.guess&&matches(S.guess,w.g);
+      body=`<div class="said">${S.guess?`you guessed <b>${esc(S.guess)}</b> ${ok?'<span class="ok">✓</span>':''}`:'no idea, fine'}</div>
+        <div class="sent">${lit(w)}${enOK(w)?`<span class="en">${esc(w.en)}</span>`:`<span class="en w">english held back: it contains words you haven't met</span>`}</div>
+        ${w.gr?`<div class="note">${esc(w.gr)}</div>`:''}`;
+      foot=`<div class="cta"><kbd>Enter</kbd> now recall it</div>`;
+    }else if(st==='recall'||st==='miss'){
+      h+=`<div class="hd"><h2 class="mask">${st==='miss'?esc(w.l):'· · ·'}</h2></div><div class="gl cue">${esc(w.g)}</div>`;
+      body=`<div class="sent">${cloze(w)}${enOK(w)?`<span class="en">${esc(w.en)}</span>`:''}</div>`;
+      if(st==='miss'){
+        body+=`<div class="res bad">✗ you wrote ${esc(S.said||'nothing')} — it is <b>${esc(w.l)}</b></div>`;
+        foot=`<div class="cta"><kbd>Enter</kbd> try again</div>`;
+      }else{
+        foot=`<input class="ans" id="in" autocomplete="off" spellcheck="false" placeholder="type the Spanish"><div class="hint"><kbd>Enter</kbd> check</div>`;
+      }
+    }else{
+      h+=`<div class="hd"><h2>${esc(w.l)}</h2></div><div class="gl">${esc(w.g)}</div>`;
+      const nx=nextIdx();
+      body=`<div class="sent">${plain(w)}<span class="en">${esc(w.en)}</span></div>
+        <div class="res good">✓ ${esc(w.l)} is yours · ${S.rated}</div>`;
+      foot=`<div class="cta">${nx!=null?`<kbd>Enter</kbd> next: <b>${esc(W[nx].l)}</b> · `:''}<span style="color:var(--o1)"><kbd>Esc</kbd> back to the atlas</span></div>`;
+    }
+  }else{
+    if(st==='ask'){
+      h+=`<div class="hd"><h2>${esc(w.l)}</h2></div>`;
+      body=`<div class="said">say it in your head, then type it</div>`;
+      foot=`<input class="ans" id="in" autocomplete="off" spellcheck="false" placeholder="meaning in English"><div class="hint"><kbd>Enter</kbd> reveal · empty = not sure</div>`;
+    }else{
+      h+=`<div class="hd"><h2>${esc(w.l)}</h2></div><div class="gl">${esc(w.g)}</div>`;
+      const ok=S.guess&&matches(S.guess,w.g);
+      body=`<div class="said">${S.guess?`you said <b>${esc(S.guess)}</b> ${ok?'<span class="ok">✓</span>':''}`:'not sure'}</div>
+        <div class="sent">${lit(w)}${enOK(w)?`<span class="en">${esc(w.en)}</span>`:''}</div>`;
+      let forms='';
+      if(w.pos==='verb'){const f=w.f||regular(w.l);forms=`<div class="row"><small>present</small><div class="forms"><span>yo <b>${f[0]}</b></span><span>tú <b>${f[1]}</b></span><span>él <b>${f[2]}</b></span><span>nosotros <b>${f[3]}</b></span></div></div>`}
+      const deep=`<div class="deep ${S.deep?'on':''}">${forms}${w.gr?`<div class="row"><small>grammar</small>${esc(w.gr)}</div>`:''}<div class="row"><small>also</small>${esc(more(w))}</div></div>`;
+      body+=deep;
+      foot=S.rated?`<div class="rate"><span class="pick">${S.rated}</span><span style="margin-left:auto"><kbd>↓</kbd> ${S.deep?'less':'deepen'} · <kbd>Enter</kbd> close</span></div>`
+        :`<div class="rate"><span><kbd>1</kbd> again</span><span><kbd>Enter</kbd> good</span><span style="margin-left:auto"><kbd>↓</kbd> ${S.deep?'less':'deepen'}</span></div>`;
+    }
+  }
+  t.innerHTML=h+body+`<div class="foot">${foot}</div>`;
+  t.setAttribute('aria-expanded','true');
+  const inp=t.querySelector('input');
+  if(inp) inp.focus({preventScroll:true}); else t.focus({preventScroll:true});
+}
+function more(w){const o=w.o.filter(x=>idx[x]).map(x=>idx[x].l);return o.length?'seen with: '+o.join(', '):'no more to add yet; this is a full-fledged word already'}
+function regular(l){
+  const s=l.slice(0,-2),t=l.slice(-2);
+  if(t==='ar')return[s+'o',s+'as',s+'a',s+'amos'];
+  if(t==='er')return[s+'o',s+'es',s+'e',s+'emos'];
+  return[s+'o',s+'es',s+'e',s+'imos'];
+}
+function matches(g,gloss){
+  const stop=new Set(['to','the','a','an','of','be','in','on','is']);
+  const words=x=>norm(x.replace(/\(.*?\)/g,' ')).split(/[^a-z']+/).filter(y=>y&&!stop.has(y));
+  const gw=new Set(words(gloss).concat(norm(gloss).split(/[^a-z']+/)));
+  return words(g).some(x=>gw.has(x));
+}
+function nextIdx(){
+  const w=W[S.open];
+  const cand=W.filter(x=>!learned.has(x.i)&&x.i!==S.open);
+  const lit_=cand.find(x=>enOK(x)&&x.i>S.open)||cand.find(x=>enOK(x))||cand[0];
+  return lit_?lit_.i:null;
+}
+function openTile(i,focusTile){
+  tip.style.display='none';
+  flip(()=>{
+    S.open=i;S.pop=S.pop;S.deep=false;S.rated=null;S.guess='';S.said='';
+    if(learned.has(i)){S.mode='review';S.stage='ask'}else{S.mode='learn';S.stage='guess'}
+    place();paint();card();
+  });
+  tiles[i].scrollIntoView({block:'nearest',behavior:'smooth'});
+}
+function closeTile(){
+  if(S.open==null)return;const i=S.open;
+  flip(()=>{S.open=null;place();paint()});
+  tiles.forEach(t=>t.tabIndex=-1);tiles[i].tabIndex=0;tiles[i].focus({preventScroll:true});
+}
+function relayout(){flip(()=>{place();paint();if(S.open!=null)card()});if(S.open!=null)tiles[S.open].scrollIntoView({block:'nearest',behavior:'smooth'})}
+function setStage(s){flip(()=>{S.stage=s;place();paint();card()})}
+function submit(v){
+  const w=W[S.open];
+  if(S.mode==='learn'){
+    if(S.stage==='guess'){S.guess=v.trim();setStage('meet')}
+    else if(S.stage==='recall'){
+      const a=strip(v),ok=a===strip(w.l)||(w.form&&a===strip(w.form));
+      if(ok){
+        S.rated=S.missed?(S.missed==='acc'?'hard · accent slip':'hard'):'good';
+        if(norm(v)!==norm(w.l)&&!(w.form&&norm(v)===norm(w.form))){S.rated='hard · mind the accent'}
+        S.missed=null;learned.add(S.open);
+        setStage('done');
+      }else{S.said=v.trim();S.missed=true;setStage('miss')}
+    }
+  }else if(S.stage==='ask'){S.guess=v.trim();setStage('reveal')}
+}
+function rate(r){S.rated=r==='good'?'good · back in 4 days':'again · back in 10 min';card()}
+function flipRedo(fn){flip(()=>{fn();place();paint();card()})}
+document.addEventListener('keydown',e=>{
+  const inInput=e.target.tagName==='INPUT';
+  if(S.open!=null){
+    if(e.key==='Escape'){e.preventDefault();closeTile();return}
+    if(e.key==='Tab'){e.preventDefault();S.pop=!S.pop;relayout();return}
+    if(inInput){
+      if(e.key==='Enter'){e.preventDefault();submit(e.target.value)}
+      return;
+    }
+    if(S.mode==='learn'){
+      if(e.key==='Enter'){
+        e.preventDefault();
+        if(S.stage==='meet')setStage('recall');
+        else if(S.stage==='miss')setStage('recall');
+        else if(S.stage==='done'){const n=nextIdx();if(n==null)closeTile();else openTile(n)}
+      }
+    }else if(S.stage==='reveal'){
+      if(e.key==='1'&&!S.rated){rate('again')}
+      else if(e.key==='2'&&!S.rated){rate('good')}
+      else if(e.key==='Enter'){e.preventDefault();if(S.rated)closeTile();else rate('good')}
+      else if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();flipRedo(()=>{S.deep=e.key==='ArrowDown'})}
+    }
+    return;
+  }
+  const f=document.activeElement;
+  if(f&&f.classList&&f.classList.contains('tile')){
+    const i=+f.dataset.i,c=cols();let n=null;
+    if(e.key==='ArrowRight')n=i+1;else if(e.key==='ArrowLeft')n=i-1;else if(e.key==='ArrowDown')n=i+c;else if(e.key==='ArrowUp')n=i-c;
+    if(n!=null&&n>=0&&n<W.length){e.preventDefault();tiles.forEach(t=>t.tabIndex=-1);tiles[n].tabIndex=0;tiles[n].focus();return}
+    if(e.key==='Enter'||e.key===' '){e.preventDefault();openTile(i)}
+  }
+});
+grid.addEventListener('click',e=>{const t=e.target.closest('.tile');if(!t)return;const i=+t.dataset.i;if(S.open!==i)openTile(i)});
+grid.addEventListener('mousemove',e=>{
+  const t=e.target.closest('.tile');
+  if(!t||t.classList.contains('open')){tip.style.display='none';return}
+  const w=W[+t.dataset.i];tip.innerHTML=`${esc(w.l)}<small>#${w.r}</small>`;tip.style.display='block';
+  tip.style.left=Math.min(e.clientX+14,innerWidth-140)+'px';tip.style.top=(e.clientY+16)+'px';
+});
+grid.addEventListener('mouseleave',()=>tip.style.display='none');
+let rt;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{if(S.open!=null){place();card()}},80)});
+tiles.forEach(t=>t.tabIndex=-1);tiles[0].tabIndex=0;
+paint();
+window.__S=S;window.__learned=learned;
+</script>
+</body>
+</html>

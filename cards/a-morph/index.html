@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Atlas · one panel</title>
+<style>
+:root{--crust:#11111b;--mantle:#181825;--base:#1e1e2e;--s0:#313244;--s1:#45475a;--o0:#6c7086;--o1:#7f849c;--sub0:#a6adc8;--text:#cdd6f4;--lav:#b4befe;--green:#a6e3a1;--red:#f38ba8;font-family:Inter,system-ui,sans-serif}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%;background:var(--crust);color:var(--text);overflow:hidden}
+body{display:flex;flex-direction:column}
+.bar{flex:none;height:40px;display:flex;align-items:center;gap:16px;padding:0 16px;background:var(--mantle);font-size:12px;color:var(--o1)}
+.bar b{color:var(--text);font-weight:500}.bar em{font-style:normal;color:var(--green)}
+.bar .sp{flex:1}.bar kbd{font:inherit;color:var(--sub0)}
+main{flex:1;min-height:0;display:flex}
+#atlas{flex:1;min-width:0;overflow:auto;padding:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:4px;align-content:start;scrollbar-width:thin;scrollbar-color:var(--s0) transparent}
+.t{position:relative;height:52px;padding:8px 10px;background:var(--base);border:1px solid transparent;border-radius:4px;text-align:left;color:var(--sub0);font-size:15px;cursor:pointer;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden}
+.t small{font-size:10px;color:var(--o0);font-variant-numeric:tabular-nums}
+.t:hover{background:var(--s0)}
+.t.L{color:var(--green);background:#1e2a2a;box-shadow:inset 2px 0 var(--green)}
+.t.L:hover{background:#243434}
+.t.X{opacity:.3;cursor:default}
+.t.S{border-color:var(--lav);background:var(--s0);color:var(--text)}
+.t.L.S{color:var(--green)}
+#card{flex:none;width:430px;background:var(--mantle);border-left:1px solid var(--s0);padding:18px 22px 14px;display:flex;flex-direction:column;overflow:hidden}
+.top{display:flex;gap:10px;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--o0);height:16px}
+.top i{font-style:normal;color:var(--lav)}.top .sp{flex:1}
+.rail{display:flex;gap:4px;margin-top:10px}
+.rail i{flex:1;height:3px;border-radius:2px;background:var(--s0)}
+.rail i.on{background:var(--lav)}.rail i.ok{background:var(--green)}
+.railL{display:flex;gap:4px;margin-top:4px;font-size:10px;color:var(--o0)}
+.railL span{flex:1}.railL span.on{color:var(--sub0)}
+.word{height:46px;margin-top:20px;display:flex;align-items:baseline;gap:12px;white-space:nowrap}
+.word h2{font-size:34px;font-weight:600;letter-spacing:-.01em}
+.word h2.hid{color:var(--s1);letter-spacing:.12em}
+.word h2.ok{color:var(--green)}.word h2.bad{color:var(--red)}
+.word span{font-size:19px;color:var(--lav)}
+.sub{height:20px;font-size:13px;color:var(--o1)}.sub .ok{color:var(--green)}.sub b{color:var(--text);font-weight:500}
+.sent{height:112px;margin-top:10px;font-size:18px;line-height:1.45}
+.sent mark{background:none;color:var(--lav);font-weight:500;border-bottom:2px solid var(--lav)}
+.sent .gap{color:var(--lav);letter-spacing:.1em}
+.sent p.en{font-size:13px;color:var(--o1);margin-top:6px;line-height:1.4}
+.in{display:block;width:100%;height:46px;margin-top:6px;background:var(--base);border:1px solid var(--s1);border-radius:5px;color:var(--text);font:18px Inter,system-ui,sans-serif;padding:0 14px;outline:none}
+.in:focus{border-color:var(--lav)}.in::placeholder{color:var(--o0)}
+.in[readonly]{border-color:var(--s0);color:var(--sub0)}
+.in.bad{border-color:var(--red);animation:sh .25s}
+.in.ok{border-color:var(--green)}
+@keyframes sh{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.fb{height:26px;margin-top:8px;font-size:13px;color:var(--o1)}.fb .ok{color:var(--green)}.fb .bad{color:var(--red)}
+.ex{flex:1;min-height:0;overflow:auto;margin-top:6px;display:flex;flex-direction:column;gap:10px;font-size:13px;color:var(--sub0);line-height:1.45}
+.ex .k{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--o0);display:block;margin-bottom:2px}
+.ex .forms span{display:inline-block;padding:1px 7px;margin:0 4px 4px 0;background:var(--base);border-radius:3px;color:var(--text)}
+.ex .s2 em{font-style:normal;color:var(--o1)}.ex mark{background:none;color:var(--lav)}
+.keys{flex:none;border-top:1px solid var(--s0);padding-top:10px;margin-top:8px;font-size:12px;color:var(--o1);display:flex;gap:14px;flex-wrap:wrap}
+kbd{font:11px ui-monospace,monospace;background:var(--s0);color:var(--text);border-radius:3px;padding:1px 5px}
+.empty{margin:auto 0;color:var(--o1);font-size:14px;line-height:1.7}
+@media(min-width:2400px){#card{width:520px;zoom:1.2}.t{height:60px;font-size:17px}#atlas{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))}}
+</style></head><body>
+<div class="bar"><b>ATLAS · ES</b><span id="cnt"></span><span class="sp"></span><span><kbd>←↑↓→</kbd> move tile · <kbd>Enter</kbd> go · <kbd>Esc</kbd> close</span></div>
+<main><div id="atlas" role="grid"></div><aside id="card"></aside></main>
+<script>
+// lemma|pos|gloss|es|en|grammar|hook|forms|es2|en2
+const RAW=`el|article|the (m.)|{El} otro no es este.|The other one is not this one.|Agrees with its noun: el, la, los, las. a + el = al.|"El Niño", "El Dorado": el = the.|el,los|{El} perro es un amigo.|The dog is a friend.
+de|prep.|of, from|Todo es {de} otro.|Everything belongs to someone else.|Marks origin and belonging. de + el = del.|"de" = "of" with the f dropped.|de,del|Soy {de} aquí.|I am from here.
+que|conj.|that, which|Digo {que} puedo.|I say that I can.|Links two clauses. English can drop "that"; Spanish cannot.|"Que sera, sera": whatever will be.|que|Creo {que} sí.|I think so.
+y|conj.|and|Todo {y} nada.|Everything and nothing.|Becomes e before an i- sound: padres e hijos.|"y" is a fork joining two prongs.|y,e|Tú {y} yo.|You and I.
+a|prep.|to, at|Voy {a} ver.|I am going to see.|ir + a + infinitive = going to do. Personal a before people.|"a" is an arrow towards the target.|a,al|Voy {a} casa.|I go home.
+en|prep.|in, on, at|Está {en} todo.|It is in everything.|One word for in, on and at.|"en" is "in" without the i.|en|Vivo {en} Madrid.|I live in Madrid.
+un|article|a, one|Tengo {un} otro.|I have another one.|un + masculine, una + feminine. Also the number one.|"un" is short for "uno".|un,una|Quiero {un} café.|I want a coffee.
+ser|verb|to be (identity)|Esto {es} todo.|This is everything.|Irregular: soy, eres, es, somos, son. Identity and traits; estar for state.|"ser" = essence, what a thing is.|ser,es,soy,eres,somos,son,fue|{Soy} tu amigo.|I am your friend.
+se|pron.|oneself; reflexive|Todo {se} hace.|Everything gets done.|Reflexive and impersonal: se hace = it gets done.|"se" = the verb folds back on itself.|se|Aquí {se} habla español.|Spanish is spoken here.
+no|adv.|no, not|{No} puedo hacer todo.|I cannot do everything.|Goes straight before the verb. Double negatives are fine.|"no" is the same as English.|no|{No} lo sé.|I do not know.
+haber|verb|to have (auxiliary); there is|Ya {ha} dicho todo.|He has already said everything.|Auxiliary only: he, has, ha + participle. hay = there is.|"haber" looks like "have".|haber,ha,he,has,hay,han|{Hay} un problema.|There is a problem.
+por|prep.|for, by, through|Lo hago {por} otro.|I do it for someone else.|por = cause or through. para = goal. Learn them as a pair.|"por" ~ "pour": pour through.|por|Gracias {por} todo.|Thanks for everything.
+con|prep.|with|Voy {con} todo.|I go with everything.|conmigo, contigo are the merged forms.|"con" ~ "concurrent": together.|con|Café {con} leche.|Coffee with milk.
+su|det.|his, her, their, your (formal)|{Su} otro es este.|His other one is this one.|Agrees with the thing owned, not the owner: su, sus.|"su" ~ "sue": whose is it?|su,sus|{Su} casa es grande.|Their house is big.
+para|prep.|for, in order to|Es {para} todo.|It is for everything.|para + infinitive = in order to. Goal and recipient.|"para" ~ "parachute": for the landing.|para|Es {para} ti.|It is for you.
+como|conj.|like, as; I eat|{Como} todo.|I eat everything.|Also the verb comer (yo): como pan = I eat bread.|"como" ~ "comparable": like.|como|Es {como} tú.|He is like you.
+estar|verb|to be (state, place)|Todo {está} en otro.|Everything is in another.|Irregular: estoy, estás, está, estamos, están. State and location.|"estar" ~ "stay": where you stay.|estar,está,estoy,estás,estamos,están|¿Cómo {estás}?|How are you?
+tener|verb|to have, to hold|{Tengo} todo.|I have everything.|Irregular: tengo, tienes, tiene. tener que + inf = must.|"tener" ~ "tenant", "tenure": holding.|tener,tengo,tienes,tiene,tienen,tenemos|{Tiene} razón.|He is right.
+le|pron.|to him / to her / to you|{Le} digo que no.|I tell him no.|Indirect object. Becomes se before lo/la.|"le" = "to him": hand it over.|le,les|{Le} doy un libro.|I give him a book.
+lo|pron.|it, him; the (neuter)|{Lo} hago ya.|I am doing it now.|Direct object: goes before the conjugated verb.|"lo and behold": look at it.|lo|{Lo} sé.|I know it.
+todo|pron.|all, everything|Esto es {todo}.|This is everything.|Pronoun: todo. Adjective: todo el día.|"todo" ~ "total".|todo,todos,toda,todas|{Todos} vienen.|Everyone comes.
+pero|conj.|but|Puedo, {pero} no lo hago.|I can, but I do not do it.|pero = but. sino = but rather.|"pero": perhaps, though.|pero|Es pequeño, {pero} fuerte.|He is small, but strong.
+más|adv.|more|Dice {más} que todo.|He says more than everything.|más que = more than. Accent separates it from mas = but.|"más" ~ "mass": more mass.|más|Quiero {más} agua.|I want more water.
+hacer|verb|to do, to make|No puedo {hacer} todo.|I cannot do everything.|Irregular: hago, hace. hecho = done. Weather: hace frío.|"hacer" ~ "fact": hecho.|hacer,hago,hace,hacen,haces,hecho|¿Qué {haces}?|What are you doing?
+o|conj.|or|Este {o} otro.|This one or the other.|Becomes u before o-: siete u ocho.|"o" is a loop: pick one.|o|¿Té {o} café?|Tea or coffee?
+poder|verb|to be able, can|{Puedo} ir, pero no voy.|I can go, but I am not going.|Stem change o→ue: puedo, puedes, puede.|"poder" = "power".|poder,puedo,puedes,puede,pueden,podemos|¿{Puedes} venir?|Can you come?
+decir|verb|to say, to tell|Me {dice} que no.|He tells me no.|Irregular: digo, dices, dice. Reported speech: decir que.|"decir" ~ "diction", "dictate".|decir,digo,dices,dice,dicen,dicho|Lo {dicen} todos.|Everyone says it.
+este|det.|this|{Este} es otro.|This one is another.|este/esta/estos/estas; esto = neuter, for ideas.|"este" ~ "east of here".|este,esto,esta,estos,estas|{Esta} casa es mía.|This house is mine.
+ir|verb|to go|{Voy} a ver.|I am going to see.|Fully irregular: voy, vas, va, vamos, van.|"ir" ~ "air out": leave.|ir,voy,vas,va,vamos,van|{Vamos} a casa.|Let us go home.
+otro|det.|other, another|Este es {otro}.|This one is another.|No article: otro libro = another book.|"otro" ~ "other".|otro,otra,otros,otras|Quiero {otro} café.|I want another coffee.
+ese|det.|that (near you)|{Ese} es otro.|That one is another.|ese = near you, aquel = far from both.|"ese": the thing over there.|ese,eso,esa,esos,esas|{Eso} es todo.|That is all.
+la|article|the (f.)|{La} otra es esta.|The other one is this one.|la + feminine noun. As pronoun: her, it.|"la la la": the feminine note.|la,las|{La} casa es grande.|The house is big.
+si|conj.|if|{Si} puedo, voy.|If I can, I go.|si = if (no accent). sí = yes (accent).|"si": see if.|si|{Si} quieres, vamos.|If you want, let us go.
+me|pron.|me, to me|No {me} ve.|He does not see me.|Before the conjugated verb. Also reflexive: me llamo.|"me" is me.|me|{Me} gusta.|I like it.
+ya|adv.|already, now|{Ya} lo hago.|I am already doing it.|ya no = no longer. Also "right away".|"ya" ~ "yeah, already".|ya|{Ya} voy.|I am coming.
+ver|verb|to see|No lo {veo}.|I do not see it.|Irregular: veo, ves, ve. a ver = let us see.|"ver" ~ "view", "video".|ver,veo,ves,ve,ven,vemos|Nos {vemos} mañana.|See you tomorrow.
+porque|conj.|because|Lo hago {porque} puedo.|I do it because I can.|porque (because), por qué (why), el porqué (the reason).|porque = por + que: "for that".|porque|No voy {porque} no puedo.|I am not going because I cannot.
+dar|verb|to give|Me {da} todo.|He gives me everything.|Irregular: doy, das, da, damos, dan.|"dar" ~ "donate".|dar,doy,das,da,damos,dan|Te {doy} un libro.|I give you a book.
+cuando|conj.|when|{Cuando} puedo, voy.|When I can, I go.|cuando = when. cuándo (accent) = when? in questions.|"cuando" ~ French "quand".|cuando|¿{Cuándo} vienes?|When are you coming?
+muy|adv.|very|No lo veo {muy} bien.|I do not see it very well.|muy + adjective/adverb. mucho before nouns and verbs.|"muy" ~ "mooey": very.|muy|Es {muy} grande.|It is very big.`;
+const W=RAW.split('\n').map((l,i)=>{const p=l.split('|');return{r:i+1,lem:p[0],pos:p[1],gl:p[2],es:p[3],en:p[4],gr:p[5],hk:p[6],forms:p[7].split(','),es2:p[8],en2:p[9]}});
+const EXTRA='casa,año,día,vida,hombre,tiempo,mundo,parte,cosa,tan,ahora,donde,bien,después,sin,sobre,entre,también,hasta,mucho'.split(',');
+const TILES=W.map(w=>w.lem).concat(EXTRA);
+const LEARNED=new Set('el de que y a en un ser se no por con para como tener lo la'.split(' '));
+const FM={};W.forEach(w=>w.forms.concat([w.lem]).forEach(f=>FM[f]=w.lem));
+const norm=s=>s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-zñ ]/g,'').trim();
+const toks=s=>s.toLowerCase().replace(/[{}¿?¡!.,]/g,' ').split(/\s+/).filter(Boolean);
+const lit=s=>s.replace(/\{(.+?)\}/,'<mark>$1</mark>');
+const target=s=>s.match(/\{(.+?)\}/)[1];
+const cloze=s=>s.replace(/\{(.+?)\}/,(m,a)=>'<span class="gap">'+'_'.repeat(a.length)+'</span>');
+function enOK(w){ // English only if every other word is already yours
+  const t=target(w.es).toLowerCase();let skip=true;
+  return toks(w.es.replace(/\{.+?\}/,' ')).every(x=>LEARNED.has(FM[x]||'?'));}
+const $=id=>document.getElementById(id),atlas=$('atlas'),card=$('card');
+let sel=-1,step='',guess='',missed=false,slip=false,res='';
+const has=i=>i>=0&&i<W.length;
+function tiles(){atlas.innerHTML=TILES.map((l,i)=>`<button class="t ${i<W.length?(LEARNED.has(l)?'L':''):'X'} ${i===sel?'S':''}" data-i="${i}" tabindex="-1"><small>${i+1}</small>${l}</button>`).join('');
+  $('cnt').innerHTML=`<b>${LEARNED.size}</b> <em>learned</em> of ${W.length} in this mock`;}
+function select(i){if(!has(i))return;sel=i;const w=W[i];guess='';missed=false;slip=false;res='';step=LEARNED.has(w.lem)?'ask':'guess';tiles();draw();
+  const t=atlas.querySelector('.S');t&&t.scrollIntoView({block:'nearest'});}
+function nextUnlearned(from){for(let k=1;k<=W.length;k++){const i=(from+k)%W.length;if(!LEARNED.has(W[i].lem))return i}return -1}
+function nextLearned(from){for(let k=1;k<=W.length;k++){const i=(from+k)%W.length;if(LEARNED.has(W[i].lem))return i}return -1}
+const rail=(n,labels,ok)=>`<div class="rail">${labels.map((_,i)=>`<i class="${i<n?(ok?'ok':'on'):i==n?'on':''}"></i>`).join('')}</div><div class="railL">${labels.map((l,i)=>`<span class="${i==n?'on':''}">${l}</span>`).join('')}</div>`;
+function frame(o){card.innerHTML=`<div class="top"><span>${o.kind} <i>#${o.w.r}</i></span><span>${o.w.pos}</span><span class="sp"></span><span>esc</span></div>${o.rail}
+<div class="word">${o.word}</div><div class="sub">${o.sub||''}</div><div class="sent">${o.sent||''}</div>
+<input class="in ${o.cls||''}" id="inp" autocomplete="off" spellcheck="false" ${o.ro?'readonly':''} placeholder="${o.ph}" value="${o.val||''}">
+<div class="fb">${o.fb||''}</div><div class="ex">${o.ex||''}</div><div class="keys">${o.keys}</div>`;
+  const i=$('inp');i.focus();}
+const deepen=w=>`<div class="forms"><span class="k">forms</span>${w.forms.map(f=>`<span>${f}</span>`).join('')}</div><div class="s2"><span class="k">also</span>${lit(w.es2)}<br><em>${w.en2}</em></div><div><span class="k">hook</span>${w.hk}</div><div><span class="k">grammar</span>${w.gr}</div>`;
+const K=(...a)=>a.map(([k,t])=>`<span><kbd>${k}</kbd> ${t}</span>`).join('');
+function draw(){
+  if(!has(sel)){card.innerHTML=`<div class="top"><span>Atlas</span></div><div class="empty">Pick a tile.<br>Green = yours, review it.<br>Grey = new, learn it.<br><br><kbd>Enter</kbd> starts the next new word.</div><div class="keys">${K(['Enter','next new word'],['←↑↓→','move'])}</div>`;return}
+  const w=W[sel],L=['guess','meet','recall'];
+  if(step=='guess')return frame({kind:'Learn',w,rail:rail(0,L),word:`<h2>${w.lem}</h2>`,sub:'What might it mean?',sent:lit(w.es),ph:'your guess in English',keys:K(['Enter','commit'],['Enter on empty','no idea'],['←→','tile (when empty)'])});
+  if(step=='meet'){const g=guess?(norm(w.gl).split(/\s+/).some(x=>x.length>2&&norm(guess).split(/\s+/).includes(x))?`you guessed <b>${guess}</b> <span class="ok">✓</span>`:`you guessed <b>${guess}</b>`):'no idea: that is fine';
+    return frame({kind:'Learn',w,rail:rail(1,L),word:`<h2>${w.lem}</h2><span>${w.gl}</span>`,sub:g,sent:lit(w.es)+(enOK(w)?`<p class="en">${w.en}</p>`:''),ro:1,ph:'↵ then type it from memory',ex:`<div><span class="k">grammar</span>${w.gr}</div><div><span class="k">hook</span>${w.hk}</div>`,keys:K(['Enter','recall it'],['Esc','close'])});}
+  if(step=='recall'||step=='miss'){const m=step=='miss';
+    return frame({kind:'Learn',w,rail:rail(2,L),word:m?`<h2 class="bad">${w.lem}</h2>`:`<h2 class="hid">${'·'.repeat(w.lem.length)}</h2><span>${w.gl}</span>`,sub:m?'':'Type the Spanish word.',sent:cloze(w.es)+(enOK(w)?`<p class="en">${w.en}</p>`:''),ro:m,cls:m?'bad':'',val:m?res:'',ph:'type it in Spanish',fb:m?`<span class="bad">✗ you wrote ${res||'nothing'}: it is ${w.lem}</span>`:(missed?'<span>again</span>':''),keys:m?K(['Enter','hide it, try again']):K(['Enter','check'],['Enter on empty','show me'])});}
+  if(step=='done'){const nx=nextUnlearned(sel);
+    return frame({kind:'Learn',w,rail:rail(3,L,1),word:`<h2 class="ok">${w.lem}</h2><span>${w.gl}</span>`,sub:`<span class="ok">✓ ${w.lem} is yours</span> · rated <b>${missed||slip?'hard':'good'}</b> · back in ${missed||slip?'1 day':'3 days'}`,sent:lit(w.es)+`<p class="en">${w.en}</p>`,ro:1,cls:'ok',val:w.lem,ph:'',ex:`<div class="forms"><span class="k">forms</span>${w.forms.map(f=>`<span>${f}</span>`).join('')}</div>`,keys:nx>=0?K(['Enter',`next: ${W[nx].lem}`],['←↑↓→','pick another']):K(['Esc','close'])});}
+  if(step=='ask'||step=='reveal'){const r=step=='reveal',R=['recall','reveal','deepen'];
+    return frame({kind:'Review',w,rail:rail(r?2:0,R,r),word:r?`<h2 class="${res=='ok'?'ok':res=='bad'?'bad':''}">${w.lem}</h2><span>${w.gl}</span>`:`<h2 class="hid">${'·'.repeat(w.lem.length)}</h2><span>${w.gl}</span>`,sub:r?(res=='ok'?'<span class="ok">✓ remembered</span> · back in '+(slip?'2 days':'9 days'):`<span style="color:var(--red)">✗ ${guess?'you wrote '+guess:'not recalled'}</span> · back tomorrow`):'Recall it before looking.',sent:r?lit(w.es)+`<p class="en">${w.en}</p>`:cloze(w.es),ro:r,cls:r?(res=='ok'?'ok':'bad'):'',val:r?guess:'',ph:'type it in Spanish',ex:r?deepen(w):'',keys:r?K(['Enter',`next due: ${W[nextLearned(sel)].lem}`],['←↑↓→','move']):K(['Enter','check'],['Enter on empty','reveal'])});}
+}
+function enter(){
+  const v=$('inp')?$('inp').value.trim():'';
+  if(!has(sel)){const n=nextUnlearned(-1);return select(n)}
+  const w=W[sel];
+  if(step=='guess'){guess=v;step='meet';return draw()}
+  if(step=='meet'){step='recall';return draw()}
+  if(step=='recall'){const ok=v&&(norm(v)==norm(w.lem)||norm(v)==norm(target(w.es)));
+    if(ok){slip=(v.toLowerCase()!=w.lem&&v.toLowerCase()!=target(w.es).toLowerCase());LEARNED.add(w.lem);step='done';tiles();return draw()}
+    missed=true;res=v;step='miss';draw();$('inp').classList.add('bad');return}
+  if(step=='miss'){step='recall';return draw()}
+  if(step=='done'){const n=nextUnlearned(sel);return n>=0?select(n):draw()}
+  if(step=='ask'){const ok=v&&(norm(v)==norm(w.lem)||norm(v)==norm(target(w.es)));slip=ok&&v.toLowerCase()!=w.lem&&v.toLowerCase()!=target(w.es).toLowerCase();res=ok?'ok':'bad';guess=v;step='reveal';return draw()}
+  if(step=='reveal')return select(nextLearned(sel));
+}
+function move(dx,dy){if(!has(sel)){return select(0)}const cols=getComputedStyle(atlas).gridTemplateColumns.split(' ').length;
+  let n=sel+dx+dy*cols;if(n<0||n>=W.length)return;select(n)}
+document.addEventListener('keydown',e=>{
+  const inp=$('inp'),empty=!inp||!inp.value||inp.readOnly;
+  if(e.key=='Enter'){e.preventDefault();enter()}
+  else if(e.key=='Escape'){sel=-1;step='';tiles();draw()}
+  else if(e.key.startsWith('Arrow')&&(empty||e.altKey)){e.preventDefault();({ArrowLeft:()=>move(-1,0),ArrowRight:()=>move(1,0),ArrowUp:()=>move(0,-1),ArrowDown:()=>move(0,1)})[e.key]()}
+});
+atlas.addEventListener('click',e=>{const b=e.target.closest('.t');if(b&&!b.classList.contains('X'))select(+b.dataset.i)});
+tiles();draw();
+</script></body></html>
