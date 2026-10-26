@@ -58,10 +58,8 @@ input{font:inherit}
 /* the card: a full-screen focus page. The atlas recedes to a ghost behind it; the centre holds one word or sentence; the margins fill only as steps are earned.
    One type scale for every width: --fs-s labels · --fs-m body/margins · --fs-h head · --fs-x the sentence · --fs-b controls */
 .scroll,.bar{transition:opacity .25s,filter .25s}
-body.fx .scroll{opacity:.16;filter:blur(2px)}
-body.fx .bar{opacity:0}
-body.fx .hint{display:none}
-.fo{position:fixed;inset:0;z-index:20;background:rgba(17,17,27,.93);display:none;overflow:hidden auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--surface0) transparent;
+body.fx .scroll,body.fx .bar,body.fx .hint{visibility:hidden}
+.fo{position:fixed;inset:0;z-index:20;background:var(--base);display:none;overflow:hidden auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--surface0) transparent;
   --fs-s:clamp(11px,.72vw,26px);--fs-m:clamp(15px,1.12vw,40px);--fs-h:clamp(20px,1.75vw,64px);--fs-x:clamp(30px,2.9vw,104px);--fs-b:clamp(14px,.95vw,34px);--gut:clamp(24px,3vw,110px);--cw:clamp(520px,38vw,1400px);
   font-size:var(--fs-m);grid-template-columns:minmax(0,1fr) minmax(0,var(--cw)) minmax(0,1fr);grid-template-rows:auto 1fr auto;grid-template-areas:"top top top" "l c r" "ft ft ft";column-gap:var(--gut);padding:0 var(--gut)}
 .fo.on{display:grid}
@@ -272,7 +270,7 @@ html,body{overscroll-behavior:none}
   <button id="s1">+1 day</button><button id="sl10">learn 10</button><button id="sl100">learn 100</button><button id="sr">reset</button>
 </footer>
 <div class="fo" id="pop" role="dialog" aria-modal="true" aria-label="Word">
-  <div class="fo-top"><button class="back" id="back"><kbd>esc</kbd><span id="backt">atlas</span></button><button class="back home" id="home" hidden>atlas</button><div class="fhint" id="fhint"></div><div class="mmw"><canvas id="mm" aria-hidden="true"></canvas><i class="mmc" id="mmc"></i></div></div>
+  <div class="fo-top"><button class="back" id="back"><kbd>esc</kbd><span id="backt">atlas</span></button><div class="fhint" id="fhint"></div><div class="mmw"><canvas id="mm" aria-hidden="true"></canvas><i class="mmc" id="mmc"></i></div></div>
   <div class="fo-l" id="foL"></div><div class="fo-c" id="foC"></div><div class="fo-r" id="foR"></div>
   <div class="fo-ft" id="foF"></div>
 </div>
@@ -9030,9 +9028,8 @@ function foOpen(i){if(leaving){leaving.cancel();leaving=null;pop.classList.remov
   pop.classList.add("on");ML.n=-1;if(RM||!pop.animate||auto)return;pop.style.transformOrigin=tileOrigin(i);
   pop.animate([{opacity:0,transform:"scale(.3)"},{opacity:1,transform:"none"}],{duration:250,easing:"cubic-bezier(.2,.8,.2,1)"})}
 // branching inside focus (a word in a sentence, a chip, the minimap): remember where you came from, so Esc steps back
-let trail=[];
-function goWord(x){if(step&&step.i!==x)trail.push(step.i);if(trail.length>50)trail.shift();if(walk)stopWalk();openStep(x,null,false)}
-function back(){if(trail.length){const p=trail.pop();if(walk)stopWalk();openStep(p,null,false);return}if(walk)stopWalk();else closePop();sc.focus({preventScroll:true})}
+function goWord(x){if(walk)stopWalk();openStep(x,null,false)}
+function back(){if(walk)stopWalk();else closePop();sc.focus({preventScroll:true})}
 // soft keyboard: the focus page rides on the visual viewport, and its field (with the button under it) stays in view
 const VV=window.visualViewport;
 function vvSync(){if(!VV)return;const de=document.documentElement,kb=VV.scale>1.01?0:Math.max(0,Math.round(innerHeight-VV.height-VV.offsetTop));  // pinch-zoomed: leave it
@@ -9047,14 +9044,13 @@ let popKey="";  // a new card or phase starts at the top of the page
 // closing waits one frame: a branch that closes and reopens (stop the walk, open a word) never flickers through the atlas
 function closePop(){popKey="";step=null;link.clear();fresh.clear();tip.style.display="none";if(pop.contains(document.activeElement))sc.focus({preventScroll:true});
   if(pop.classList.contains("on")&&!closing&&!leaving){closing=1;requestAnimationFrame(()=>{closing=0;if(step||!pop.classList.contains("on"))return;
-    trail=[];shownFor=-1;document.body.classList.remove("fx");
+    shownFor=-1;document.body.classList.remove("fx");
     const end=()=>{const a=leaving;leaving=null;pop.classList.remove("on","leaving","pg");if(a)a.cancel();foL.innerHTML=foC.innerHTML=foR.innerHTML=foF.innerHTML=""};
     if(RM||!pop.animate||auto){end();return}
     pop.style.transformOrigin=tileOrigin(sel);pop.classList.add("leaving");
     leaving=pop.animate([{opacity:1,transform:"none"},{opacity:0,transform:"scale(.3)"}],{duration:200,easing:"cubic-bezier(.4,0,1,1)",fill:"forwards"});leaving.onfinish=end})}
   req();updateGo()}
 $("back").onclick=()=>back();
-$("home").onclick=()=>{trail=[];if(walk)stopWalk();else closePop();sc.focus({preventScroll:true})};
 
 // =====================================================================
 // THE WALK + STEPS: one engine; clicking a cell opens the step its state calls for
@@ -9167,7 +9163,7 @@ function answer(r){
   render();if(!seeded&&k.green&&(i===HOLA||i===MUNDO))showTip(1);
 }
 function openSentence(){step={kind:"sentence",i:MUNDO,phase:"spell",sent:SEED0,gap:[],typed:"",verdict:null,inWalk:!!walk,opened:null};sel=MUNDO;link.clear();SEED0.ids.forEach(x=>link.add(x));render();select(MUNDO,true)}
-function continueStep(){if(!step)return;if(step.inWalk&&walk){next();return}const nx=nextUp(false);if(nx&&nx.i>=0){trail=[];openStep(nx.i,null,false);return}closePop();sc.focus()}
+function continueStep(){if(!step)return;if(step.inWalk&&walk){next();return}const nx=nextUp(false);if(nx&&nx.i>=0){openStep(nx.i,null,false);return}closePop();sc.focus()}
 function claimWord(i){const k=K(i);if(k.green||k.claimed)return;k.claimed=1;repaint(i);const op=branch(i);stats();save();if(step&&step.i===i){step.kind="page";step.phase="page";step.learn=false;step.opened=op?[op]:null;render()}}
 
 // =====================================================================
@@ -9218,7 +9214,7 @@ function render(){
   const item=(key,h4,body,cls)=>{keys.add(key);const keep=shownKeys.has(key);return'<div class="it'+(cls?' '+cls:'')+(keep?' keep':'')+'"'+(keep?'':' style="animation-delay:'+(90*nIt++)+'ms"')+'>'+(h4?'<h4>'+h4+'</h4>':'')+body+'</div>'};
   const Lm=[],Rm=[];let c='',ft='';
   const KL={new:"new",verify:"you said you know this · verify",due:"due",again:"again",page:k.green?"yours":k.claimed?"claimed":"learning",probe:"finding your frontier",sentence:"your first sentence"};
-  const gapNote=s&&kind!=="probe"&&kind!=="sentence"&&kind!=="page"&&phase!=="after"?(step.gap.length?step.gap.length+' more to go in this sentence':'every other word is yours'):kind==="page"&&due[i]?'due':'';
+  const gapNote=s&&kind!=="probe"&&kind!=="sentence"&&kind!=="page"&&phase!=="after"?(step.gap.length?step.gap.length+' more to go in this sentence':''):kind==="page"&&due[i]?'due':'';
   const done=phase==="after"&&(kind==="sentence"||k.green&&step.r>1);
   c+='<div class="flab'+(done||kind==="page"&&k.green?' g':'')+'"><span>'+(step.learn?(phase==="after"&&k.green?"yours":k.S>0?"learning":"new word"):KL[kind])+(kind==="probe"?' · '+(probe.n+1):'')+'</span>'+(gapNote?'<i>'+gapNote+'</i>':'')+'</div>';
   const enItem=x=>x&&enOK(x,i)?item("en","in English",'<p>'+esc(x.en)+'</p>'):'';
@@ -9233,7 +9229,7 @@ function render(){
   if(showS)c+='<div class="sx">'+sentHTML(s,i,sentMode)+(phase==="ask"&&step.cue==="cloze"?'<span class="en">'+esc(s.en)+'</span>':'')+'</div>';
   if(phase==="probe")c+='<div class="nt">Do you know what this means?</div><div class="acts"><div class="yn"><button class="fb" data-r="1">don’t<small>1</small></button><button class="fb pri" data-r="2">know<small>2</small></button></div></div>';
   else if(phase==="guess"){
-    c+='<div class="nt">'+(s?'What might the lit word mean?':'What might it mean?')+' Guess before you look — a wrong guess still helps it stick.</div>'+field("your guess, in English","en")+'<div class="acts"><div class="yn"><button class="fb" data-act="skip">no idea</button><button class="fb pri" data-act="guess">guess<small>enter</small></button></div></div>';
+    c+='<div class="nt">'+(s?'What might the lit word mean?':'What might it mean?')+'</div>'+field("your guess, in English","en")+'<div class="acts"><div class="yn"><button class="fb" data-act="skip">no idea</button><button class="fb pri" data-act="guess">guess<small>enter</small></button></div></div>';
     let l='';if(!k.S&&!walk)l+='<button class="lnk" data-act="claim">I already know this</button>';
     if(!seeded&&!probed&&i===HOLA)l+='<button class="lnk" data-act="probe">I already know some Spanish → find my frontier</button>';
     if(l)c+='<div class="lnks">'+l+'</div>';
@@ -9277,11 +9273,11 @@ function render(){
     }
   }
   // footer: the keys
-  const esc_=trail.length?'back':walk?'stop':'atlas';
+  const esc_=walk?'stop':'atlas';
   ft='<span class="kbh">'+(kind==="probe"?'<kbd>1</kbd> don’t · <kbd>2</kbd> know · <kbd>esc</kbd> stop':kind==="page"?'<kbd>←</kbd> <kbd>→</kbd> words that are yours · <kbd>enter</kbd> next'+(due[i]?' · <kbd>space</kbd> review now':'')+' · <kbd>b</kbd> open another sentence · <kbd>esc</kbd> '+esc_:phase==="ask"?'<kbd>space</kbd> reveal · <kbd>esc</kbd> '+esc_:phase==="rate"||(phase==="reveal"&&kind==="due")?'<kbd>1–4</kbd> rate · <kbd>enter</kbd> '+["","again","hard","good","easy"][suggested()]+' · <kbd>esc</kbd> '+esc_:phase==="reveal"?'<kbd>enter</kbd> spell it':phase==="spell"||phase==="recall"?'<kbd>enter</kbd> check · <kbd>esc</kbd> '+esc_:phase==="guess"?'<kbd>enter</kbd> guess — empty is no idea · <kbd>esc</kbd> '+esc_:phase==="meet"||phase==="miss"?'<kbd>enter</kbd> '+(phase==="miss"?'try again':'recall it'):phase==="after"?'<kbd>enter</kbd> '+(step.inWalk&&walk?'continue':step.nx&&step.nx.i>=0?(step.nx.rev?'next review · ':'next word · ')+'<b>'+esc(words[step.nx.i].w)+'</b>':step.nx?'next word':'back to atlas')+' · <kbd>esc</kbd> '+esc_:'')+'</span>';
   foOpen(i);
   pop.classList.toggle("pg",kind==="page");
-  $("backt").textContent=trail.length?"← "+words[trail[trail.length-1]].w:walk?"stop":"atlas";$("home").hidden=!trail.length;
+  $("backt").textContent=walk?"stop":"atlas";
   foL.innerHTML=Lm.join("");foC.innerHTML=c;foR.innerHTML=Rm.join("");foF.innerHTML=ft;shownKeys=keys;syncHint();
   wire(w,k);if(needLayout)layout();
   if(popKey!==i+":"+phase){popKey=i+":"+phase;pop.scrollTop=0;keepInput()}
@@ -9500,7 +9496,7 @@ else if(seedDone())openSentence();
 else if(!nYours&&!probed)showTip(0);
 draw();sc.focus({preventScroll:true});
 {const ai=pop.querySelector("[data-ans]");if(ai&&!matchMedia("(hover:none)").matches)ai.focus()}  // a card opened at load (reload mid-ritual, ?open) keeps its input focused
-window.__fog={revealCell,reorder,repaint,flushAppear,goWord,back,trail:()=>trail,nextLearned,nextUp,ML:()=>ML,L:()=>L,cellXY,hit,sc,surfaceOf,setZoom,draw,N,words,K,IDX,bank,step:()=>step,walk:()=>walk,startWalk,answer,reveal,toSpell,spelled,commitGuess,toRecall,recalled,continueStep,openStep,autoLearn,advance,select,stats,candidates,order:()=>order,fresh,appear,glide,yours,gapOf,day:()=>day,nRead:()=>nRead,openedS,branch,startProbe,probe:()=>probe};
+window.__fog={revealCell,reorder,repaint,flushAppear,goWord,back,nextLearned,nextUp,ML:()=>ML,L:()=>L,cellXY,hit,sc,surfaceOf,setZoom,draw,N,words,K,IDX,bank,step:()=>step,walk:()=>walk,startWalk,answer,reveal,toSpell,spelled,commitGuess,toRecall,recalled,continueStep,openStep,autoLearn,advance,select,stats,candidates,order:()=>order,fresh,appear,glide,yours,gapOf,day:()=>day,nRead:()=>nRead,openedS,branch,startProbe,probe:()=>probe};
 window.__devnotesState=()=>!step?{screen:"atlas",sel:sel>=0?words[sel].w:null}
   :{screen:step.kind==="sentence"?"seed":step.kind==="probe"?"probe":step.kind==="page"?"focus-word":step.learn?"focus-learn":"review",kind:step.kind,word:words[step.i].w,step:step.phase,walk:!!step.inWalk};
 </script>
