@@ -27,8 +27,6 @@ input{font:inherit}
 .cov-t{font-size:12px;color:var(--overlay1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cov-t b{color:var(--text);font-weight:500;font-variant-numeric:tabular-nums}
 .cov-t em{font-style:normal;color:var(--green);font-variant-numeric:tabular-nums}
-.track{height:2px;background:var(--surface0);position:relative}
-.track i{position:absolute;left:0;top:0;bottom:0;background:var(--green);width:0}
 .go{height:26px;padding:0 10px;border-radius:3px;background:var(--surface0);color:var(--lavender);font-size:12px;white-space:nowrap;font-variant-numeric:tabular-nums}
 .go:hover{background:var(--surface1)}
 .go.on{background:var(--lavender);color:var(--crust)}
@@ -147,12 +145,12 @@ input{font:inherit}
 <body>
 <header class="bar">
   <div class="lang">es</div>
-  <div class="cov"><div class="cov-t" id="covt"></div><div class="track"><i id="covb"></i></div></div>
+  <div class="cov"><div class="cov-t" id="covt"></div></div>
   <button class="go" id="go" title="The Walk (space)"></button>
   <input id="fq" type="search" placeholder="find a word" aria-label="Find a word: reveals it on the board" autocomplete="off" spellcheck="false">
   <div class="zoom"><button id="zm" aria-label="Zoom out">−</button><button id="zp" aria-label="Zoom in">+</button><button id="z0" class="fit" aria-label="Fit what you have found">fit</button></div>
 </header>
-<main class="scroll" id="sc" tabindex="0" role="application" aria-label="Spanish words you have found, in blocks of one hundred by frequency. Arrows move, Enter opens, Space walks.">
+<main class="scroll" id="sc" tabindex="0" role="application" aria-label="The Spanish words you have found, most common first. Arrows move, Enter opens, Space walks.">
   <canvas id="cv" aria-hidden="true"></canvas><div id="sp"></div>
 </main>
 <div class="hint" id="hint"></div>
@@ -184,7 +182,6 @@ const hex=h=>[1,3,5].map(j=>parseInt(h.slice(j,j+2),16));
 const mix=(a,b,t)=>{const A=hex(a),B=hex(b);return"rgb("+A.map((v,j)=>Math.round(v*t+B[j]*(1-t))).join(",")+")"};
 // colour buckets: 0 fog ghost (inside a touched block) · 1 new: found, not tried · 2 learning: tried, not yet yours · 3..32 yours: green by stability
 const NB=33,COL=[C.crust,C.s0,mix(C.green,C.s0,.3)];for(let b=0;b<30;b++)COL.push(mix(C.green,C.s0,.5+.5*b/29));
-const GHOST=Q.has("ghost")?+Q.get("ghost"):.45;  // ghost-grid strength for the fog inside a touched block (?ghost=0: nothing but the words)
 
 // =====================================================================
 // CONTENT (top 5,000 lemmas from prototypes/data via atlas-v1's embed; hand glosses; sentence bank + seed sentences)
@@ -5448,23 +5445,30 @@ let nRead=0;function countRead(){nRead=0;bank.forEach(s=>{if(readable(s))nRead++
 // which sentence to open from a yours word: fewest unknowns (≤3), then the most frequent unknowns, then the shortest; sentences that would reveal nothing new go last
 function sentScore(s,ex){const g=gapOf(s,ex);if(!g.length||g.length>3)return null;const nw=g.filter(x=>!K(x).vis).length;return(nw?0:5e6)+g.length*1e6+g.reduce((a,x)=>a+x,0)/g.length*10+s.n}
 function branch(i){const k=K(i);let best=null,bs=Infinity;(INV.get(i)||[]).forEach(s=>{if(openedS.has(s.key))return;const sc=sentScore(s,i);if(sc!=null&&sc<bs){bs=sc;best=s}});
-  if(!best)return null;openedS.add(best.key);k.opened.push(best.key);const g=gapOf(best,i),nw=[];g.forEach(x=>{if(revealCell(x,best.key))nw.push(x)});return{s:best,g,nw}}
+  if(!best)return null;openedS.add(best.key);k.opened.push(best.key);const g=gapOf(best,i),nw=[];g.forEach(x=>{if(revealCell(x,best.key))nw.push(x)});flushAppear(i);return{s:best,g,nw}}
 // the sentence to learn/review a word in: fewest other unknowns, most frequent ones, shortest
 function bestSent(i){const via=K(i).via;let best=null,bs=Infinity;(INV.get(i)||[]).forEach(s=>{const g=gapOf(s,i),sc=g.length*1e6+(g.length?g.reduce((a,x)=>a+x,0)/g.length:0)*10+s.n-(s.key===via?1e5:openedS.has(s.key)?.5:0);if(sc<bs){bs=sc;best=s}});return best}
-const blockN=new Uint8Array(Math.ceil(N/100));let slots=[],slotOf=new Int16Array(Math.ceil(N/100)).fill(-1),needLayout=false;
-function reslot(){slots=[];slotOf.fill(-1);for(let b=0;b<blockN.length;b++)if(blockN[b]){slotOf[b]=slots.length;slots.push(b)}needLayout=true}
-const appear=new Map();
-function revealCell(i,via){const k=K(i);if(k.vis)return false;k.vis=1;k.via=via;const b=i/100|0;if(!blockN[b]++)reslot();if(!RM&&!auto)appear.set(i,performance.now());repaint(i);return true}
+// the board is the found cards only, in rank order, reflowed compactly: nothing on it says how much is left (rank stays internal)
+let order=[],pos=new Int32Array(N).fill(-1),needLayout=false;
+// motion state (never saved, so nothing re-fires on reload): appear = card → start time of its pop-in; glide = card → where it was before the reflow; fresh = found since the learner's last action
+const appear=new Map(),glide=new Map(),fresh=new Set();let pendingAppear=[],oldXY=null,appearUntil=0;
+const APPEAR_MS=RM?240:520,GLIDE_MS=200;
+function reorder(){if(!oldXY&&L.p&&!auto){oldXY=new Map();for(const i of order){const c=cellXY(i);if(c)oldXY.set(i,c)}}order=[];for(let i=0;i<N;i++)if(K(i).vis)order.push(i);pos.fill(-1);order.forEach((i,k)=>pos[i]=k);needLayout=true}
+function revealCell(i,via){const k=K(i);if(k.vis)return false;k.vis=1;k.via=via;if(!auto){reorder();fresh.add(i);pendingAppear.push(i)}repaint(i);return true}
+// the celebration: the parent fills first, then its new words pop in, rippling outward from the parent across the grid (55 ms apart, at most 24 steps); reduced motion = fade only, no stagger
+function flushAppear(parent){if(!pendingAppear.length)return;const now=performance.now();if(appearUntil<now)appearUntil=0;const base=Math.max(now+(RM?0:260),appearUntil?appearUntil+55:0);
+  const pp=parent>=0?pos[parent]:-1,list=pendingAppear.slice().sort((a,b)=>pp<0?a-b:Math.abs(pos[a]-pp)-Math.abs(pos[b]-pp));
+  list.forEach((i,j)=>{const t=base+(RM?0:Math.min(j,24)*55);appear.set(i,t);appearUntil=Math.max(appearUntil,t)});pendingAppear=[];req()}
 // a word becomes yours: it turns green and opens one sentence; the seed pair is hand-ordered (hola → mundo)
 function turnGreen(i){const k=K(i);k.green=1;repaint(i);
-  if(i===HOLA&&!K(MUNDO).vis){openedS.add(SEED0.key);k.opened.push(SEED0.key);revealCell(MUNDO,SEED0.key);return{s:SEED0,g:[MUNDO],nw:[MUNDO]}}
+  if(i===HOLA&&!K(MUNDO).vis){openedS.add(SEED0.key);k.opened.push(SEED0.key);revealCell(MUNDO,SEED0.key);flushAppear(i);return{s:SEED0,g:[MUNDO],nw:[MUNDO]}}
   return branch(i)}
 // after a probe or at a dead end: reveal the words that stand alone (or nearly) between you and a sentence
 function revealFrontier(max){const c=new Map();for(let gl=1;gl<=3&&c.size<max;gl++)bank.forEach(s=>{if(openedS.has(s.key))return;const g=gapOf(s,-1);if(g.length!==gl)return;g.forEach(x=>{if(!K(x).vis&&!c.has(x))c.set(x,s.key)})});
   const list=[...c].sort((a,b)=>a[0]-b[0]).slice(0,max);list.forEach(([x,key])=>{revealCell(x,key);openedS.add(key)});
-  if(list.length)return list.length;
+  if(list.length){flushAppear(-1);return list.length}
   // the bank has nothing left for this learner (prototype bank is small): fall back to frequency order, bare words
-  let n=0;for(let i=0;i<N&&n<max;i++)if(!K(i).vis){revealCell(i,"rank");n++}return n}
+  let n=0;for(let i=0;i<N&&n<max;i++)if(!K(i).vis){revealCell(i,"rank");n++}flushAppear(-1);return n}
 function candidates(){const c=[];for(let i=0;i<N;i++){const k=K(i);if(k.vis&&!k.green&&!k.claimed&&k.S===0)c.push(i)}return c}
 
 // =====================================================================
@@ -5476,8 +5480,8 @@ function repaint(i){const k=K(i);if(!k.vis){bk[i]=0;return}if(k.green||k.claimed
 function stats(){
   nDue=0;nYours=0;nVis=0;for(let i=0;i<N;i++){const k=K(i);const d=dueAt(i,day)?1:0;due[i]=d;nDue+=d;if(k.vis)nVis++;if(k.green||k.claimed)nYours++}
   countRead();
-  covText=narrow()?'<em>'+nYours+'</em> · <b>'+nRead+'</b>/'+bank.length:'<em>'+nYours.toLocaleString("en")+'</em> yours · <b>'+nRead+'</b>/'+bank.length+' sentences readable · <b>'+nVis.toLocaleString("en")+'</b> found of '+N.toLocaleString("en");
-  $("covb").style.width=(nRead/bank.length*100)+"%";
+  // only what is yours: never a total, a rank, or a fraction of anything
+  covText=narrow()?'<em>'+nYours+'</em> · <b>'+nRead+'</b>':'<em>'+nYours.toLocaleString("en")+'</em> yours · <b>'+nRead+'</b> sentence'+(nRead===1?'':'s')+' readable';
   if(!msgT)$("covt").innerHTML=covText;
   updateGo();
 }
@@ -5491,29 +5495,26 @@ function hideTip(){hint.classList.remove("on")}
 // LAYOUT + DRAW: only the hundred-blocks you have touched, in rank order, auto-fitted (zoom 0 = everything found on one screen)
 // =====================================================================
 const PMIN=3,PMAX=180;let L={},dpr=1;
+const cgap=p=>p<7?0:Math.min(14,Math.max(1,Math.round(p*.08)));
+const zOfP=p=>Math.log(p/PMIN)/Math.log(PMAX/PMIN);
+// the largest cell that shows every found card at once (zoom 0 = fit; wide screens stay full, nothing is dead space)
+function fitP(W,vh,n,M){for(let c=1;c<=2000;c++){const pe=(W-2*M)/c,g=cgap(pe),p=Math.min(PMAX,pe-g*(c-1)/c);if(p<PMIN)return PMIN;const rows=Math.ceil(n/c);if(2*M+rows*(p+g)-g<=vh)return p}return PMIN}
 function layout(){
-  const W=sc.clientWidth,vh=sc.clientHeight,nb=Math.max(1,slots.length);
-  const pd=PMIN*Math.pow(PMAX/PMIN,zoom);
-  const minB=Math.max(W>=900?2:1,Math.ceil(W/(10*PMAX*1.08))),maxB=Math.max(minB,Math.floor(W/(10*PMIN+3)));
-  const geo=b=>{const pe=W/(b*10),G=Math.max(3,Math.min(b===1?8:18,Math.round(pe*.42))),p=(W-(b+1)*G)/(b*10);return{G,p,H:G+Math.ceil(nb/b)*(10*p+G)}};
-  let fitB=minB;while(fitB<maxB&&geo(fitB).H>vh)fitB++;
-  const bpr=Math.max(minB,Math.min(fitB,Math.round(W/(10*pd*1.06))));
-  if(bpr===fitB&&W/(10*pd*1.06)>fitB)zoom=Math.max(0,zOfB(fitB,W));
-  const{G,p}=geo(bpr),bw=10*p,bh=bw+G,brows=Math.ceil(nb/bpr);
+  const W=sc.clientWidth,vh=sc.clientHeight,n=Math.max(1,order.length),M=narrow()?10:18;
+  const pf=fitP(W,vh,n,M);
+  let p=pf;if(zoom>0){const pd=PMIN*Math.pow(PMAX/PMIN,zoom);p=Math.max(pf,Math.min(PMAX,pd));if(p<=pf){p=pf;zoom=0}}
+  const gap=cgap(p),cols=Math.max(1,Math.floor((W-2*M+gap)/(p+gap))),rows=Math.ceil(n/cols);
   const stage=p<7?0:p<28?1:p<46?2:3;
-  const gap=stage===0?0:p<34?1:2;
-  const Hh=G+brows*bh,xoff=nb<bpr?Math.round((W-(nb*(bw+G)+G))/2):0,yoff=Hh<vh?Math.round((vh-Hh)/2):0;
-  L={W,vh,bpr,fitB,p,G,bw,bh,brows,stage,gap,H:Hh,xoff,yoff,nb};
+  L={W,vh,p,gap,cols,rows,M,stage,H:2*M+rows*(p+gap)-gap};
   dpr=Math.min(2,devicePixelRatio||1);
   cv.width=Math.round(W*dpr);cv.height=Math.round(vh*dpr);cv.style.width=W+"px";cv.style.height=vh+"px";
   sp.style.height=Math.max(0,L.H-vh)+"px";needLayout=false;
 }
-const cellXY=i=>{const b=i/100|0,s=slotOf[b];if(s<0)return null;const j=i%100,br=s/L.bpr|0,bc=s%L.bpr;return{x:L.xoff+L.G+bc*(L.bw+L.G)+(j%10)*L.p,y:L.yoff+L.G+br*L.bh+(j/10|0)*L.p}};
+const cellXY=i=>{const k=pos[i];if(k<0)return null;return{x:L.M+(k%L.cols)*(L.p+L.gap),y:L.M+Math.floor(k/L.cols)*(L.p+L.gap)}};
 function hit(x,y){
-  const bc=Math.floor((x-L.xoff-L.G)/(L.bw+L.G)),lx=x-L.xoff-L.G-bc*(L.bw+L.G);if(bc<0||bc>=L.bpr||lx<0||lx>=L.bw)return-1;
-  const br=Math.floor((y-L.yoff-L.G)/L.bh),ly=y-L.yoff-L.G-br*L.bh;if(br<0||ly<0||ly>=L.bw)return-1;
-  const s=br*L.bpr+bc;if(s>=slots.length)return-1;
-  const i=slots[s]*100+Math.floor(ly/L.p)*10+Math.floor(lx/L.p);return i<N&&K(i).vis?i:-1;
+  const c=Math.floor((x-L.M)/(L.p+L.gap)),r=Math.floor((y-L.M)/(L.p+L.gap));if(c<0||c>=L.cols||r<0)return-1;
+  if(x-L.M-c*(L.p+L.gap)>=L.p||y-L.M-r*(L.p+L.gap)>=L.p)return-1;
+  const k=r*L.cols+c;return k<order.length?order[k]:-1;
 }
 function setZoom(z,ai,sy){
   zoom=Math.max(0,Math.min(1,z));
@@ -5522,8 +5523,7 @@ function setZoom(z,ai,sy){
   layout();const c2=ai>=0?cellXY(ai):null;if(c2&&sy!=null)sc.scrollTop=c2.y-sy;save();
   draw();if(pop.classList.contains("on"))place();
 }
-const zOfB=(b,W=L.W)=>Math.log(W/(10*b*1.06)/PMIN)/Math.log(PMAX/PMIN);
-function zoomStep(d){const b=L.bpr,nb=d>0?Math.min(b-1,Math.floor(b*.8)):Math.max(b+1,Math.ceil(b*1.25));setZoom(zOfB(Math.max(1,nb)))}
+function zoomStep(d){const np=L.p*(d>0?1.25:.8);setZoom(np<=fitP(L.W,L.vh,Math.max(1,order.length),L.M)?0:zOfP(np))}
 
 const B=Array.from({length:NB},()=>[]),vis=[],anims=new Map();
 let sel=-1,hov=-1,link=new Set();
@@ -5539,37 +5539,41 @@ const INK=[C.o1,C.sub,C.text,C.crust];
 function draw(){
   if(needLayout)layout();
   const now=performance.now();
-  const{W,vh,bpr,p,G,bw,bh,brows,stage,gap,xoff,yoff}=L,s=sc.scrollTop;
+  const{W,vh,p,gap,cols,rows,M,stage}=L,s=sc.scrollTop;
   ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle=C.crust;ctx.fillRect(0,0,W,vh);
   for(const a of B)a.length=0;vis.length=0;const late=[];
-  const Rc=(x,y)=>{const x0=Math.round(x),y0=Math.round(y);ctx.rect(x0,y0,Math.round(x+p)-gap-x0,Math.round(y+p)-gap-y0)};
-  const r0=Math.max(0,Math.floor((s-G-yoff)/bh)),r1=Math.min(brows-1,Math.floor((s+vh-yoff)/bh));
-  for(let br=r0;br<=r1;br++){const by=yoff+G+br*bh-s;
-    for(let bc=0;bc<bpr;bc++){const si=br*bpr+bc;if(si>=slots.length)break;const bl=slots[si],b0=bl*100,bx=xoff+G+bc*(bw+G);
-      // the ground shows itself as you walk it: a block's ghost grid fades in with the words found in it (none at one word, full at eight)
-      const ga=GHOST*Math.min(1,Math.max(0,blockN[bl]-1)/7);if(ga>0&&stage>=1){ctx.globalAlpha=ga;ctx.fillStyle=C.s0;ctx.beginPath()}
-      for(let r=0;r<10;r++){const y=by+r*p;if(y+p<0||y>vh)continue;const i0=b0+r*10;if(i0>=N)break;
-        for(let c=0;c<10&&i0+c<N;c++){const i=i0+c,x=bx+c*p;if(!bk[i]){if(ga>0&&stage>=1)Rc(x,y);continue}vis.push(i,x,y);if(appear.has(i))late.push(i,x,y);else B[bk[i]].push(x,y)}}
-      if(ga>0&&stage>=1){ctx.fill();ctx.globalAlpha=1}}}
+  const Rc=(x,y)=>{const x0=Math.round(x),y0=Math.round(y);ctx.rect(x0,y0,Math.round(x+p)-x0,Math.round(y+p)-y0)};
+  // cards that only moved in the reflow glide (≤ 200 ms) so the new ones are the only event; reduced motion: they jump
+  if(oldXY){if(!RM)oldXY.forEach((o,i)=>{const c=cellXY(i);if(c&&(c.x!==o.x||c.y!==o.y))glide.set(i,{x0:o.x,y0:o.y,t0:now})});oldXY=null}
+  const ease=u=>1-Math.pow(1-u,3);
+  const r0=Math.max(0,Math.floor((s-M)/(p+gap))),r1=Math.min(rows-1,Math.floor((s+vh-M)/(p+gap)));
+  for(let r=r0;r<=r1;r++){const y0=M+r*(p+gap)-s;for(let c=0;c<cols;c++){const k=r*cols+c;if(k>=order.length)break;const i=order[k];let x=M+c*(p+gap),y=y0;
+    const gl=glide.get(i);if(gl){const u=(now-gl.t0)/GLIDE_MS;if(u>=1)glide.delete(i);else{const e=ease(u);x=gl.x0+(x-gl.x0)*e;y=gl.y0-s+(y-(gl.y0-s))*e}}
+    const ts=appear.get(i);if(ts!==undefined){const t=(now-ts)/APPEAR_MS;if(t<0)continue;if(t>=1)appear.delete(i);else{late.push(i,x,y,t);vis.push(i,x,y);continue}}
+    vis.push(i,x,y);B[bk[i]].push(x,y)}}
   for(let b=1;b<NB;b++){const a=B[b];if(!a.length)continue;ctx.fillStyle=COL[b];ctx.beginPath();for(let j=0;j<a.length;j+=2)Rc(a[j],a[j+1]);ctx.fill()}
-  // newly found cells fade in (320 ms), the only entrance motion
-  for(let j=0;j<late.length;j+=3){const i=late[j],t=Math.min(1,(now-appear.get(i))/320);if(t>=1)appear.delete(i);ctx.globalAlpha=t;ctx.fillStyle=COL[bk[i]];ctx.beginPath();Rc(late[j+1],late[j+2]);ctx.fill();ctx.globalAlpha=1}
+  // the pop-in: fade, a quick scale with a soft overshoot, and one lavender ring pulse rolling off the edge (reduced motion: fade only)
+  for(let j=0;j<late.length;j+=4){const i=late[j],x=late[j+1],y=late[j+2],t=late[j+3];
+    const a=Math.min(1,t*2.5),sc_=RM?1:(.75+.25*a)+.14*Math.sin(Math.PI*t),cs=p*sc_,ox=x+(p-cs)/2,oy=y+(p-cs)/2;
+    ctx.globalAlpha=a;ctx.fillStyle=COL[bk[i]];ctx.fillRect(Math.round(ox),Math.round(oy),Math.round(cs),Math.round(cs));
+    if(!RM){const off=1+9*t;ctx.globalAlpha=(1-t)*.9;ctx.strokeStyle=C.lav;ctx.lineWidth=Math.max(1,p*.03);ctx.strokeRect(x-off,y-off,p+2*off,p+2*off)}
+    ctx.globalAlpha=1}
   // due = hollow: the tint stays as a ring, the interior empties; a rating refills it
   const rw=p<5?1:Math.max(1,Math.round(p*.13));
   ctx.fillStyle=C.crust;ctx.beginPath();
   for(let j=0;j<vis.length;j+=3){const i=vis[j];let f=due[i]?1:0;const a=anims.get(i);
     if(a!==undefined){const t=(now-a)/240;if(t>=1)anims.delete(i);else f=1-t*(2-t)}
-    if(f<=0)continue;const x=Math.round(vis[j+1]),y=Math.round(vis[j+2]),cs=Math.round(vis[j+1]+p)-gap-x,inn=(cs-2*rw)*f;
+    if(f<=0)continue;const x=Math.round(vis[j+1]),y=Math.round(vis[j+2]),cs=Math.round(vis[j+1]+p)-x,inn=(cs-2*rw)*f;
     if(inn>=1)ctx.rect(x+(cs-inn)/2,y+(cs-inn)/2,inn,inn)}
   ctx.fill();
-  // lemma text (never the gloss: the board never gives away a retrieval target)
+  // lemma text (never the gloss, never a number: the board gives away neither a retrieval target nor the size of the language)
   if(stage>=2){
-    const cs=p-gap,pad=stage===2?Math.max(1,Math.round(p*.04)):Math.max(3,Math.round(p*.08));
+    const cs=p,pad=stage===2?Math.max(1,Math.round(p*.04)):Math.max(3,Math.round(p*.08));
     const fs=stage===2?Math.max(9,Math.min(13,p*.27)):Math.min(22,p*.19);
     for(let k=0;k<4;k++){
       ctx.fillStyle=INK[k];ctx.font="500 "+fs.toFixed(1)+"px "+T("ui");ctx.textBaseline="middle";ctx.textAlign=stage===2?"center":"left";
       for(let j=0;j<vis.length;j+=3){const i=vis[j];if(inkOf(i)!==k)continue;const x=vis[j+1],y=vis[j+2];
-        if(appear.has(i))ctx.globalAlpha=Math.min(1,(now-appear.get(i))/320);
+        if(appear.has(i))ctx.globalAlpha=Math.min(1,(now-appear.get(i))/APPEAR_MS*2.5);
         if(stage===2)ctx.fillText(fit(i,fs,cs-2*pad),x+cs/2,y+cs/2+.5,cs-2*pad);
         else ctx.fillText(fit(i,fs,cs-2*pad),x+pad,y+cs*.5,cs-2*pad);
         ctx.globalAlpha=1}
@@ -5578,12 +5582,13 @@ function draw(){
         ctx.globalAlpha=1}
     }
   }
-  // transient outlines: the open card's sentence-mates (dashed), hover, selection
-  const box=i=>{const c=cellXY(i);if(!c)return null;const x0=Math.round(c.x),y0=Math.round(c.y-s),cs=Math.round(c.x+p)-gap-x0;return[x0,y0,cs]};
+  // transient outlines: the open card's sentence-mates (dashed), cards found since your last action (lavender), hover, selection
+  const box=i=>{const c=cellXY(i);if(!c)return null;const x0=Math.round(c.x),y0=Math.round(c.y-s),cs=Math.round(c.x+p)-x0;return[x0,y0,cs]};
   if(link.size&&p>=7){ctx.save();ctx.setLineDash([3,2]);ctx.strokeStyle=C.text;ctx.lineWidth=1;ctx.beginPath();for(let j=0;j<vis.length;j+=3){const i=vis[j];if(link.has(i)){const bx=box(i);if(bx)ctx.rect(bx[0]+1.5,bx[1]+1.5,bx[2]-3,bx[2]-3)}}ctx.stroke();ctx.restore()}
+  if(fresh.size){ctx.strokeStyle=C.lav;ctx.lineWidth=p>=22?2:1;ctx.beginPath();for(let j=0;j<vis.length;j+=3){const i=vis[j];if(fresh.has(i)&&i!==sel&&!appear.has(i)){const bx=box(i);if(bx)ctx.rect(bx[0]+1,bx[1]+1,bx[2]-2,bx[2]-2)}}ctx.stroke()}
   if(hov>=0&&hov!==sel){const bx=box(hov);if(bx){ctx.strokeStyle=C.o1;ctx.lineWidth=1;ctx.strokeRect(bx[0]+.5,bx[1]+.5,bx[2]-1,bx[2]-1)}}
   if(sel>=0&&K(sel).vis){const bx=box(sel);if(bx){ctx.lineWidth=2;ctx.strokeStyle=C.crust;ctx.strokeRect(bx[0]+1,bx[1]+1,bx[2]-2,bx[2]-2);ctx.strokeStyle=C.text;ctx.strokeRect(bx[0]-1,bx[1]-1,bx[2]+2,bx[2]+2)}}
-  if(anims.size||appear.size)req();
+  if(anims.size||appear.size||glide.size)req();
 }
 
 // =====================================================================
@@ -5598,28 +5603,27 @@ function ensureVisible(i,smooth){
 }
 function select(i,smooth){
   if(i<0||i>=N)return;sel=i;const k=K(i);
-  live.textContent=words[i].w+", rank "+(i+1)+", "+(k.green?"yours":k.claimed?"claimed":k.S>0?"learning":"new")+(due[i]?", due":"");
+  live.textContent=words[i].w+", "+(k.green?"yours":k.claimed?"claimed":k.S>0?"learning":"new")+(due[i]?", due":"");
   req();ensureVisible(i,smooth);if(pop.classList.contains("on"))place();
 }
-let side=null,sideBlock=-1;
+let side=null;
 function place(){
   if(narrow()){pop.style.cssText="";return}
   const c=cellXY(sel);if(!c)return;
-  const r=sc.getBoundingClientRect(),cx=r.left+c.x,cy=r.top+c.y-sc.scrollTop,p=L.p;
-  const b=sel/100|0,bx=r.left+c.x-(sel%10)*p,vw=innerWidth,vh=innerHeight,pw=pop.offsetWidth,ph=pop.offsetHeight,g=10,m=8;
-  const C2={R:bx+L.bw+g,L:bx-g-pw,r:cx+p+g,l:cx-g-pw};
+  const r=sc.getBoundingClientRect(),cx=r.left+c.x,cy=r.top+c.y-sc.scrollTop,p=L.p,vw=innerWidth,vh=innerHeight,pw=pop.offsetWidth,ph=pop.offsetHeight,g=10,m=8;
+  const C2={r:cx+p+g,l:cx-g-pw};
   const ok=k=>C2[k]>=m&&C2[k]+pw<=vw-m;
-  if(!(side&&ok(side)&&(b===sideBlock||side==="R"||side==="L")))side=["R","L","r","l"].find(ok)||null;
-  sideBlock=b;const top=r.top+m;let px,py;
+  if(!(side&&ok(side)))side=["r","l"].find(ok)||null;
+  const top=r.top+m;let px,py;
   if(side){px=C2[side];py=Math.max(top,Math.min(vh-ph-m,cy+p/2-ph*.3))}
   else{px=Math.max(m,Math.min(vw-pw-m,cx+p/2-pw/2));py=cy+p+g;if(py+ph>vh-m)py=Math.max(top,cy-ph-g)}
   pop.style.left=px+"px";pop.style.top=py+"px";
   const ar=pop.querySelector("#arr");if(!ar)return;const ay=Math.max(10,Math.min(ph-20,cy+p/2-py-5));
-  if(side==="R"||side==="r")ar.style.cssText="left:-6px;top:"+ay+"px;transform:rotate(-45deg)";
+  if(side==="r")ar.style.cssText="left:-6px;top:"+ay+"px;transform:rotate(-45deg)";
   else if(side)ar.style.cssText="right:-6px;top:"+ay+"px;transform:rotate(135deg)";
   else ar.style.cssText="display:none";
 }
-function closePop(){pop.classList.remove("on");pop.innerHTML="";side=null;step=null;link.clear();req();updateGo()}
+function closePop(){pop.classList.remove("on");pop.innerHTML="";side=null;step=null;link.clear();fresh.clear();req();updateGo()}
 
 // =====================================================================
 // THE WALK + STEPS: one engine; clicking a cell opens the step its state calls for
@@ -5663,16 +5667,16 @@ function finishProbe(){
   const Fr=med<15?0:med>.8*N?N:Math.round(Math.exp(pmed(.3)));
   // below the frontier the fog lifts: the 300 ranks nearest it are claimed (verified in-stream), deeper ranks are trusted
   for(let i=0;i<Fr;i++){const k=K(i);if(!k.green&&!probe.asked.has(i)){revealCell(i,"probe");if(i<Fr-300){k.S=120*(1+2*Math.random());k.last=day;k.reps=1;k.green=1}else k.claimed=1}repaint(i)}
-  probed=1;probe=null;walk=null;seeded=1;
+  probed=1;probe=null;walk=null;seeded=1;flushAppear(-1);
   revealFrontier(12);
-  reslot();layout();save();stats();msg(Fr?'the fog lifted over <b>'+Fr.toLocaleString("en")+'</b> words you already know':'starting from the first word');
+  reorder();layout();save();stats();msg(Fr?'the fog lifted over the words you already know':'starting from the first word');
   startWalk();
 }
 
 // ---------- a step: ask → reveal → spell → rate → after ----------
 const CUE={word:"word → meaning",cloze:"fill the gap"};
 function openStep(i,kind,inWalk){
-  const k=K(i);hideTip();
+  const k=K(i);hideTip();fresh.clear();
   if(!kind)kind=k.claimed?"verify":k.green?(due[i]?"due":"browse"):k.S>0?(due[i]?"due":"again"):"new";
   const s=kind==="probe"?null:bestSent(i);
   step={kind,i,phase:kind==="probe"?"probe":kind==="browse"?"closed":"ask",sent:s,gap:s?gapOf(s,i):[],typed:"",verdict:null,inWalk:!!inWalk,opened:null,cue:"word"};
@@ -5694,7 +5698,7 @@ function reveal(){
 function toSpell(){if(!step||step.phase!=="reveal")return;step.phase="spell";if(!auto)render()}
 function spelled(){
   if(!step||step.phase!=="spell")return;const ai=pop.querySelector("[data-ans]");step.typed=ai?ai.value:"";
-  if(step.kind==="sentence"){const ok=flat(step.typed)===flat(SEED0.es);step.verdict={ok};if(ok){seeded=1;step.opened=[branch(HOLA),branch(MUNDO)].filter(Boolean);step.phase="after";plan();save();stats();reslot();layout();if(!auto){render();showTip(2)}}else{step.phase="spell";step.wrong=1;if(!auto)render()}return}
+  if(step.kind==="sentence"){const ok=flat(step.typed)===flat(SEED0.es);step.verdict={ok};if(ok){seeded=1;step.opened=[branch(HOLA),branch(MUNDO)].filter(Boolean);step.phase="after";plan();save();stats();reorder();layout();if(!auto){render();showTip(2)}}else{step.phase="spell";step.wrong=1;if(!auto)render()}return}
   if(!norm(step.typed)){step.phase="spell";if(!auto)render();return}
   step.verdict=check(words[step.i],step.typed,step.sent?surfaceOf(step.sent,step.i):null);
   step.phase="rate";if(!auto)render();
@@ -5751,7 +5755,7 @@ function render(){
   h+='<div class="cl"><span>'+KL[kind]+(kind==="probe"?' · '+(probe.n+1):'')+'</span>'+(gapNote?'<i>'+gapNote+'</i>':'')+'</div>';
   const hideWord=phase==="spell"||(phase==="ask"&&step.cue==="cloze");
   if(kind==="sentence")h+='<div class="ph"><h2>'+esc(SEED0.en)+'</h2></div>';
-  else h+='<div class="ph">'+(hideWord?'<h2 class="hid">'+esc(w.t)+'</h2>':'<h2>'+head(w)+'</h2>')+'<small>'+posLabel(w)+' · #'+(i+1).toLocaleString("en")+'</small></div>';
+  else h+='<div class="ph">'+(hideWord?'<h2 class="hid">'+esc(w.t)+'</h2>':'<h2>'+head(w)+'</h2>')+'<small>'+posLabel(w)+'</small></div>';
   if(phase==="probe"){h+='<div class="q">Do you know what this means?</div><div class="yn"><button data-r="1">don’t<small>1</small></button><button data-r="2">know<small>2</small></button></div>'}
   else if(phase==="closed"){h+='<div class="q">Recall the meaning before you look.</div><button class="big" data-act="reveal">reveal<small>space</small></button>'}
   else if(phase==="ask"){
@@ -5810,7 +5814,7 @@ function wire(w,k){
     if(a==="reveal")reveal();else if(a==="spell")toSpell();else if(a==="cont")continueStep();
     else if(a==="test"){openStep(step.i,k.green||k.claimed?"due":"again",false)}
     else if(a==="claim")claimWord(step.i);else if(a==="probe")startProbe();
-    else if(a==="branch"){const op=branch(step.i);if(op){reslot();layout();stats();save();step.opened=[op];render()}}});
+    else if(a==="branch"){const op=branch(step.i);if(op){reorder();layout();stats();save();step.opened=[op];render()}}});
   d.querySelectorAll("[data-go]").forEach(b=>b.onclick=e=>{e.stopPropagation();if(walk)stopWalk();openStep(+b.dataset.go,null,false)});
   const ai=d.querySelector("[data-ans]");if(ai){ai.addEventListener("keydown",e=>{e.stopPropagation();if(e.key==="Enter"){e.preventDefault();if(step.phase==="spell")spelled();else reveal()}if(e.key==="Escape"){e.preventDefault();if(walk)stopWalk();else closePop()}});if(!matchMedia("(hover:none)").matches)ai.focus()}
   d.querySelectorAll(".tk[data-ids]").forEach(t=>{const ids=t.dataset.ids.split(",").map(Number);
@@ -5833,8 +5837,8 @@ go.onclick=()=>{if(walk){stopWalk();return}const P=plan();if(!P.due.length&&(!P.
 // =====================================================================
 fq.addEventListener("keydown",e=>{e.stopPropagation();if(e.key==="Escape"){fq.value="";fq.blur();sc.focus();return}if(e.key!=="Enter")return;e.preventDefault();
   const v=strip(fq.value.trim().toLowerCase());if(!v)return;let i=-1;for(let j=0;j<N;j++)if(words[j].norm===v){i=j;break}
-  if(i<0){msg('<b>'+esc(fq.value)+'</b> is not in the first '+N.toLocaleString("en")+' words');return}
-  if(walk)stopWalk();const fresh=revealCell(i,"found");if(fresh){reslot();layout();stats();save()}fq.value="";fq.blur();sc.focus({preventScroll:true});openStep(i,null,false);if(fresh)msg('<b>'+esc(words[i].w)+'</b> is on the board now');
+  if(i<0){msg('no card for <b>'+esc(fq.value)+'</b>');return}
+  if(walk)stopWalk();const isNew=revealCell(i,"found");if(isNew){flushAppear(-1);layout();stats();save()}fq.value="";fq.blur();sc.focus({preventScroll:true});openStep(i,null,false);if(isNew)msg('<b>'+esc(words[i].w)+'</b> is on the board now');
 });
 
 // =====================================================================
@@ -5846,7 +5850,7 @@ function showHover(i,cx,cy,loupe){
   if(i<0){tip.style.display="none";return}
   tip.className="tip"+(loupe?" loupe":"");
   const k=K(i),st=k.green?(due[i]?"due":"yours · stable "+fmtD(k.S)):k.claimed?"claimed":k.S>0?(due[i]?"due":"learning"):"new";
-  tip.innerHTML='<b>'+esc((words[i].art?words[i].art+" ":"")+words[i].w)+'</b><small>#'+(i+1).toLocaleString("en")+' · '+st+'</small>';  // lemma only — never the gloss
+  tip.innerHTML='<b>'+esc((words[i].art?words[i].art+" ":"")+words[i].w)+'</b><small>'+st+'</small>';  // lemma and state only — never the gloss, never a rank
   tip.style.display="block";const w=tip.offsetWidth,h=tip.offsetHeight;
   let x=loupe?cx-w/2:cx+14,y=loupe?cy-h-56:cy+16;
   x=Math.max(6,Math.min(innerWidth-w-6,x));if(y+h>innerHeight-6)y=cy-h-10;if(y<50)y=cy+40;
@@ -5886,12 +5890,11 @@ sc.addEventListener("scroll",()=>{req();if(pop.classList.contains("on")&&!narrow
 document.addEventListener("pointerdown",e=>{if(pop.classList.contains("on")&&!walk&&!pop.contains(e.target)&&e.target!==cv&&!e.target.closest(".bar")&&!e.target.closest(".sim"))closePop()});
 new ResizeObserver(()=>{if(sc.clientWidth===L.W&&sc.clientHeight===L.vh)return;const a=sel>=0&&isVisible(sel)?sel:null;setZoom(zoom,a);stats()}).observe(sc);
 $("zm").onclick=()=>zoomStep(-1);$("zp").onclick=()=>zoomStep(1);$("z0").onclick=()=>setZoom(0);
-function moveSel(d){ // among found cells only: ←→ by rank, ↑↓ by row within the block
-  const list=[];for(let i=0;i<N;i++)if(K(i).vis)list.push(i);if(!list.length)return;
-  if(sel<0||!K(sel).vis){select(list[0]);return}
-  let j=list.indexOf(sel),i=sel;
-  if(d==="L")i=list[Math.max(0,j-1)];else if(d==="R")i=list[Math.min(list.length-1,j+1)];
-  else{const dy=d==="D"?10:-10;let t=sel+dy;while(t>=0&&t<N&&(t/100|0)===(sel/100|0)&&!K(t).vis)t+=dy;if(t>=0&&t<N&&(t/100|0)===(sel/100|0)&&K(t).vis)i=t;else return}
+function moveSel(d){ // over the found cards: ←→ by rank, ↑↓ by row of the grid
+  if(!order.length)return;
+  if(sel<0||pos[sel]<0){select(order[0]);return}
+  const k=pos[sel];let nk=d==="L"?k-1:d==="R"?k+1:d==="D"?k+L.cols:k-L.cols;
+  if(nk<0||nk>=order.length)return;const i=order[nk];
   if(walk)stopWalk();if(pop.classList.contains("on"))openStep(i,null,false);else select(i,false);
 }
 document.addEventListener("keydown",e=>{
@@ -5910,7 +5913,7 @@ document.addEventListener("keydown",e=>{
       if(ph==="ask"||ph==="closed")reveal();else if(ph==="reveal"){if(step.kind==="due")answer(suggested());else toSpell()}else if(ph==="rate")answer(suggested());else if(ph==="after")continueStep();else if(ph==="open"&&k===" ")openStep(step.i,K(step.i).green||K(step.i).claimed?"due":"again",false);return}
     if(/^[1-4]$/.test(k)&&(ph==="rate"||(ph==="reveal"&&step.kind==="due"))){e.preventDefault();answer(+k);return}
     if(k==="k"&&!walk&&ph==="ask"&&step.kind==="new"){e.preventDefault();claimWord(step.i);return}
-    if(k==="b"&&ph==="open"){e.preventDefault();const op=branch(step.i);if(op){reslot();layout();stats();save();step.opened=[op];render()}return}
+    if(k==="b"&&ph==="open"){e.preventDefault();const op=branch(step.i);if(op){reorder();layout();stats();save();step.opened=[op];render()}return}
     if(walk)return;
   }
   switch(k){
@@ -5930,7 +5933,7 @@ document.addEventListener("keydown",e=>{
 // =====================================================================
 function simText(){if(!$("sim").classList.contains("on"))return;let g=0,l=0;KM.forEach(k=>{if(k.green)g++;else if(k.S>0)l++});const c=candidates().length;
   const top=[200,500,1000].map(n=>{let y=0;for(let i=0;i<n;i++)if(yours(i))y++;return '<b>'+y+'</b>/'+n}).join(" · ");
-  $("simt").innerHTML='day <b>'+day+'</b> · yours <b>'+g+'</b> · learning <b>'+l+'</b> · open tiles <b>'+c+'</b> · due <b>'+nDue+'</b> · yours in top '+top}
+  $("simt").innerHTML='day <b>'+day+'</b> · yours <b>'+g+'</b> · learning <b>'+l+'</b> · open tiles <b>'+c+'</b> · due <b>'+nDue+'</b> · debug, yours in top '+top}
 function autoLearn(n){
   if(walk)stopWalk();closePop();auto=true;
   for(let j=0;j<n;j++){const P=plan();let i=-1;
@@ -5940,7 +5943,7 @@ function autoLearn(n){
     rate(i,3);P.L.new++;turnGreen(i);
     if(!seeded&&K(HOLA).green&&K(MUNDO).green){seeded=1;branch(HOLA);branch(MUNDO)}
   }
-  auto=false;reslot();layout();for(let i=0;i<N;i++)repaint(i);stats();save();draw();
+  auto=false;reorder();layout();for(let i=0;i<N;i++)repaint(i);stats();save();draw();
 }
 function advance(d){day+=d;save();for(let i=0;i<N;i++)repaint(i);stats();req();if(nDue)showTip(3)}
 $("s1").onclick=()=>{stopWalk();advance(1)};
@@ -5949,16 +5952,16 @@ $("sl100").onclick=()=>autoLearn(100);
 $("sr").onclick=()=>{stopWalk();localStorage.removeItem("atlas-fog");location.search="?sim"};
 
 // =====================================================================
-// INIT  (?reset · ?sim[=N] auto-learn N · ?all reveal everything · ?day=N · ?z=0..1 · ?open=lemma · ?walk · ?probe=auto)
+// INIT  (?reset · ?sim[=N] auto-learn N · ?all reveal everything (debug) · ?day=N · ?z=0..1 · ?open=lemma · ?walk · ?probe=auto)
 // =====================================================================
 if(Q.has("reset"))localStorage.removeItem("atlas-fog");
 const had=load();if(Q.has("day"))day=+Q.get("day");
 if(Q.has("z"))zoom=+Q.get("z");
 if(!had){revealCell(HOLA,SEED0.key);K(HOLA).via=SEED0.key}
-if(Q.has("all"))for(let i=0;i<N;i++)revealCell(i,"all");
+if(Q.has("all")){auto=true;for(let i=0;i<N;i++)revealCell(i,"all");auto=false}
 for(let i=0;i<N;i++)repaint(i);
 if(Q.has("sim"))$("sim").classList.add("on");
-reslot();layout();stats();if(narrow())fq.placeholder="find";
+reorder();layout();stats();if(narrow())fq.placeholder="find";
 if(Q.has("sim")&&+Q.get("sim")>0){auto=true;autoLearn(+Q.get("sim"));auto=false}
 if(Q.has("probe")&&Q.get("probe")==="auto"&&!probed){auto=true;startProbe();let g=0;while(step&&step.kind==="probe"&&g++<40){answer(Math.random()<words[step.i].pt?2:1)}auto=false;walk=null;step=null;closePop();stats()}
 sel=HOLA;
@@ -5966,7 +5969,7 @@ if(Q.has("open")){const o=Q.get("open");openStep(IDX.has(o)?IDX.get(o):+o,null,f
 else if(Q.has("walk"))startWalk();
 else if(!nYours&&!probed)showTip(0);
 draw();sc.focus({preventScroll:true});
-window.__fog={L:()=>L,cellXY,hit,sc,surfaceOf,setZoom,draw,N,words,K,IDX,bank,step:()=>step,walk:()=>walk,startWalk,answer,reveal,toSpell,spelled,continueStep,openStep,autoLearn,advance,select,stats,candidates,slots:()=>slots,yours,gapOf,day:()=>day,nRead:()=>nRead,openedS,branch,startProbe,probe:()=>probe};
+window.__fog={L:()=>L,cellXY,hit,sc,surfaceOf,setZoom,draw,N,words,K,IDX,bank,step:()=>step,walk:()=>walk,startWalk,answer,reveal,toSpell,spelled,continueStep,openStep,autoLearn,advance,select,stats,candidates,order:()=>order,fresh,appear,glide,yours,gapOf,day:()=>day,nRead:()=>nRead,openedS,branch,startProbe,probe:()=>probe};
 </script>
 </body>
 </html>
