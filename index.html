@@ -93,6 +93,9 @@ input,textarea{font:inherit}
 .vd b{font-weight:500}
 .vd.bad{color:var(--red)}
 .vd.ok{color:var(--lavender)}
+.gs{margin-top:6px;font-size:13px;color:var(--overlay1)}
+.gs b{color:var(--subtext1);font-weight:500}
+.gs.ok,.gs.ok b{color:var(--lavender)}
 .hooks{margin-top:12px;font-size:13px;line-height:1.5;display:flex;flex-direction:column;gap:3px}
 .hooks>div{display:flex;gap:8px;align-items:flex-start}
 .hooks em,.rung>em{flex:none;width:70px;font-style:normal;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--overlay0);padding-top:4px}
@@ -10788,7 +10791,8 @@ function finishProbe(){
 function openStep(i,kind,inWalk){
   const k=K(i);
   if(!kind){kind=k.claimed?"verify":k.S>0?(due[i]?"due":"browse"):"new"}
-  step={kind,i,phase:kind==="probe"?"probe":"ask",cue:"word",sent:null,typed:"",verdict:null,missed:new Set(),deck:false,sug:null,inWalk:!!inWalk};
+  const learn=kind==="new"&&!k.S&&!k.claimed;  // never learned → the learn card
+  step={kind,i,phase:kind==="probe"?"probe":learn?"guess":"ask",learn,miss:0,guess:"",cue:"word",sent:null,typed:"",verdict:null,missed:new Set(),deck:false,sug:null,inWalk:!!inWalk};
   if(kind==="due"||kind==="again")step.cue=pickCue(i);
   if(step.cue==="word"||step.cue==="cloze"){const s=pickCtx(i);if(s){step.sent=s}else if(step.cue==="cloze")step.cue="word"}
   if(step.cue==="chunk")step.frame=words[i].h.frame[k.hooks.frame[(k.cueN.chunk||0)%k.hooks.frame.length]];
@@ -10804,6 +10808,19 @@ function reveal(){
     const surf=step.sent?surfaceOf(step.sent,step.i):step.cue==="chunk"?br(step.frame[0]):step.cue==="mine"?br(K(step.i).hooks.mine):null;step.verdict=check(words[step.i],step.typed,surf)}
   step.phase=step.phase==="closed"?"open":"reveal";if(!auto)render();
 }
+// ---------- the learn card (never-learned word): guess → meet → recall, until right → enrolled. Nothing English is on the card before the guess. ----------
+function commitGuess(){if(!step||step.phase!=="guess")return;const ai=pop.querySelector("[data-ans]");step.guess=ai?ai.value.trim():"";step.phase="meet";if(!auto)render()}
+function toRecall(){if(!step||(step.phase!=="meet"&&step.phase!=="miss"))return;step.phase="recall";if(!auto)render()}
+function recalled(){
+  if(!step||step.phase!=="recall")return;const ai=pop.querySelector("[data-ans]");step.typed=ai?ai.value:"";if(!norm(step.typed))return;
+  step.verdict=check(words[step.i],step.typed,step.sent?surfaceOf(step.sent,step.i):null);
+  if(!step.verdict.ok){step.miss++;step.phase="miss";if(!auto)render();return}
+  step.phase="reveal";answer(step.miss||step.verdict.acc||step.verdict.art?2:3);
+}
+const STOPW=new Set(["to","the","a","an","of","is","it","in","on","for","and","or","one","some","something"]);
+function guessClose(g,t){const ws=x=>strip(x.toLowerCase()).split(/[^a-z]+/).filter(x=>x.length>1&&!STOPW.has(x)),b=ws(t);return ws(g).some(x=>b.some(y=>x===y||(x.length>3&&y.length>3&&(x.startsWith(y)||y.startsWith(x)))))}
+function hookLine(w){const h=w.h;if(!h)return'';const kin=h.kin&&h.kin.find(x=>x[1]!=="contrast"),snd=h.sound&&h.sound[0];
+  return kin?'<div class="hooks"><div><em>cousins</em><span>'+esc(kin[0])+'</span></div></div>':snd?'<div class="hooks"><div><em>sounds like</em><span>'+esc(snd[0])+' — '+esc(snd[1])+'</span></div></div>':''}
 function answer(r){
   if(!step)return;const{kind,i}=step,w=words[i],k=K(i);
   if(kind==="probe"){probeAnswer(i,r===2);return}
@@ -10825,6 +10842,7 @@ function answer(r){
     step.sug=(ci>=0&&!k.hooks.kin.includes(ci))?"kin":nextRung(w,k);
     if(lc){const j=IDX.get(lc);if(j!==undefined)collide=j}
     if(!auto)render();return}
+  if(step.learn&&!auto){step.phase="done";render();return}
   continueStep();
 }
 function continueStep(){if(!step)return;collide=-1;if(step.inWalk&&walk){next();return}step.phase="after";if(!auto)render()}
@@ -10856,16 +10874,38 @@ function deckHTML(w,k,sug,lc){const hk=w.h||{};let h='<div class="deck">';
     h+='</div></div>'}
   return h+'</div>'}
 function nearHTML(i){const{blocked}=contexts(i);const b=blocked[0];if(!b)return'';const bl=new Map();blocked.forEach(x=>{if(x.m.length===1&&typeof x.m[0]==="number")bl.set(x.m[0],(bl.get(x.m[0])||0)+1)});
-  return'<div class="near">'+sentHTML(b.s,i,null,"plain")+'<i>'+esc(b.s.en)+(bl.size?' · opens once you know '+[...bl].sort((a,b)=>b[1]-a[1]).slice(0,3).map(([x,n])=>'<button class="tk" data-go="'+x+'">'+esc(words[x].w)+'</button>'+(n>1?' ·'+n:'')).join(", "):'')+'</i></div>'}
+  const enOK=b.m.every(x=>typeof x!=="number"||K(x).S>0||K(x).claimed);  // English would give away a word never learned
+  return'<div class="near">'+sentHTML(b.s,i,null,"plain")+'<i>'+(enOK?esc(b.s.en):'')+(bl.size?' · opens once you know '+[...bl].sort((a,b)=>b[1]-a[1]).slice(0,3).map(([x,n])=>'<button class="tk" data-go="'+x+'">'+esc(words[x].w)+'</button>'+(n>1?' ·'+n:'')).join(", "):'')+'</i></div>'}
 function render(){
   if(!step)return;const{kind,i,phase,cue}=step,w=words[i],k=K(i);
   let h='<div class="arr" id="arr"></div><button class="x" aria-label="Close">×</button>';
   const KL={probe:"finding your frontier",new:"new",due:"due",again:"again",verify:"you claimed this · verify",browse:k.S>0?"learning":"new"};
-  const hidden=phase==="ask"&&cue!=="word";
+  const hidden=(phase==="ask"&&cue!=="word")||phase==="recall";
   h+='<div class="cl"><span>'+KL[kind]+(kind==="probe"?' · '+(probe.n+1):'')+'</span>'+(phase==="ask"&&kind!=="probe"?'<i>'+CUEL[cue]+'</i>':'')+'</div>';
   h+=headerHTML(w,!hidden);
   if(phase==="probe"){h+='<div class="q">Do you know what this means?</div><div class="yn"><button data-r="1">don’t<small>1</small></button><button data-r="2">know<small>2</small></button></div>'}
   else if(phase==="closed"){h+='<div class="q">'+(k.S>0?'Recall the meaning before you look.':'Guess first — even a wrong guess makes the answer stick.')+'</div><button class="big" data-act="reveal">reveal<small>space</small></button>'}
+  else if(phase==="guess"){
+    if(step.sent)h+='<div class="cue">'+sentHTML(step.sent,i,step.missed,"ask")+'</div>';
+    h+='<div class="q">'+(step.sent?'Every other word is yours. What might the lit one mean?':'What might it mean?')+' Guess before you look — a wrong guess still helps it stick.</div><input class="ans" data-ans placeholder="your guess, in English" autocomplete="off" autocapitalize="off" spellcheck="false"><div class="yn"><button data-act="skip">no idea</button><button data-act="guess">guess<small>enter</small></button></div>';
+    h+='<button class="lnk" data-act="claim">I already know this</button>';
+  }
+  else if(phase==="meet"||phase==="miss"){
+    h+='<div class="tr">'+esc(w.t)+'</div>';
+    if(phase==="meet"&&step.guess){const g=guessClose(step.guess,w.t);h+='<div class="gs'+(g?' ok':'')+'">'+(g?'✓ ':'')+'you guessed <b>'+esc(step.guess)+'</b></div>'}
+    if(phase==="miss"){const v=step.verdict,cw=v.conf?words[IDX.get(v.conf)]:null;h+='<div class="vd bad">✗ you wrote <b>'+esc(step.typed)+'</b>'+(cw?' — that is '+esc(cw.t)+', the neighbour':'')+' — it is <b>'+esc(answerOf(w))+'</b></div>'}
+    if(step.sent)h+='<div class="cue" style="font-size:16px;margin-top:6px">'+sentHTML(step.sent,i,null,"ask")+'<span class="en">'+esc(step.sent.en)+'</span></div>';
+    else h+=nearHTML(i);
+    if(w.g)h+='<div class="gr">'+esc(w.g)+'</div>';
+    h+=hookLine(w);
+    h+='<button class="big" data-act="recall">'+(phase==="miss"?'try again':'now recall it')+'<small>enter</small></button>';
+  }
+  else if(phase==="recall"){
+    h+='<div class="tr">'+esc(w.t)+'</div>'+(step.sent?'<div class="cue">'+sentHTML(step.sent,i,null,"cloze")+'<span class="en">'+esc(step.sent.en)+'</span></div>':'')+'<div class="q">Now type the Spanish from memory.</div><input class="ans" data-ans placeholder="type it" autocomplete="off" autocapitalize="off" spellcheck="false">';
+  }
+  else if(phase==="done"){
+    h+='<div class="tr">'+esc(w.t)+'</div><div class="vd ok">✓ <b>'+esc(answerOf(w))+'</b> — learned. It comes back in '+fmtIv(ivlOf(k.S))+'.</div><button class="big" data-act="cont">'+(step.inWalk&&walk?'continue':'close')+'<small>enter</small></button>';
+  }
   else if(phase==="ask"){
     if(cue==="word"){h+=step.sent?'<div class="cue">'+sentHTML(step.sent,i,step.missed,"ask")+'</div><div class="q">'+(kind==="new"?'Every other word is yours. Guess the lit one, then reveal.':'Read it. Tap any word you didn’t get, then reveal.')+'</div>':'<div class="q">'+(kind==="new"?'Guess the meaning first, then reveal — a wrong guess still helps it stick.':'Recall the meaning, then reveal.')+'</div>'}
     else if(cue==="cloze")h+='<div class="cue">'+sentHTML(step.sent,i,null,"cloze")+'<span class="en">'+esc(step.sent.en)+'</span></div>';
@@ -10897,7 +10937,7 @@ function render(){
       if(!k.S)h+='<button class="lnk" data-act="claim">'+(k.claimed?'unclaim · k':'I know this · k')+'</button>';
     }
   }
-  h+='<div class="kb">'+(kind==="probe"?'<kbd>1</kbd> don’t · <kbd>2</kbd> know · <kbd>esc</kbd> stop':phase==="ask"||phase==="closed"?'<kbd>space</kbd> reveal · <kbd>esc</kbd> '+(walk?'stop':'close'):phase==="reveal"?'<kbd>1–4</kbd> rate · <kbd>h</kbd> hooks · <kbd>esc</kbd> '+(walk?'stop':'close'):phase==="hook"?'<kbd>enter</kbd> continue · <kbd>esc</kbd> stop':'<kbd>←↑↓→</kbd> move · <kbd>k</kbd> claim · <kbd>esc</kbd> close')+'</div>';
+  h+='<div class="kb">'+(kind==="probe"?'<kbd>1</kbd> don’t · <kbd>2</kbd> know · <kbd>esc</kbd> stop':phase==="ask"||phase==="closed"?'<kbd>space</kbd> reveal · <kbd>esc</kbd> '+(walk?'stop':'close'):phase==="reveal"?'<kbd>1–4</kbd> rate · <kbd>h</kbd> hooks · <kbd>esc</kbd> '+(walk?'stop':'close'):phase==="hook"?'<kbd>enter</kbd> continue · <kbd>esc</kbd> stop':phase==="guess"?'<kbd>enter</kbd> guess — empty is no idea · <kbd>esc</kbd> '+(walk?'stop':'close'):phase==="meet"||phase==="miss"?'<kbd>enter</kbd> '+(phase==="miss"?'try again':'recall it'):phase==="recall"?'<kbd>enter</kbd> check':phase==="done"?'<kbd>enter</kbd> '+(step.inWalk&&walk?'continue':'close'):'<kbd>←↑↓→</kbd> move · <kbd>k</kbd> claim · <kbd>esc</kbd> close')+'</div>';
   pop.innerHTML=h;pop.classList.add("on");wire(w,k);place();
   // linked cells: cousins and confusables get a dashed outline while the card is open
   link.clear();if(w.h&&phase!=="ask"&&phase!=="probe"&&phase!=="closed"){[...(w.h.conf||[]),...(w.h.kin||[]).filter(x=>x[1]!=="etym").map(x=>x[0].split(/\s[—–-]\s/)[0].trim().split(/[\s/]/)[0])].forEach(l=>{const j=IDX.get(l);if(j!==undefined&&j!==i)link.add(j)})}
@@ -10909,10 +10949,11 @@ function wire(w,k){
   d.querySelectorAll("[data-r]").forEach(b=>b.onclick=()=>answer(+b.dataset.r));
   d.querySelectorAll("[data-act]").forEach(b=>b.onclick=()=>{const a=b.dataset.act;
     if(a==="reveal")reveal();else if(a==="cont")continueStep();
+    else if(a==="guess")commitGuess();else if(a==="skip"){const ai=d.querySelector("[data-ans]");if(ai)ai.value="";commitGuess()}else if(a==="recall")toRecall();
     else if(a==="deck"){step.deck=!step.deck;render()}
     else if(a==="clear-sk"){k.hooks.sketch=null;re()}
     else if(a==="ask"){openStep(step.i,"new",false)}
-    else if(a==="claim"){claim([step.i]);render()}});
+    else if(a==="claim"){claim([step.i]);if(step.learn&&K(step.i).claimed)step.phase="after";render()}});
   d.querySelectorAll("[data-go]").forEach(b=>b.onclick=e=>{e.stopPropagation();openStep(+b.dataset.go,null,false)});
   d.querySelectorAll("[data-kin]").forEach(b=>b.onclick=()=>{toggle(k.hooks.kin,+b.dataset.kin);re()});
   d.querySelectorAll("[data-frame]").forEach(b=>b.onclick=()=>{toggle(k.hooks.frame,+b.dataset.frame);re()});
@@ -10926,13 +10967,13 @@ function wire(w,k){
   d.querySelectorAll("canvas.sk").forEach(c=>sketchPad(c,k,()=>{save();if(!d.querySelector("[data-act=clear-sk]"))render()}));
   d.querySelectorAll("canvas.hk-sk").forEach(c=>drawStrokes(c,k.hooks.sketch,true));
   d.querySelectorAll("canvas.cue-sk").forEach(c=>drawStrokes(c,k.hooks.sketch));
-  const ai=d.querySelector("[data-ans]");if(ai){ai.addEventListener("keydown",e=>{e.stopPropagation();if(e.key==="Enter"||(e.key===" "&&!ai.value.trim())){e.preventDefault();reveal()}if(e.key==="Escape"){e.preventDefault();if(walk)stopWalk();else closePop()}});if(!matchMedia("(hover:none)").matches)ai.focus()}
+  const ai=d.querySelector("[data-ans]");if(ai){ai.addEventListener("keydown",e=>{e.stopPropagation();if(e.key==="Enter"||(e.key===" "&&!ai.value.trim()&&step.phase!=="recall")){e.preventDefault();if(step.phase==="guess")commitGuess();else if(step.phase==="recall")recalled();else reveal()}if(e.key==="Escape"){e.preventDefault();if(walk)stopWalk();else closePop()}});if(!matchMedia("(hover:none)").matches)ai.focus()}
   d.querySelectorAll("input").forEach(x=>x.addEventListener("keydown",e=>e.stopPropagation()));
   // sentence tokens: hover → cell outline; tap in the ask phase marks a word you didn't get; tap after reveal goes there
   d.querySelectorAll(".tk[data-ids]").forEach(t=>{const ids=t.dataset.ids.split(",").map(Number);
     t.addEventListener("mouseenter",()=>{hov=ids[0];req()});t.addEventListener("mouseleave",()=>{hov=-1;req()});
     t.onclick=e=>{e.stopPropagation();if(ids.includes(step.i))return;
-      if(step.phase==="ask"){ids.forEach(x=>{if(K(x).S>0||K(x).claimed)step.missed.has(x)?step.missed.delete(x):step.missed.add(x)});render()}
+      if(step.phase==="ask"||step.phase==="guess"){ids.forEach(x=>{if(K(x).S>0||K(x).claimed)step.missed.has(x)?step.missed.delete(x):step.missed.add(x)});render()}
       else{if(walk)stopWalk();openStep(ids[0],null,false)}}});
 }
 function claim(ids){undo=ids.map(i=>[i,K(i).claimed]);const all=ids.every(i=>K(i).claimed||K(i).S>0);ids.forEach(i=>{const k=K(i);if(k.S>0)return;k.claimed=all?0:1;k.seen=1;repaint(i)});save();stats();if(ids.length>1)msg('<b>'+ids.length+'</b> claimed · <kbd>z</kbd> undo');req()}
@@ -11105,10 +11146,11 @@ document.addEventListener("keydown",e=>{
     const ph=step.phase;
     if(step.kind==="probe"){if(k==="1"||k==="2")answer(+k);return}
     if(k===" "||k==="Enter"){if(t.closest&&t.closest(".pop")&&t.tagName==="BUTTON"&&k==="Enter")return;e.preventDefault();
-      if(ph==="ask"||ph==="closed")reveal();else if(ph==="hook")continueStep();else if(ph==="after"&&!K(step.i).S&&!K(step.i).claimed&&k===" ")openStep(step.i,"new",false);return}
+      if(ph==="guess")commitGuess();else if(ph==="meet"||ph==="miss")toRecall();else if(ph==="recall")recalled();else if(ph==="done")continueStep();
+      else if(ph==="ask"||ph==="closed")reveal();else if(ph==="hook")continueStep();else if(ph==="after"&&!K(step.i).S&&!K(step.i).claimed&&k===" ")openStep(step.i,"new",false);return}
     if(/^[1-4]$/.test(k)&&ph==="reveal"){e.preventDefault();answer(+k);return}
     if(k==="h"&&(ph==="reveal"||ph==="after"||ph==="open")){e.preventDefault();step.deck=!step.deck;render();return}
-    if(k==="k"&&!walk){e.preventDefault();claim([step.i]);render();return}
+    if(k==="k"&&!walk){e.preventDefault();claim([step.i]);if(step.learn&&K(step.i).claimed)step.phase="after";render();return}
     if(walk)return;
   }
   switch(k){
@@ -11138,6 +11180,7 @@ function autoAnswer(){
   const{kind,i,phase}=step,w=words[i];
   if(kind==="probe"){answer(Math.random()<w.pt?2:1);return}
   if(phase==="hook"){continueStep();return}
+  if(phase==="guess")step.phase="reveal";
   if(phase==="ask")reveal();
   let r;
   if(kind==="verify"||kind==="new"){const ok=Math.random()<w.pt;r=ok?(w.pt>.9&&Math.random()<.5?4:3):(Math.random()<.75?1:2)}
@@ -11169,7 +11212,7 @@ if(Q.has("probe")&&Q.get("probe")==="auto"&&!probed){auto=true;startProbe();let 
 if(Q.has("open")){const o=Q.get("open");openStep(IDX.has(o)?IDX.get(o):+o,null,false)}
 else if(Q.has("walk"))startWalk();
 draw();sc.focus({preventScroll:true});
-window.__atlas={L:()=>L,setZoom,draw,zoomStep,N,words,K,step:()=>step,walk:()=>walk,startWalk,answer,reveal,continueStep,openStep,autoWalk,advance,openLens,select,stats,plan:()=>{plan();return today},probe:()=>probe,IDX,bank,day:()=>day,F:()=>F,mask:()=>({f:!!fm,l:!!lm,q:!!qm})};
+window.__atlas={L:()=>L,setZoom,draw,zoomStep,N,words,K,step:()=>step,walk:()=>walk,startWalk,answer,reveal,commitGuess,toRecall,recalled,continueStep,openStep,autoWalk,advance,openLens,select,stats,plan:()=>{plan();return today},probe:()=>probe,IDX,bank,day:()=>day,F:()=>F,mask:()=>({f:!!fm,l:!!lm,q:!!qm})};
 </script>
 <script>
 // triple-tap the language label / coverage text to toggle the simulation strip

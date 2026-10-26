@@ -85,6 +85,9 @@ input{font:inherit}
 .vd b{font-weight:500}
 .vd.bad{color:var(--red)}
 .vd.ok{color:var(--green)}
+.gs{margin-top:6px;font-size:13px;color:var(--overlay1)}
+.gs b{color:var(--subtext1);font-weight:500}
+.gs.ok,.gs.ok b{color:var(--green)}
 .rate{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;margin-top:14px}
 .rate button{height:42px;background:var(--base);border-radius:2px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font-size:12px;color:var(--subtext1)}
 .rate button small{font-size:10px;color:var(--overlay0);font-variant-numeric:tabular-nums}
@@ -5679,9 +5682,9 @@ const CUE={word:"word → meaning",cloze:"fill the gap"};
 function openStep(i,kind,inWalk){
   const k=K(i);hideTip();fresh.clear();
   if(!kind)kind=k.claimed?"verify":k.green?(due[i]?"due":"browse"):k.S>0?(due[i]?"due":"again"):"new";
-  const s=kind==="probe"?null:bestSent(i);
-  step={kind,i,phase:kind==="probe"?"probe":kind==="browse"?"closed":"ask",sent:s,gap:s?gapOf(s,i):[],typed:"",verdict:null,inWalk:!!inWalk,opened:null,cue:"word"};
-  if(kind==="due"&&s&&!step.gap.length)step.cue="cloze";
+  const s=kind==="probe"?null:bestSent(i),learn=kind!=="probe"&&kind!=="verify"&&!k.green&&!k.claimed;  // not yours yet → the learn card
+  step={kind,i,phase:kind==="probe"?"probe":learn?"guess":kind==="browse"?"closed":"ask",learn,miss:0,guess:"",sent:s,gap:s?gapOf(s,i):[],typed:"",verdict:null,inWalk:!!inWalk,opened:null,cue:"word"};
+  if(kind==="due"&&!learn&&s&&!step.gap.length)step.cue="cloze";
   sel=i;link.clear();if(s)s.ids.forEach(x=>{if(x!==i&&K(x).vis)link.add(x)});
   if(!auto){render();select(i,true)}
   updateGo();
@@ -5704,6 +5707,18 @@ function spelled(){
   step.verdict=check(words[step.i],step.typed,step.sent?surfaceOf(step.sent,step.i):null);
   step.phase="rate";if(!auto)render();
 }
+// ---------- the learn card (a word that is not yours yet): guess → meet → recall, until right → yours. Nothing English is on the card before the guess. ----------
+function commitGuess(){if(!step||step.phase!=="guess")return;const ai=pop.querySelector("[data-ans]");step.guess=ai?ai.value.trim():"";step.phase="meet";if(!auto)render()}
+function toRecall(){if(!step||(step.phase!=="meet"&&step.phase!=="miss"))return;step.phase="recall";if(!auto)render()}
+function recalled(){
+  if(!step||step.phase!=="recall")return;const ai=pop.querySelector("[data-ans]");step.typed=ai?ai.value:"";if(!norm(step.typed))return;
+  step.verdict=check(words[step.i],step.typed,step.sent?surfaceOf(step.sent,step.i):null);
+  if(!step.verdict.ok){step.miss++;step.phase="miss";if(!auto)render();return}
+  step.phase="rate";answer(step.miss||step.verdict.acc?2:3);
+}
+const STOPW=new Set(["to","the","a","an","of","is","it","in","on","for","and","or","one","some","something"]);
+function guessClose(g,t){const ws=x=>strip(x.toLowerCase()).split(/[^a-z]+/).filter(x=>x.length>1&&!STOPW.has(x)),b=ws(t);return ws(g).some(x=>b.some(y=>x===y||(x.length>3&&y.length>3&&(x.startsWith(y)||y.startsWith(x)))))}
+const enOK=(s,i)=>!gapOf(s,i).length;  // a sentence's English shows only when every other word in it is yours: it would give away the others
 function suggested(){const v=step.verdict;if(!v)return 3;return v.ok?(v.acc?2:3):1}
 function answer(r){
   if(!step)return;const{kind,i}=step,k=K(i);
@@ -5721,7 +5736,7 @@ function answer(r){
   step.r=r;step.opened=op?[op]:null;step.readNew=nRead-before;step.phase="after";
   if(auto)return;
   if(seedDone()){openSentence();return}
-  if(!op&&!step.readNew&&r>1&&step.inWalk&&walk){next();return}
+  if(!op&&!step.readNew&&r>1&&step.inWalk&&walk&&!step.learn){next();return}
   render();if(!seeded&&k.green&&(i===HOLA||i===MUNDO))showTip(1);
 }
 function openSentence(){step={kind:"sentence",i:MUNDO,phase:"spell",sent:SEED0,gap:[],typed:"",verdict:null,inWalk:!!walk,opened:null};sel=MUNDO;link.clear();SEED0.ids.forEach(x=>link.add(x));render();select(MUNDO,true)}
@@ -5746,32 +5761,44 @@ function sentHTML(s,target,mode){ // "ask" (target lit) · "cloze" (target blank
 }
 function rateRow(i,sug){const S=K(i).S||0;const iv=r=>{if(r===1)return"10m";const s=S?S*(1+15*Math.pow(S,-.1)*(Math.exp(1-R(i))-1)*[0,0,.6,1,1.5][r]):S0[r];return fmtIv(ivlOf(s))};
   return'<div class="rate" role="group" aria-label="Rate">'+["again","hard","good","easy"].map((n,j)=>'<button data-r="'+(j+1)+'" class="'+(sug===j+1?"sug":"")+'">'+n+'<small>'+(j+1)+' · '+iv(j+1)+'</small></button>').join("")+'</div>'}
-function openedHTML(list){if(!list||!list.length)return'';return list.map(o=>'<div class="open"><div class="lab">opened</div><div class="sn">'+sentHTML(o.s,-1,"plain")+'<span class="en">'+esc(o.s.en)+'</span></div>'+(o.nw.length?'<div class="chips">'+o.nw.map(x=>'<button class="chip new" data-go="'+x+'">'+esc(words[x].w)+'</button>').join("")+'<span class="chip" style="border:0;color:var(--overlay0)">new on the board</span></div>':'<div class="q" style="margin-top:4px">its words were already on the board</div>')+'</div>').join("")}
+function openedHTML(list){if(!list||!list.length)return'';return list.map(o=>'<div class="open"><div class="lab">opened</div><div class="sn">'+sentHTML(o.s,-1,"plain")+(readable(o.s)?'<span class="en">'+esc(o.s.en)+'</span>':'')+'</div>'+(o.nw.length?'<div class="chips">'+o.nw.map(x=>'<button class="chip new" data-go="'+x+'">'+esc(words[x].w)+'</button>').join("")+'<span class="chip" style="border:0;color:var(--overlay0)">new on the board</span></div>':'<div class="q" style="margin-top:4px">its words were already on the board</div>')+'</div>').join("")}
 function render(){
   if(!step)return;const{kind,i,phase}=step,w=words[i],k=K(i),s=step.sent;
   let h='<div class="arr" id="arr"></div><button class="x" aria-label="Close">×</button>';
   const KL={new:"new",verify:"you said you know this · verify",due:"due",again:"again",browse:k.green?"yours":k.claimed?"claimed":"learning",probe:"finding your frontier",sentence:"your first sentence"};
   const gapNote=s&&kind!=="probe"&&kind!=="sentence"&&phase!=="after"?(step.gap.length?step.gap.length+' more to go in this sentence':'every other word is yours'):'';
-  h+='<div class="cl"><span>'+KL[kind]+(kind==="probe"?' · '+(probe.n+1):'')+'</span>'+(gapNote?'<i>'+gapNote+'</i>':'')+'</div>';
-  const hideWord=phase==="spell"||(phase==="ask"&&step.cue==="cloze");
+  h+='<div class="cl"><span>'+(step.learn?(k.S>0?"learning":"new word"):KL[kind])+(kind==="probe"?' · '+(probe.n+1):'')+'</span>'+(gapNote?'<i>'+gapNote+'</i>':'')+'</div>';
+  const hideWord=phase==="spell"||phase==="recall"||(phase==="ask"&&step.cue==="cloze");
   if(kind==="sentence")h+='<div class="ph"><h2>'+esc(SEED0.en)+'</h2></div>';
   else h+='<div class="ph">'+(hideWord?'<h2 class="hid">'+esc(w.t)+'</h2>':'<h2>'+head(w)+'</h2>')+'<small>'+posLabel(w)+'</small></div>';
   if(phase==="probe"){h+='<div class="q">Do you know what this means?</div><div class="yn"><button data-r="1">don’t<small>1</small></button><button data-r="2">know<small>2</small></button></div>'}
   else if(phase==="closed"){h+='<div class="q">Recall the meaning before you look.</div><button class="big" data-act="reveal">reveal<small>space</small></button>'}
+  else if(phase==="guess"){
+    if(s)h+='<div class="cue">'+sentHTML(s,i,"ask")+'</div>';
+    h+='<div class="q">'+(s?'What might the lit word mean?':'What might it mean?')+' Guess before you look — a wrong guess still helps it stick.</div><input class="ans" data-ans placeholder="your guess, in English" autocomplete="off" autocapitalize="off" spellcheck="false"><div class="yn"><button data-act="skip">no idea</button><button data-act="guess">guess<small>enter</small></button></div>';
+  }
+  else if(phase==="meet"||phase==="miss"){
+    h+='<div class="tr">'+esc(w.t)+'</div>';
+    if(phase==="meet"&&step.guess){const ok=guessClose(step.guess,w.t);h+='<div class="gs'+(ok?' ok':'')+'">'+(ok?'✓ ':'')+'you guessed <b>'+esc(step.guess)+'</b></div>'}
+    if(phase==="miss")h+='<div class="vd bad">✗ you wrote <b>'+esc(step.typed)+'</b> — it is <b>'+esc(s?surfaceOf(s,i):w.w)+'</b></div>';
+    if(s)h+='<div class="cue" style="font-size:16px;margin-top:6px">'+sentHTML(s,i,"ask")+(enOK(s,i)?'<span class="en">'+esc(s.en)+'</span>':'')+'</div>';
+    if(w.g)h+='<div class="gr">'+esc(w.g)+'</div>';
+    h+='<button class="big" data-act="recall">'+(phase==="miss"?'try again':'now recall it')+'<small>enter</small></button>';
+  }
   else if(phase==="ask"){
     if(step.cue==="cloze"){h+='<div class="cue">'+sentHTML(s,i,"cloze")+'<span class="en">'+esc(s.en)+'</span></div><input class="ans" data-ans placeholder="type the missing word — or just think it" autocomplete="off" autocapitalize="off" spellcheck="false">'}
-    else if(s){h+='<div class="cue">'+sentHTML(s,i,"ask")+(step.gap.length?'<span class="en">'+esc(s.en)+'</span>':'')+'</div><div class="q">'+(step.gap.length?'Find the lit word in the English, then reveal.':kind==="due"||kind==="again"?'Read it. Recall the lit word, then reveal.':'Every other word is yours. Guess the lit one, then reveal.')+'</div>'}
-    else h+='<div class="q">'+(kind==="new"?'Guess the meaning first, then reveal — a wrong guess still helps it stick.':'Recall the meaning, then reveal.')+'</div>';
+    else if(s){h+='<div class="cue">'+sentHTML(s,i,"ask")+'</div><div class="q">Read it. Recall the lit word, then reveal.</div>'}
+    else h+='<div class="q">Recall the meaning, then reveal.</div>';
     h+='<button class="big" data-act="reveal">reveal<small>space</small></button>';
   }
-  else if(phase==="spell"){
+  else if(phase==="spell"||phase==="recall"){
     if(kind==="sentence"){h+='<div class="q">You know every word of your first sentence. Type it in Spanish — punctuation optional.</div>'+(step.wrong?'<div class="vd bad">not quite — <b>'+esc(SEED0.es)+'</b></div>':'')+'<input class="ans" data-ans placeholder="type the sentence" autocomplete="off" autocapitalize="off" spellcheck="false">'}
-    else{h+='<div class="cue">'+(s?sentHTML(s,i,"cloze")+'<span class="en">'+esc(s.en)+'</span>':'<span class="en">'+esc(w.t)+'</span>')+'</div><div class="q">Spell it from memory.</div><input class="ans" data-ans placeholder="type it" autocomplete="off" autocapitalize="off" spellcheck="false">'}
+    else{h+=(s?'<div class="cue">'+sentHTML(s,i,"cloze")+(enOK(s,i)?'<span class="en">'+esc(s.en)+'</span>':'')+'</div>':'')+'<div class="q">'+(phase==="recall"?'Now type the Spanish from memory.':'Spell it from memory.')+'</div><input class="ans" data-ans placeholder="type it" autocomplete="off" autocapitalize="off" spellcheck="false">'}
   }
   else{ // reveal · rate · after · open
     const v=step.verdict;
     if(phase!=="after"||kind!=="sentence")h+='<div class="tr">'+esc(w.t)+'</div>';
-    if(s&&(phase==="reveal"||phase==="rate"))h+='<div class="cue" style="font-size:16px;margin-top:6px">'+sentHTML(s,i,"ask")+'<span class="en">'+esc(s.en)+'</span></div>';
+    if(s&&(phase==="reveal"||phase==="rate"))h+='<div class="cue" style="font-size:16px;margin-top:6px">'+sentHTML(s,i,"ask")+(enOK(s,i)?'<span class="en">'+esc(s.en)+'</span>':'')+'</div>';
     if(w.g&&phase!=="after")h+='<div class="gr">'+esc(w.g)+'</div>';
     if(v&&(phase==="rate"||(phase==="reveal"&&step.cue==="cloze"))){
       if(v.ok&&v.acc)h+='<div class="vd">✓ nearly — mind the accent: <b>'+esc(s?surfaceOf(s,i):w.w)+'</b></div>';
@@ -5796,14 +5823,14 @@ function render(){
     else{ // open: the browsing card of a yours / learning word
       h+='<div class="sched">'+(k.S>0?'stable '+fmtD(k.S)+' · '+(due[i]?'due now':'due in '+Math.max(1,Math.ceil(ivlOf(k.S)-(day-k.last)))+' d')+' · '+k.reps+' review'+(k.reps===1?'':'s')+(k.lapses?' · '+k.lapses+' slip'+(k.lapses>1?'s':''):''):k.claimed?'claimed · the walk will verify it':'not yet yours')+'</div>';
       if(step.opened)h+=openedHTML(step.opened);
-      else if(k.opened.length)h+='<div class="open"><div class="lab">sentences you opened from here</div>'+k.opened.map(key=>{const o=SK.get(key);return o?'<div class="sn">'+sentHTML(o,-1,"plain")+'<span class="en">'+esc(o.en)+'</span></div>':''}).join("")+'</div>';
+      else if(k.opened.length)h+='<div class="open"><div class="lab">sentences you opened from here</div>'+k.opened.map(key=>{const o=SK.get(key);return o?'<div class="sn">'+sentHTML(o,-1,"plain")+(readable(o)?'<span class="en">'+esc(o.en)+'</span>':'')+'</div>':''}).join("")+'</div>';
       if(k.green||k.claimed){const more=(INV.get(i)||[]).some(x=>!openedS.has(x.key)&&sentScore(x,i)!=null);h+='<button class="lnk" data-act="branch"'+(more?'':' disabled style="opacity:.5"')+'>'+(more?'open another sentence · b':'no more sentences here yet')+'</button>'}
       if(k.S>0||k.claimed)h+='<button class="lnk" data-act="test">test me · space</button>';
     }
   }
-  if(phase==="ask"&&!k.green&&!k.claimed&&kind==="new"&&!walk)h+='<button class="lnk" data-act="claim">I already know this · k</button>';
-  if(phase==="ask"&&!seeded&&!probed&&i===HOLA)h+='<button class="lnk" data-act="probe">I already know some Spanish → find my frontier</button>';
-  h+='<div class="kb">'+(kind==="probe"?'<kbd>1</kbd> don’t · <kbd>2</kbd> know · <kbd>esc</kbd> stop':phase==="ask"||phase==="closed"?'<kbd>space</kbd> reveal · <kbd>esc</kbd> '+(walk?'stop':'close'):phase==="rate"||(phase==="reveal"&&kind==="due")?'<kbd>1–4</kbd> rate · <kbd>enter</kbd> '+["","again","hard","good","easy"][suggested()]+' · <kbd>esc</kbd> '+(walk?'stop':'close'):phase==="reveal"?'<kbd>enter</kbd> spell it':phase==="spell"?'<kbd>enter</kbd> check':phase==="after"?'<kbd>enter</kbd> '+(step.inWalk&&walk?'continue':'close'):'<kbd>←→</kbd> move · <kbd>esc</kbd> close')+'</div>';
+  if(phase==="guess"&&!k.S&&!walk)h+='<button class="lnk" data-act="claim">I already know this</button>';
+  if(phase==="guess"&&!seeded&&!probed&&i===HOLA)h+='<button class="lnk" data-act="probe">I already know some Spanish → find my frontier</button>';
+  h+='<div class="kb">'+(kind==="probe"?'<kbd>1</kbd> don’t · <kbd>2</kbd> know · <kbd>esc</kbd> stop':phase==="ask"||phase==="closed"?'<kbd>space</kbd> reveal · <kbd>esc</kbd> '+(walk?'stop':'close'):phase==="rate"||(phase==="reveal"&&kind==="due")?'<kbd>1–4</kbd> rate · <kbd>enter</kbd> '+["","again","hard","good","easy"][suggested()]+' · <kbd>esc</kbd> '+(walk?'stop':'close'):phase==="reveal"?'<kbd>enter</kbd> spell it':phase==="spell"||phase==="recall"?'<kbd>enter</kbd> check':phase==="guess"?'<kbd>enter</kbd> guess — empty is no idea · <kbd>esc</kbd> '+(walk?'stop':'close'):phase==="meet"||phase==="miss"?'<kbd>enter</kbd> '+(phase==="miss"?'try again':'recall it'):phase==="after"?'<kbd>enter</kbd> '+(step.inWalk&&walk?'continue':'close'):'<kbd>←→</kbd> move · <kbd>esc</kbd> close')+'</div>';
   pop.innerHTML=h;pop.classList.add("on");wire(w,k);if(needLayout)layout();place();tip.style.display="none";req();
 }
 function wire(w,k){
@@ -5812,11 +5839,12 @@ function wire(w,k){
   d.querySelectorAll("[data-r]").forEach(b=>b.onclick=()=>answer(+b.dataset.r));
   d.querySelectorAll("[data-act]").forEach(b=>b.onclick=()=>{const a=b.dataset.act;
     if(a==="reveal")reveal();else if(a==="spell")toSpell();else if(a==="cont")continueStep();
+    else if(a==="guess")commitGuess();else if(a==="skip"){const ai=d.querySelector("[data-ans]");if(ai)ai.value="";commitGuess()}else if(a==="recall")toRecall();
     else if(a==="test"){openStep(step.i,k.green||k.claimed?"due":"again",false)}
     else if(a==="claim")claimWord(step.i);else if(a==="probe")startProbe();
     else if(a==="branch"){const op=branch(step.i);if(op){reorder();layout();stats();save();step.opened=[op];render()}}});
   d.querySelectorAll("[data-go]").forEach(b=>b.onclick=e=>{e.stopPropagation();if(walk)stopWalk();openStep(+b.dataset.go,null,false)});
-  const ai=d.querySelector("[data-ans]");if(ai){ai.addEventListener("keydown",e=>{e.stopPropagation();if(e.key==="Enter"){e.preventDefault();if(step.phase==="spell")spelled();else reveal()}if(e.key==="Escape"){e.preventDefault();if(walk)stopWalk();else closePop()}});if(!matchMedia("(hover:none)").matches)ai.focus()}
+  const ai=d.querySelector("[data-ans]");if(ai){ai.addEventListener("keydown",e=>{e.stopPropagation();if(e.key==="Enter"){e.preventDefault();if(step.phase==="spell")spelled();else if(step.phase==="guess")commitGuess();else if(step.phase==="recall")recalled();else reveal()}if(e.key==="Escape"){e.preventDefault();if(walk)stopWalk();else closePop()}});if(!matchMedia("(hover:none)").matches)ai.focus()}
   d.querySelectorAll(".tk[data-ids]").forEach(t=>{const ids=t.dataset.ids.split(",").map(Number);
     t.addEventListener("mouseenter",()=>{const x=ids.find(x=>K(x).vis);if(x!==undefined){hov=x;req()}});t.addEventListener("mouseleave",()=>{hov=-1;req()});
     t.onclick=e=>{e.stopPropagation();if(ids.includes(step.i))return;const x=ids.find(x=>K(x).vis)??ids[0];if(!K(x).vis)return;if(walk)stopWalk();openStep(x,null,false)}});
@@ -5910,9 +5938,10 @@ document.addEventListener("keydown",e=>{
     const ph=step.phase;
     if(step.kind==="probe"){if(k==="1"||k==="2")answer(+k);return}
     if(k===" "||k==="Enter"){if(t.closest&&t.closest(".pop")&&t.tagName==="BUTTON"&&k==="Enter")return;e.preventDefault();
-      if(ph==="ask"||ph==="closed")reveal();else if(ph==="reveal"){if(step.kind==="due")answer(suggested());else toSpell()}else if(ph==="rate")answer(suggested());else if(ph==="after")continueStep();else if(ph==="open"&&k===" ")openStep(step.i,K(step.i).green||K(step.i).claimed?"due":"again",false);return}
+      if(ph==="guess")commitGuess();else if(ph==="meet"||ph==="miss")toRecall();else if(ph==="recall")recalled();
+      else if(ph==="ask"||ph==="closed")reveal();else if(ph==="reveal"){if(step.kind==="due")answer(suggested());else toSpell()}else if(ph==="rate")answer(suggested());else if(ph==="after")continueStep();else if(ph==="open"&&k===" ")openStep(step.i,K(step.i).green||K(step.i).claimed?"due":"again",false);return}
     if(/^[1-4]$/.test(k)&&(ph==="rate"||(ph==="reveal"&&step.kind==="due"))){e.preventDefault();answer(+k);return}
-    if(k==="k"&&!walk&&ph==="ask"&&step.kind==="new"){e.preventDefault();claimWord(step.i);return}
+    if(k==="k"&&!walk&&ph==="guess"&&!K(step.i).S){e.preventDefault();claimWord(step.i);return}
     if(k==="b"&&ph==="open"){e.preventDefault();const op=branch(step.i);if(op){reorder();layout();stats();save();step.opened=[op];render()}return}
     if(walk)return;
   }
@@ -5971,7 +6000,7 @@ else if(seedDone())openSentence();
 else if(!nYours&&!probed)showTip(0);
 draw();sc.focus({preventScroll:true});
 {const ai=pop.querySelector("[data-ans]");if(ai&&!matchMedia("(hover:none)").matches)ai.focus()}  // a card opened at load (reload mid-ritual, ?open) keeps its input focused
-window.__fog={L:()=>L,cellXY,hit,sc,surfaceOf,setZoom,draw,N,words,K,IDX,bank,step:()=>step,walk:()=>walk,startWalk,answer,reveal,toSpell,spelled,continueStep,openStep,autoLearn,advance,select,stats,candidates,order:()=>order,fresh,appear,glide,yours,gapOf,day:()=>day,nRead:()=>nRead,openedS,branch,startProbe,probe:()=>probe};
+window.__fog={L:()=>L,cellXY,hit,sc,surfaceOf,setZoom,draw,N,words,K,IDX,bank,step:()=>step,walk:()=>walk,startWalk,answer,reveal,toSpell,spelled,commitGuess,toRecall,recalled,continueStep,openStep,autoLearn,advance,select,stats,candidates,order:()=>order,fresh,appear,glide,yours,gapOf,day:()=>day,nRead:()=>nRead,openedS,branch,startProbe,probe:()=>probe};
 </script>
 </body>
 </html>
