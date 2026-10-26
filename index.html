@@ -9,7 +9,7 @@
   --crust:#11111b; --mantle:#181825; --base:#1e1e2e;
   --surface0:#313244; --surface1:#45475a; --surface2:#585b70;
   --overlay0:#6c7086; --overlay1:#7f849c; --subtext0:#a6adc8; --subtext1:#bac2de; --text:#cdd6f4;
-  --lavender:#b4befe; --green:#a6e3a1; --red:#f38ba8;
+  --lavender:#b4befe; --green:#a6e3a1; --gold:#f4d27a; --red:#f38ba8;
   --ui: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
   font-family: var(--ui);
 }
@@ -20,17 +20,25 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 input{font:inherit}
 .vh{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
 
-/* bar: one row. The Walk button, one sentence of numbers, find, zoom. */
+/* bar: one row. One sentence of numbers, the view toggle (grid · cards), the bucket, the gate counter, find, zoom. */
 .bar{flex:none;height:44px;display:flex;align-items:center;gap:14px;padding:0 14px;background:var(--mantle);border-bottom:1px solid var(--crust);position:relative;z-index:5}
 .lang{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--overlay1)}
 .cov{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px;justify-content:center}
 .cov-t{font-size:12px;color:var(--overlay1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cov-t b{color:var(--text);font-weight:500;font-variant-numeric:tabular-nums}
 .cov-t em{font-style:normal;color:var(--green);font-variant-numeric:tabular-nums}
-.go{height:26px;padding:0 10px;border-radius:3px;background:var(--surface0);color:var(--lavender);font-size:12px;white-space:nowrap;font-variant-numeric:tabular-nums}
-.go:hover{background:var(--surface1)}
-.go.on{background:var(--lavender);color:var(--crust)}
-.go.done{color:var(--subtext0)}
+.vt{flex:none;display:flex;height:26px;border-radius:3px;background:var(--base);border:1px solid var(--surface0);overflow:hidden}
+.vt button{padding:0 10px;font-size:12px;color:var(--overlay1);display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.vt button:hover{color:var(--text)}
+.vt button.on{background:var(--surface0);color:var(--text)}
+.vt b{font-weight:500;color:var(--lavender);font-variant-numeric:tabular-nums}
+.vt b:empty{display:none}
+.bk{flex:none;height:26px;padding:0 8px;border-radius:3px;font-size:12px;color:var(--overlay1);font-variant-numeric:tabular-nums;white-space:nowrap}
+.bk:before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--lavender);opacity:.7;margin-right:6px;vertical-align:1px}
+.bk:hover{background:var(--surface0);color:var(--text)}
+.bk.full{color:var(--lavender)}
+.clr{flex:none;font-size:12px;color:var(--subtext0);white-space:nowrap;font-variant-numeric:tabular-nums}
+.clr[hidden]{display:none}
 #fq{width:140px;height:26px;background:var(--base);border:1px solid var(--surface0);border-radius:3px;color:var(--text);padding:0 8px;font:12px var(--ui)}
 #fq::placeholder{color:var(--overlay0)}
 #fq:focus{outline:none;border-color:var(--lavender)}
@@ -78,19 +86,21 @@ body.fx .scroll,body.fx .bar,body.fx .hint{visibility:hidden}
 #mm{display:block;cursor:pointer;touch-action:manipulation}
 .mmc{position:absolute;border-radius:2px;border:2px solid var(--lavender);pointer-events:none;animation:pu 1.8s ease-in-out infinite;display:none}
 .mmc.on{border-color:var(--green);animation:none}
+.fo.rd .mmw{visibility:hidden}  /* the cards view: the minimap would point at the answer */
 @keyframes pu{50%{box-shadow:0 0 0 4px #b4befe33}}
 /* centre */
 .fo-c{grid-area:c;align-self:center;display:flex;flex-direction:column;align-items:center;text-align:center;min-width:0;padding:clamp(20px,3vh,64px) 0}
 .flab{font-size:var(--fs-s);letter-spacing:.18em;text-transform:uppercase;color:var(--overlay0);display:flex;gap:1.2em;flex-wrap:wrap;justify-content:center}
 .flab i{font-style:normal;color:var(--lavender)}
 .flab.g span{color:var(--green)}
+.flab.au span{color:var(--gold)}
 .hd{margin-top:clamp(16px,2.2vh,48px);font-size:var(--fs-h);font-weight:600;letter-spacing:-.01em;display:flex;align-items:baseline;gap:.5em;justify-content:center;flex-wrap:wrap}
 .hd i{font-style:normal;font-weight:400;color:var(--subtext0)}
 .hd small{font-size:var(--fs-s);font-weight:400;color:var(--overlay0);letter-spacing:.06em}
 .hd.cue{color:var(--subtext0);font-weight:500}
 .hd.solo{font-size:var(--fs-x);margin-top:clamp(20px,3vh,64px)}
 .sx{margin-top:clamp(14px,2vh,40px);font-size:var(--fs-x);line-height:1.3;letter-spacing:-.01em;overflow-wrap:break-word;max-width:100%}
-.sx.cueen{color:var(--subtext0)}
+.sx.sm{font-size:var(--fs-h)}
 .sx .en{display:block;font-size:var(--fs-m);color:var(--overlay1);margin-top:.7em;letter-spacing:0;line-height:1.5}
 .tk{border-radius:3px;position:relative;cursor:pointer;padding:0 .04em}
 .tk.tg{color:var(--lavender);font-weight:600;box-shadow:inset 0 -.07em 0 var(--lavender)}
@@ -102,8 +112,6 @@ body.fx .scroll,body.fx .bar,body.fx .hint{visibility:hidden}
   .tk[data-l]:hover{background:var(--surface0)}
   .tk[data-l]:hover:after{content:attr(data-l);position:absolute;left:50%;bottom:calc(100% + 6px);transform:translateX(-50%);background:var(--mantle);border:1px solid var(--surface1);border-radius:3px;padding:.15em .6em;font-size:max(13px,var(--fs-s));line-height:1.5;font-weight:400;font-style:normal;color:var(--subtext1);white-space:nowrap;z-index:3;letter-spacing:0;pointer-events:none}
 }
-.gap{font:inherit;font-weight:600;color:var(--lavender);background:var(--base);border:0;border-bottom:.07em solid var(--lavender);border-radius:4px 4px 0 0;padding:0 .2em;width:4em;max-width:100%;text-align:center;outline:none;letter-spacing:0;vertical-align:baseline}
-.gap:focus{background:var(--surface0)}
 .mean{margin-top:clamp(12px,1.8vh,36px);font-size:var(--fs-h);color:var(--subtext1);line-height:1.35}
 .nt{margin-top:clamp(12px,1.6vh,30px);line-height:1.5;color:var(--overlay1);max-width:34em}
 .nt b{color:var(--subtext1);font-weight:500}
@@ -116,7 +124,6 @@ body.fx .scroll,body.fx .bar,body.fx .hint{visibility:hidden}
 .gs b{color:var(--subtext1);font-weight:500}
 .gs.ok,.gs.ok b{color:var(--green)}
 .ans{display:block;width:min(100%,24em);height:2.8em;margin-top:clamp(16px,2.2vh,40px);font-size:var(--fs-b);background:var(--base);border:1px solid var(--surface0);border-radius:5px;padding:0 1em;text-align:center;color:var(--text)}
-.ans.wide{width:min(100%,30em)}
 .ans:focus{outline:none;border-color:var(--lavender)}
 .ans::placeholder{color:var(--overlay0)}
 /* accent keys under a Spanish answer field: always shown, so they never hint that the answer has an accent */
@@ -151,20 +158,28 @@ body.fx .scroll,body.fx .bar,body.fx .hint{visibility:hidden}
 .it h4{font-size:var(--fs-s);letter-spacing:.16em;text-transform:uppercase;color:var(--overlay0);font-weight:500;margin-bottom:.7em}
 .it p{line-height:1.5;color:var(--subtext0)}
 .it p.sm{font-size:.85em;color:var(--overlay0);margin-top:.3em}
-.it .sn{line-height:1.4;color:var(--subtext1);margin-bottom:.9em}
-.it .sn:last-child{margin-bottom:0}
-.it .sn .en{display:block;font-size:.85em;color:var(--overlay1);margin-top:.15em}
 .it.ok p{color:var(--green)}
 .it.ok b{font-weight:500}
-.enb{font-size:.78em;color:var(--overlay0);margin-left:.5em;border-bottom:1px dotted var(--overlay0)}
-.enb:hover{color:var(--text)}
 .chips{display:flex;flex-wrap:wrap;align-items:center;gap:.4em;margin-top:.5em}
 .fo-l .chips{justify-content:flex-end}
 .chip{font-size:.85em;padding:.25em .8em;border-radius:1em;background:var(--base);border:1px solid var(--surface0);color:var(--subtext1);line-height:1.4}
 .chip:hover{background:var(--surface0);color:var(--text)}
 .chip.new{color:var(--lavender);border-color:#b4befe44}
 .chips .cap{font-size:.78em;color:var(--overlay0)}
-/* the word page (a word that is yours): the word, its attributes, its sentences */
+/* the upgraded card (a collected word): the word, its attributes, its sentences. A sentence that still has words in the fog is one button: clicking it brings them all onto the board */
+.sents{margin-top:clamp(18px,2.6vh,48px);display:flex;flex-direction:column;gap:.55em;width:min(100%,36em);text-align:left}
+.sb{display:block;width:100%;text-align:left;font-size:calc(var(--fs-m)*1.12);line-height:1.45;padding:.6em 4.6em .6em .9em;border:1px solid var(--surface0);border-radius:6px;background:var(--base);color:var(--subtext1);position:relative}
+.sb:after{content:"open";position:absolute;right:.9em;top:50%;transform:translateY(-50%);font-size:max(11px,var(--fs-s));letter-spacing:.14em;text-transform:uppercase;color:var(--overlay0)}
+@media (hover:hover){.sb:hover{background:var(--surface0);border-color:#b4befe55}.sb:hover:after{color:var(--lavender)}}
+.sb .tk{cursor:inherit}
+.sents .sn{font-size:calc(var(--fs-m)*1.12);line-height:1.45;padding:.6em .9em;color:var(--subtext1)}
+.sents .sn .en{display:block;font-size:.85em;color:var(--overlay1);margin-top:.15em}
+.sents .sn .sm{font-size:.8em;color:var(--overlay0);margin-top:.3em}
+.sents .lnk{align-self:flex-start}
+.gate{margin-top:clamp(12px,1.6vh,30px);line-height:1.5;color:var(--subtext0);border-left:2px solid var(--lavender);padding:.3em 0 .3em .9em;text-align:left;max-width:34em}
+.gate b{color:var(--text);font-weight:500}
+.gate .lnk{padding:0;color:var(--lavender)}
+.sents .gate{margin:0 0 .3em}
 .gl{margin-top:.35em;font-size:var(--fs-h);color:var(--subtext1);line-height:1.35}
 .tags{display:flex;gap:.5em;flex-wrap:wrap;justify-content:center;margin-top:clamp(12px,1.6vh,30px)}
 .tag{font-size:max(12px,var(--fs-s));letter-spacing:.06em;padding:.3em .9em;border-radius:1em;border:1px solid var(--surface1);color:var(--subtext0)}
@@ -209,6 +224,9 @@ body.fx .scroll,body.fx .bar,body.fx .hint{visibility:hidden}
 @media (max-width:720px){
   .bar{gap:8px;padding:0 10px}
   .lang,#zp,#zm{display:none}
+  .vt button{padding:0 8px}
+  .bk{padding:0 6px}
+  .clr{font-size:11px}
   #fq{width:64px}
   /* the focus page sits on the visual viewport (--kb = soft keyboard height, --vvh = visible height; set by vvSync) and scrolls within itself */
   .fo{top:auto;bottom:var(--kb,0px);height:var(--vvh,100dvh);padding-top:env(safe-area-inset-top);--fs-s:11px;--fs-m:16px;--fs-h:22px;--fs-x:clamp(24px,7.4vw,32px);--fs-b:16px;--gut:16px}
@@ -239,13 +257,16 @@ html,body{overscroll-behavior:none}
   #fq{font-size:16px}  /* under 16px iOS zooms on focus */
   .fo .ans{font-size:max(16px,var(--fs-b))}
   .bar{height:calc(54px + env(safe-area-inset-top));padding-top:env(safe-area-inset-top);padding-left:max(10px,env(safe-area-inset-left));padding-right:max(10px,env(safe-area-inset-right))}
-  .go,#fq{height:44px}
+  .bk,#fq{height:44px}
+  .bk{min-width:44px}
+  .vt{height:auto}
+  .vt button{min-height:44px;min-width:44px;justify-content:center}
+  .sb{min-height:44px}
   .zoom button{width:44px;height:44px}
   .back{min-height:44px}
   .acc button,.tz button{min-height:44px}
   .lnk{min-height:44px;display:inline-flex;align-items:center}
-  button.chip,.tag,.enb{min-height:44px;min-width:44px;display:inline-flex;align-items:center;justify-content:center}
-  .enb{border-bottom:0;text-decoration:underline dotted}
+  button.chip,.tag{min-height:44px;min-width:44px;display:inline-flex;align-items:center;justify-content:center}
   .ans,.fb{min-height:44px}
   .fb small{display:none}  /* key hints */
   button:active{filter:brightness(1.35)}
@@ -265,17 +286,18 @@ html,body{overscroll-behavior:none}
 <header class="bar">
   <div class="lang">es</div>
   <div class="cov"><div class="cov-t" id="covt"></div></div>
-  <button class="go" id="go" title="The Walk (space)"></button>
+  <div class="vt" role="group" aria-label="View"><button id="vg" class="on" title="The grid (esc)">grid</button><button id="vc" title="Flashcards (c)">cards<b id="vcn"></b></button></div>
+  <button class="bk" id="bk"></button><span class="clr" id="clr" hidden></span>
   <input id="fq" type="search" placeholder="find a word" aria-label="Find a word: reveals it on the board" lang="es" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="search">
   <div class="zoom"><button id="zm" aria-label="Zoom out">−</button><button id="zp" aria-label="Zoom in">+</button><button id="z0" class="fit" aria-label="Fit what you have found">fit</button></div>
 </header>
-<main class="scroll" id="sc" tabindex="0" role="application" aria-label="The Spanish words you have found, most common first. Arrows move, Enter opens, Space walks.">
+<main class="scroll" id="sc" tabindex="0" role="application" aria-label="The Spanish words you have found, most common first. Arrows move, Enter opens, Space goes to the next step, c opens the flashcards.">
   <canvas id="cv" aria-hidden="true"></canvas><div id="sp"></div>
 </main>
 <div class="hint" id="hint"></div>
 <footer class="sim" id="sim">
-  <span class="lab">simulation · not product ui</span><span id="simt"></span>
-  <button id="s1">+1 day</button><button id="sl10">learn 10</button><button id="sl100">learn 100</button><button id="sr">reset</button>
+  <span class="lab">simulation · not product ui</span>
+  <button id="s1">+1 day</button><button id="s7">+7 days</button><button id="snd">next due</button><button id="sl10">learn 10</button><button id="sl100">learn 100</button><button id="sr">reset</button><span id="simt"></span>
 </footer>
 <div class="fo" id="pop" role="dialog" aria-modal="true" aria-label="Word">
   <div class="fo-top"><button class="back" id="back"><kbd>esc</kbd><span id="backt">atlas</span></button><div class="fhint" id="fhint"></div><div class="mmw"><canvas id="mm" aria-hidden="true"></canvas><i class="mmc" id="mmc"></i></div></div>
@@ -288,7 +310,7 @@ html,body{overscroll-behavior:none}
 <script>
 "use strict";
 const $=id=>document.getElementById(id);
-const sc=$("sc"),cv=$("cv"),sp=$("sp"),pop=$("pop"),tip=$("tip"),fq=$("fq"),go=$("go"),hint=$("hint");
+const sc=$("sc"),cv=$("cv"),sp=$("sp"),pop=$("pop"),tip=$("tip"),fq=$("fq"),hint=$("hint");
 const foL=$("foL"),foC=$("foC"),foR=$("foR"),foF=$("foF"),mm=$("mm"),mmc=$("mmc"),fhint=$("fhint");
 const ctx=cv.getContext("2d",{alpha:false});
 const Q=new URLSearchParams(location.search);
@@ -301,11 +323,22 @@ const flat=s=>strip(s.toLowerCase()).replace(/[^a-zñ ]/g," ").replace(/\s+/g," 
 
 // ---------- tokens ----------
 const css=getComputedStyle(document.documentElement),T=n=>css.getPropertyValue("--"+n).trim();
-const C={crust:T("crust"),base:T("base"),s0:T("surface0"),s1:T("surface1"),s2:T("surface2"),o0:T("overlay0"),o1:T("overlay1"),sub:T("subtext1"),text:T("text"),lav:T("lavender"),green:T("green"),red:T("red")};
+const C={crust:T("crust"),base:T("base"),s0:T("surface0"),s1:T("surface1"),s2:T("surface2"),o0:T("overlay0"),o1:T("overlay1"),sub:T("subtext1"),text:T("text"),lav:T("lavender"),green:T("green"),gold:T("gold"),red:T("red")};
 const hex=h=>[1,3,5].map(j=>parseInt(h.slice(j,j+2),16));
-const mix=(a,b,t)=>{const A=hex(a),B=hex(b);return"rgb("+A.map((v,j)=>Math.round(v*t+B[j]*(1-t))).join(",")+")"};
-// colour buckets: 0 fog ghost (inside a touched block) · 1 new: found, not tried · 2 learning: tried, not yet yours · 3..32 yours: green by stability
-const NB=33,COL=[C.crust,C.s0,mix(C.green,C.s0,.3)];for(let b=0;b<30;b++)COL.push(mix(C.green,C.s0,.5+.5*b/29));
+// colour = learning strength only (the scheduled interval), blended perceptually: OKLab from the unlocked tile (surface0) towards green as the interval goes 0 → 7 d
+// (full green only strictly beyond 7 d), then OKLCH from green to gold by log-interval up to GOLD_DAYS. Time alone never fades it; due is the hollow outline.
+const lin=c=>{c/=255;return c<=.04045?c/12.92:Math.pow((c+.055)/1.055,2.4)},gam=c=>{const v=c<=.0031308?12.92*c:1.055*Math.pow(c,1/2.4)-.055;return Math.round(Math.max(0,Math.min(1,v))*255)};
+function lab(h){const[r,g,b]=hex(h).map(lin),l=Math.cbrt(.4122214708*r+.5363325363*g+.0514459929*b),m=Math.cbrt(.2119034982*r+.6806995451*g+.1073969566*b),s=Math.cbrt(.0883024619*r+.2817188376*g+.6299787005*b);
+  return[.2104542553*l+.793617785*m-.0040720468*s,1.9779984951*l-2.428592205*m+.4505937099*s,.0259040371*l+.7827717662*m-.808675766*s]}
+function rgbOf([L,a,b]){const l=Math.pow(L+.3963377774*a+.2158037573*b,3),m=Math.pow(L-.1055613458*a-.0638541728*b,3),s=Math.pow(L-.0894841775*a-1.291485548*b,3);
+  return"rgb("+[4.0767416621*l-3.3077115913*m+.2309699292*s,-1.2684380046*l+2.6097574011*m-.3413193965*s,-.0041960863*l-.7034186147*m+1.707614701*s].map(gam).join(",")+")"}
+const lerp=(a,b,t)=>a.map((v,j)=>v+(b[j]-v)*t);
+const lchMix=(A,B,t)=>{const c=x=>[x[0],Math.hypot(x[1],x[2]),Math.atan2(x[2],x[1])],P=c(A),Q=c(B);let dh=Q[2]-P[2];if(dh>Math.PI)dh-=2*Math.PI;if(dh<-Math.PI)dh+=2*Math.PI;
+  const L=P[0]+(Q[0]-P[0])*t,Ch=P[1]+(Q[1]-P[1])*t,h=P[2]+dh*t;return[L,Ch*Math.cos(h),Ch*Math.sin(h)]};
+// buckets: 0 fog · 1 on the board, never rated (transparent) · 2..21 learning, interval 0 → 7 d (sqrt ramp, 80 % of the way at 7 d) · 22 green (> 7 d) … 45 gold (≥ GOLD_DAYS)
+const NB=46,LAB0=lab(C.s0),LABG=lab(C.green),LABY=lab(C.gold),COL=[C.crust,C.s0],LUM=[0,LAB0[0]];
+for(let b=0;b<20;b++){const x=lerp(LAB0,LABG,.8*b/19);COL.push(rgbOf(x));LUM.push(x[0])}
+for(let b=0;b<24;b++){const x=lchMix(LABG,LABY,b/23);COL.push(rgbOf(x));LUM.push(x[0])}
 
 // =====================================================================
 // CONTENT (top 5,000 lemmas from prototypes/data via atlas-v1's embed; hand glosses; sentence bank + seed sentences)
@@ -5394,7 +5427,8 @@ El mundo es pequeño.|The world is small.
 Hola, soy Ana.|Hello, I'm Ana.
 Yo también.|Me too.
 Está aquí.|It's here.
-No tengo casa.|I don't have a house.`;
+No tengo casa.|I don't have a house.
+¡Hola a todo el mundo!|Hello, everyone!`;
 const BANK=`El libro es de mi hermana.|The book is my sister's.
 Creo que tienes razón.|I think you're right.
 Quiero ser médico.|I want to be a doctor.
@@ -8792,43 +8826,78 @@ const POSW={verb:"verb",noun:"noun",adj:"adjective",adv:"adverb",conj:"conjuncti
 
 // =====================================================================
 // KNOWLEDGE (per device; keyed by lemma, never by rank)
+//   new = on the board, not guessed · collected = guessed right, in the bucket (no flashcard round yet) · learning · green (interval > 7 d) · gold (≥ 90 d)
+//   st: 0 collected, never rated · 1 learning steps · 2 review · 3 relearning (after a lapse) · times are in days (float), on a clock the simulation can shift
 // =====================================================================
-const blank=()=>({S:0,last:0,reps:0,lapses:0,claimed:0,vis:0,green:0,via:null,opened:[],ctx:[]});
+const blank=()=>({vis:0,via:null,col:0,ct:0,claimed:0,S:0,D:0,st:0,ls:0,last:0,due:0,ivl:0,reps:0,lapses:0,ld:-1});
 const KM=new Map();const K=i=>{let k=KM.get(i);if(!k){k=blank();KM.set(i,k)}return k};
-let day=0,log={},zoom=0,probed=0,seeded=0,tips=0;
+let off=0,zoom=0,probed=0,seeded=0,tips=0;
+const clock=()=>Date.now()/864e5+off;  // days; off = the simulation's fast-forward (?day=N, +1 day, next due)
 const openedS=new Set();
 const IDM=new Map(words.map((w,i)=>[w.id,i]));
-function save(){try{const o={};KM.forEach((k,i)=>{if(k.vis||k.S||k.claimed)o[words[i].id]=k});localStorage.setItem("atlas-fog",JSON.stringify({K:o,day,log,zoom,probed,seeded,tips,opened:[...openedS]}))}catch(e){}}
-function load(){try{const j=JSON.parse(localStorage.getItem("atlas-fog"));if(!j)return false;day=j.day|0;log=j.log||{};probed=j.probed|0;seeded=j.seeded|0;tips=j.tips|0;if(typeof j.zoom==="number")zoom=j.zoom;(j.opened||[]).forEach(x=>openedS.add(x));
+const STORE="atlas-fog.v2",STORE_V1="atlas-fog";  // v1 (integer days, green = typed once) is read once and migrated, never written
+function save(){try{const o={};KM.forEach((k,i)=>{if(k.vis||k.col)o[words[i].id]=k});localStorage.setItem(STORE,JSON.stringify({v:2,K:o,off,zoom,probed,seeded,tips,opened:[...openedS]}))}catch(e){}}
+function load(){try{const j=JSON.parse(localStorage.getItem(STORE));if(!j||j.v!==2)return migrate();off=+j.off||0;probed=j.probed|0;seeded=j.seeded|0;tips=j.tips|0;if(typeof j.zoom==="number")zoom=j.zoom;(j.opened||[]).forEach(x=>openedS.add(x));
   for(const w in j.K){const i=IDM.get(w);if(i===undefined)continue;const k=blank();Object.assign(k,j.K[w]);KM.set(i,k)}return true}catch(e){return false}}
+// v1 → v2: a word that was green or claimed is collected with a short interval (≤ 7 d, so it earns green again in a round); one that was tried but missed goes into the bucket
+function migrate(){try{const j=JSON.parse(localStorage.getItem(STORE_V1));if(!j||typeof j!=="object"||!j.K)return false;const now=clock(),d=j.day|0;
+  probed=j.probed|0;seeded=j.seeded|0;tips=(j.tips|0)&1;if(typeof j.zoom==="number")zoom=j.zoom;(Array.isArray(j.opened)?j.opened:[]).forEach(x=>{if(SK.has(x))openedS.add(x)});
+  for(const w in j.K){const i=IDM.get(w),o=j.K[w];if(i===undefined||!o||typeof o!=="object")continue;const k=blank();k.vis=o.vis?1:0;k.via=typeof o.via==="string"?o.via:null;
+    if(o.green||o.claimed){const S=Math.max(1,Math.min(LEARNED_INTERVAL_DAYS,+o.S||1));k.col=1;k.ct=now;k.st=2;k.S=S;k.D=5;k.ivl=ivlFor(S);k.reps=Math.max(1,o.reps|0);k.lapses=o.lapses|0;k.claimed=o.claimed&&!o.green?1:0;
+      k.last=now-Math.min(k.ivl,Math.max(0,d-(o.last|0)));k.due=k.last+k.ivl}
+    else if(+o.S>0){k.col=1;k.ct=now}
+    if(k.vis||k.col){k.vis=1;KM.set(i,k)}}
+  save();return true}catch(e){return false}}
 
-// ---------- scheduler: FSRS-shaped (power forgetting curve; ts-fsrs in the build) ----------
-const TARGET=.85,FAC=19/81;
-const Rof=(k,d)=>k.S>0?Math.pow(1+FAC*Math.max(0,d-k.last)/k.S,-.5):1;
-const R=i=>Rof(K(i),day);
-const dueAt=(i,d)=>{const k=K(i);return k.S>0&&Rof(k,d)<TARGET};
-const S0=[0,.4,1.2,3.1,15];
-function rate(i,r,relearn){const k=K(i),Rr=R(i);
-  if(k.S===0)k.S=S0[r];
-  else if(r===1){if(!relearn){k.lapses++;k.S=Math.max(.3,1.6*(Math.pow(k.S+1,.3)-1)*Math.exp(2.3*(1-Rr)))}}
-  else k.S=k.S*(1+15*Math.pow(k.S,-.1)*(Math.exp(1-Rr)-1)*[0,0,.6,1,1.5][r]);
-  k.last=day;k.reps++;k.claimed=0;}
-const ivlOf=S=>S*(Math.pow(TARGET,-2)-1)/FAC;
-const fmtIv=d=>d<1?"<1d":d<30?Math.round(d)+"d":d<365?Math.round(d/30)+"mo":(d/365).toFixed(1)+"y";
+// ---------- scheduler: FSRS-5-shaped (stability S, difficulty D, retrievability on the FSRS forgetting curve, desired retention 0.9; ts-fsrs in the build) ----------
+// ratings: 1 again · 2 hard · 3 medium (FSRS "good") · 4 easy. New cards run learning steps first; a lapse runs a relearning step; review intervals are whole days, no fuzz.
+const RETENTION=.9,FAC=19/81,DECAY=-.5,MIN=1/1440;
+const W=[.40255,1.18385,3.173,15.69105,7.1949,.5345,1.4604,.0046,1.54575,.1192,1.01925,1.9395,.11,.29605,2.2698,.2315,2.9898,.51655,.6621];  // FSRS-5 defaults
+const LEARN_STEPS=[MIN,10*MIN],RELEARN_STEPS=[10*MIN],LEARN_AHEAD=20*MIN;  // a card due again within LEARN_AHEAD comes back in the same round
+const LEARNED_INTERVAL_DAYS=7,GOLD_DAYS=90;  // green: next interval strictly beyond 7 d · gold: 90 d or more
+const BUCKET_N=5;  // a full bucket offers a flashcard round
+const GATE_N=30,GATE_WINDOW_DAYS=7;  // the gate on new words closes when (bucket + due now + due within 7 d) ≥ GATE_N
+const CLAIM_S=10;  // "I already know this": trusted, checked when it comes due
+const Rt=(t,S)=>S>0?Math.pow(1+FAC*Math.max(0,t)/S,DECAY):1;
+const ivlFor=S=>Math.max(1,Math.round(S/FAC*(Math.pow(RETENTION,1/DECAY)-1)));  // = S at retention 0.9
+const clampD=d=>Math.min(10,Math.max(1,d)),D0=g=>clampD(W[4]-Math.exp(W[5]*(g-1))+1);
+const nextD=(D,g)=>{const l=D-W[6]*(g-3)*(10-D)/9;return clampD(W[7]*D0(4)+(1-W[7])*l)};
+const sRecall=(S,D,R,g)=>S*(1+Math.exp(W[8])*(11-D)*Math.pow(S,-W[9])*(Math.exp(W[10]*(1-R))-1)*(g===2?W[15]:1)*(g===4?W[16]:1));
+const sForget=(S,D,R)=>Math.min(S,W[11]*Math.pow(D,-W[12])*(Math.pow(S+1,W[13])-1)*Math.exp(W[14]*(1-R)));
+function schedule(k,g,now){
+  const t=now-k.last,R=Rt(t,k.S);
+  if(!k.reps){k.S=W[g-1];k.D=D0(g)}
+  else if(t<1){k.S=Math.max(.05,k.S*Math.exp(W[17]*(g-3+W[18])));k.D=nextD(k.D,g)}  // same day: short-term stability
+  else{k.S=g===1?sForget(k.S,k.D,R):sRecall(k.S,k.D,R,g);k.D=nextD(k.D,g)}
+  let ivl;
+  if(k.st===2){if(g===1){k.lapses++;k.st=3;k.ls=0;ivl=RELEARN_STEPS[0]}else ivl=ivlFor(k.S)}
+  else{const L=k.st===3?RELEARN_STEPS:LEARN_STEPS;if(k.st===0){k.st=1;k.ls=0}
+    if(g===1){k.ls=0;ivl=L[0]}
+    else if(g===2)ivl=k.ls?L[k.ls]:L.length>1?(L[0]+L[1])/2:L[0]*1.5;
+    else if(g===3&&k.ls+1<L.length){k.ls++;ivl=L[k.ls]}
+    else{k.st=2;k.ls=0;ivl=ivlFor(k.S)}}
+  k.ivl=ivl;k.last=now;k.due=now+ivl;k.reps++;k.claimed=0}
+const preview=(k,g)=>{const c={...k};schedule(c,g,clock());return c.ivl};
+const isGreen=k=>k.col&&k.st===2&&k.ivl>LEARNED_INTERVAL_DAYS,isGold=k=>k.col&&k.st===2&&k.ivl>=GOLD_DAYS;
+const inBucket=k=>k.col&&!k.reps;
+const strengthName=k=>!k.col?"new":!k.reps?"collected":isGold(k)?"gold":isGreen(k)?"green":"learning";
+const fmtIv=d=>d<1/24?Math.max(1,Math.round(d*1440))+"m":d<.98?Math.round(d*24)+"h":d<30?Math.round(d)+"d":d<365?Math.round(d/30)+"mo":(d/365).toFixed(1)+"y";
+const fmtSpan=d=>d<1/24?Math.max(1,Math.round(d*1440))+" min":d<.98?Math.round(d*24)+" h":d<30?Math.round(d)+" d":d<365?Math.round(d/30)+" months":(d/365).toFixed(1)+" years";
 const fmtD=S=>S<1?Math.round(S*24)+" h":S<10?S.toFixed(1)+" d":Math.round(S)+" d";
 
+
 // =====================================================================
-// FOG: a word is on the board once a sentence you opened contains it; it is yours once you have produced it. Yours words open sentences.
+// FOG: a word is on the board once a sentence you opened contains it; it is yours once you have guessed it (collected). Clicking a sentence on a collected word's card brings all its words onto the board.
 // =====================================================================
-const yours=x=>typeof x==="number"&&(K(x).green||K(x).claimed);
+const yours=x=>typeof x==="number"&&!!K(x).col;
 // the gap of a sentence: one representative (most frequent reading) per sub-lemma no reading of which is yours
 function gapOf(s,ex){const g=[];s.parts.forEach(p=>{if(!p.alts||!p.alts.length)return;for(const a of p.alts){if(a.includes(ex))continue;if(a.some(yours))continue;let m=Infinity;a.forEach(x=>{if(typeof x==="number"&&x<m)m=x});if(isFinite(m)&&!g.includes(m))g.push(m)}});return g}
 const readable=s=>gapOf(s,-1).length===0;
 let nRead=0;function countRead(){nRead=0;bank.forEach(s=>{if(readable(s))nRead++})}
-// which sentence to open from a yours word: fewest unknowns (≤3), then the most frequent unknowns, then the shortest; sentences that would reveal nothing new go last
-function sentScore(s,ex){const g=gapOf(s,ex);if(!g.length||g.length>3)return null;const nw=g.filter(x=>!K(x).vis).length;return(nw?0:5e6)+g.length*1e6+g.reduce((a,x)=>a+x,0)/g.length*10+s.n}
-function branch(i){const k=K(i);let best=null,bs=Infinity;(INV.get(i)||[]).forEach(s=>{if(openedS.has(s.key))return;const sc=sentScore(s,i);if(sc!=null&&sc<bs){bs=sc;best=s}});
-  if(!best)return null;openedS.add(best.key);k.opened.push(best.key);const g=gapOf(best,i),nw=[];g.forEach(x=>{if(revealCell(x,best.key))nw.push(x)});flushAppear(i);return{s:best,g,nw}}
+// a sentence's words that are still in the fog: one representative (the most frequent reading) per sub-lemma none of whose readings is on the board
+function fogIds(s){const r=[];s.parts.forEach(p=>{if(!p.alts)return;p.alts.forEach(a=>{const ids=a.filter(x=>typeof x==="number");if(!ids.length||ids.some(x=>K(x).vis))return;const m=Math.min(...ids);if(!r.includes(m))r.push(m)})});return r}
+// the first cascade: the seed sentence that holds both seed words and opens three of the most frequent ones
+const FIRST=bank.find(s=>s.es==="¡Hola a todo el mundo!")||SEED0;
 // the sentence to learn/review a word in: fewest other unknowns, most frequent ones, shortest
 function bestSent(i){const via=K(i).via;let best=null,bs=Infinity;(INV.get(i)||[]).forEach(s=>{const g=gapOf(s,i),sc=g.length*1e6+(g.length?g.reduce((a,x)=>a+x,0)/g.length:0)*10+s.n-(s.key===via?1e5:openedS.has(s.key)?.5:0);if(sc<bs){bs=sc;best=s}});return best}
 // the board is the found cards only, in rank order, reflowed compactly: nothing on it says how much is left (rank stays internal)
@@ -8838,42 +8907,52 @@ const appear=new Map(),glide=new Map(),fresh=new Set();let pendingAppear=[],oldX
 const APPEAR_MS=RM?240:520,GLIDE_MS=200;
 function reorder(){if(!oldXY&&L.p&&!auto){oldXY=new Map();for(const i of order){const c=cellXY(i);if(c)oldXY.set(i,c)}}order=[];for(let i=0;i<N;i++)if(K(i).vis)order.push(i);pos.fill(-1);order.forEach((i,k)=>pos[i]=k);needLayout=true}
 function revealCell(i,via){const k=K(i);if(k.vis)return false;k.vis=1;k.via=via;if(!auto){reorder();fresh.add(i);pendingAppear.push(i)}repaint(i);return true}
+// a sentence is one object: clicking it reveals every word in it that is still in the fog (the celebration plays from the card's word)
+function unlockSentence(s,parent){openedS.add(s.key);seeded=1;const nw=[];fogIds(s).forEach(x=>{if(revealCell(x,s.key))nw.push(x)});if(nw.length&&!auto)flushAppear(parent);return{s,nw}}
 // the celebration: the parent fills first, then its new words pop in, rippling outward from the parent across the grid (55 ms apart, at most 24 steps); reduced motion = fade only, no stagger
 function flushAppear(parent){if(!pendingAppear.length)return;const now=performance.now();if(appearUntil<now)appearUntil=0;const base=Math.max(now+(RM?0:260),appearUntil?appearUntil+55:0);
   const pp=parent>=0?pos[parent]:-1,list=pendingAppear.slice().sort((a,b)=>pp<0?a-b:Math.abs(pos[a]-pp)-Math.abs(pos[b]-pp));
   list.forEach((i,j)=>{const t=base+(RM?0:Math.min(j,24)*55);appear.set(i,t);appearUntil=Math.max(appearUntil,t)});pendingAppear=[];req()}
-// a word becomes yours: it turns green and opens one sentence — except the seed pair, which opens nothing until the first sentence has been typed
-function turnGreen(i){const k=K(i);k.green=1;repaint(i);if(!seeded&&(i===HOLA||i===MUNDO))return null;return branch(i)}
-const seedDone=()=>!seeded&&!probed&&K(HOLA).green&&K(MUNDO).green;
-// the first cascade: typing ¡Hola, mundo! opens two sentences from each seed word (six tiles)
-function seedCascade(){seeded=1;openedS.add(SEED0.key);const op=[];for(let r=0;r<2;r++)for(const i of [HOLA,MUNDO]){const b=branch(i);if(b)op.push(b)}return op}
 // after a probe or at a dead end: reveal the words that stand alone (or nearly) between you and a sentence
 function revealFrontier(max){const c=new Map();for(let gl=1;gl<=3&&c.size<max;gl++)bank.forEach(s=>{if(openedS.has(s.key))return;const g=gapOf(s,-1);if(g.length!==gl)return;g.forEach(x=>{if(!K(x).vis&&!c.has(x))c.set(x,s.key)})});
   const list=[...c].sort((a,b)=>a[0]-b[0]).slice(0,max);list.forEach(([x,key])=>{revealCell(x,key);openedS.add(key)});
   if(list.length){flushAppear(-1);return list.length}
   // the bank has nothing left for this learner (prototype bank is small): fall back to frequency order, bare words
   let n=0;for(let i=0;i<N&&n<max;i++)if(!K(i).vis){revealCell(i,"rank");n++}flushAppear(-1);return n}
-function candidates(){const c=[];for(let i=0;i<N;i++){const k=K(i);if(k.vis&&!k.green&&!k.claimed&&k.S===0)c.push(i)}return c}
+function candidates(){const c=[];for(let i=0;i<N;i++){const k=K(i);if(k.vis&&!k.col)c.push(i)}return c}
+// the best new word to guess next: most frequent, in a sentence whose other words are mostly yours
+function pickNew(c){let best=-1,bs=-1;c.forEach(x=>{const s=bestSent(x),g=s?gapOf(s,x).length:9,sc=share(x)*(g<=1?2:g===2?1.3:1)*(x===HOLA||x===MUNDO?100:1);if(sc>bs){bs=sc;best=x}});return best}
+// a collected word with a sentence that would still bring new words (for Enter / Space when no new word is on the board)
+function unlockable(){let best=-1;for(const i of order){const k=K(i);if(!k.col)continue;if((INV.get(i)||[]).some(s=>fogIds(s).length)){best=i;break}}return best}
 
 // =====================================================================
 // BOARD STATE + STATS
 // =====================================================================
 const due=new Uint8Array(N),bk=new Uint8Array(N);
-let nDue=0,nYours=0,nVis=0,covText="",msgT=0,auto=false;
-function repaint(i){const k=K(i);if(!k.vis){bk[i]=0;return}if(k.green||k.claimed){const t=Math.min(1,Math.max(0,Math.log2(k.S+1)/Math.log2(181)));bk[i]=3+Math.min(29,Math.floor(t*29.999))}else bk[i]=k.S>0?2:1}
+let nDue=0,nCol=0,nVis=0,nBucket=0,nGreen=0,nGold=0,load7=0,nextDue=Infinity,covText="",msgT=0,auto=false;
+function repaint(i){const k=K(i);if(!k.vis){bk[i]=0;return}if(!k.col||!k.reps){bk[i]=1;return}const v=k.ivl;
+  if(!(k.st===2&&v>LEARNED_INTERVAL_DAYS)){bk[i]=2+Math.min(19,Math.floor(Math.sqrt(Math.min(v,LEARNED_INTERVAL_DAYS)/LEARNED_INTERVAL_DAYS)*19.999));return}
+  bk[i]=v>=GOLD_DAYS?45:22+Math.min(22,Math.floor(Math.log(v/LEARNED_INTERVAL_DAYS)/Math.log(GOLD_DAYS/LEARNED_INTERVAL_DAYS)*23))}
+// the gate: new words wait while too much is due (bucket + due now + due within the next GATE_WINDOW_DAYS); it is derived, never stored
+const gateClosed=()=>load7>=GATE_N,toClear=()=>Math.max(0,load7-GATE_N+1),practisable=()=>nDue+nBucket,roundReady=()=>nDue>0||nBucket>=BUCKET_N;
 function stats(){
-  nDue=0;nYours=0;nVis=0;for(let i=0;i<N;i++){const k=K(i);const d=dueAt(i,day)?1:0;due[i]=d;nDue+=d;if(k.vis)nVis++;if(k.green||k.claimed)nYours++}
+  const now=clock(),win=now+GATE_WINDOW_DAYS;nDue=0;nCol=0;nVis=0;nBucket=0;nGreen=0;nGold=0;load7=0;nextDue=Infinity;
+  for(let i=0;i<N;i++){const k=K(i);if(k.vis)nVis++;if(!k.col){due[i]=0;continue}nCol++;
+    if(!k.reps){nBucket++;load7++;due[i]=0;continue}
+    const d=k.due<=now?1:0;due[i]=d;nDue+=d;if(k.due<=win)load7++;if(!d&&k.due<nextDue)nextDue=k.due;if(isGreen(k))nGreen++;if(isGold(k))nGold++}
   countRead();
   // only what is yours: never a total, a rank, or a fraction of anything
-  covText=narrow()?'<em>'+nYours+'</em> · <b>'+nRead+'</b>':'<em>'+nYours.toLocaleString("en")+'</em> yours · <b>'+nRead+'</b> sentence'+(nRead===1?'':'s')+' readable';
+  covText=narrow()?'<em>'+nGreen+'</em> · <b>'+nCol+'</b>':'<em>'+nGreen.toLocaleString("en")+'</em> green · <b>'+nCol.toLocaleString("en")+'</b> collected · <b>'+nRead+'</b> sentence'+(nRead===1?'':'s')+' readable';
   if(!msgT)$("covt").innerHTML=covText;
-  updateGo();
+  updateBar();if(nDue)showTip(3);if(nGreen)showTip(4);
 }
+function refresh(){stats();req();if(step&&step.kind==="page"&&!pop.querySelector("input:focus"))render()}  // time moves: due words go hollow on their own
 function msg(t){clearTimeout(msgT);$("covt").innerHTML=t;msgT=setTimeout(()=>{msgT=0;$("covt").innerHTML=covText},3500)}
+const nextDueText=()=>isFinite(nextDue)?'next due in '+fmtSpan(nextDue-clock()):'nothing else is scheduled';
 // one-time hints: bit n shown once ever
-const TIP=["Two words are on the board. Click one — or press <kbd>space</kbd>.","Green means yours. Make the other one yours too, then type the sentence they make.","Every green word opens a sentence; its words appear around it. Pick any tile, or press <kbd>space</kbd> and the board picks for you.","A hollow tile is due: recall it and it fills again."];
-if(matchMedia("(hover:none)").matches){TIP[0]="Two words are on the board. Tap one, or tap <kbd>▸ begin</kbd>.";TIP[2]="Every green word opens a sentence; its words appear around it. Tap any tile, or tap <kbd>▸</kbd> and the board picks for you."}  // touch wording
-function showTip(n){if(tips&(1<<n))return;tips|=1<<n;hint.innerHTML=TIP[n];hint.classList.add("on");save();syncHint()}
+const TIP=["Two words are on the board. Click one — or press <kbd>space</kbd>.","Collected: it is in the bucket. Now click a sentence — its words come onto the board.","New words are on the board. Guess each one; five in the bucket make a flashcard round.","A hollow tile is due: practise it in a flashcard round (<kbd>c</kbd>).","Green: the word comes back in more than a week. Gold: you know it in your sleep."];
+if(matchMedia("(hover:none)").matches){TIP[0]="Two words are on the board. Tap one.";TIP[3]="A hollow tile is due: practise it in a flashcard round (tap <kbd>cards</kbd>)."}  // touch wording
+function showTip(n){if(tips&(1<<n)||auto)return;tips|=1<<n;hint.innerHTML=TIP[n];hint.classList.add("on");save();syncHint()}
 function hideTip(){hint.classList.remove("on");syncHint()}
 function syncHint(){fhint.innerHTML=hint.classList.contains("on")?hint.innerHTML:""}  // on the focus page the hint sits at the top, between the way back and the minimap
 
@@ -8920,7 +8999,8 @@ function fit(i,fs,av){
   const w=w100[i]*fs/100;if(w*.8<=av)return words[i].w;
   const n=Math.max(1,Math.floor(words[i].w.length*av/(w*.8))-1);return words[i].w.slice(0,n)+"…";
 }
-const inkOf=i=>due[i]?1:bk[i]===1?1:bk[i]===2?2:bk[i]>=22?3:2;
+const INKB=LUM.map((l,b)=>b<2?1:l>.6?3:2);  // bright tiles get dark ink
+const inkOf=i=>due[i]?1:INKB[bk[i]];
 const INK=[C.o1,C.sub,C.text,C.crust];
 function draw(){
   if(needLayout)layout();
@@ -8968,6 +9048,12 @@ function draw(){
         ctx.globalAlpha=1}
     }
   }
+  // second cues, never colour alone: a lavender dot = collected, waiting in the bucket · a small four-point star = gold
+  if(p>=10){const r=Math.max(1.5,p*.024),ins=Math.max(4,p*.11),st=Math.max(2.5,p*.04);
+    ctx.fillStyle=C.lav;ctx.beginPath();for(let j=0;j<vis.length;j+=3){const i=vis[j];if(appear.has(i)||!inBucket(K(i)))continue;const x=vis[j+1]+p-ins,y=vis[j+2]+ins;ctx.moveTo(x+r,y);ctx.arc(x,y,r,0,7)}ctx.fill();
+    for(const hol of [0,1]){ctx.fillStyle=hol?COL[45]:C.crust;ctx.beginPath();
+      for(let j=0;j<vis.length;j+=3){const i=vis[j];if(bk[i]!==45||!due[i]!==!hol||appear.has(i))continue;const x=vis[j+1]+p-ins,y=vis[j+2]+ins,q=st*.28;
+        ctx.moveTo(x,y-st);ctx.lineTo(x+q,y-q);ctx.lineTo(x+st,y);ctx.lineTo(x+q,y+q);ctx.lineTo(x,y+st);ctx.lineTo(x-q,y+q);ctx.lineTo(x-st,y);ctx.lineTo(x-q,y-q);ctx.closePath()}ctx.fill()}}
   // transient outlines: the open card's sentence-mates (dashed), cards found since your last action (lavender), hover, selection
   const box=i=>{const c=cellXY(i);if(!c)return null;const x0=Math.round(c.x),y0=Math.round(c.y-s),cs=Math.round(c.x+p)-x0;return[x0,y0,cs]};
   if(link.size&&p>=7){ctx.save();ctx.setLineDash([3,2]);ctx.strokeStyle=C.text;ctx.lineWidth=1;ctx.beginPath();for(let j=0;j<vis.length;j+=3){const i=vis[j];if(link.has(i)){const bx=box(i);if(bx)ctx.rect(bx[0]+1.5,bx[1]+1.5,bx[2]-3,bx[2]-3)}}ctx.stroke();ctx.restore()}
@@ -8990,7 +9076,7 @@ function ensureVisible(i,smooth){
 }
 function select(i,smooth){
   if(i<0||i>=N)return;sel=i;const k=K(i);
-  live.textContent=words[i].w+", "+(k.green?"yours":k.claimed?"claimed":k.S>0?"learning":"new")+(due[i]?", due":"");
+  live.textContent=words[i].w+", "+(k.claimed?"claimed":strengthName(k))+(due[i]?", due":"");
   req();ensureVisible(i,smooth);
 }
 // ---------- the minimap: only the found cards, in the board's own compact rank order (it never shows what is still in the fog), the open word ringed ----------
@@ -9021,7 +9107,7 @@ function drawMini(){
     mx.fillStyle=COL[bk[i]];mx.fillRect(x,y,s,s);
     if(due[i]&&s>=5){const r=Math.max(1,Math.round(s*.2));mx.fillStyle=C.crust;mx.fillRect(x+r,y+r,s-2*r,s-2*r)}}
   if(cx<0)mmc.style.display="none";
-  else{const b=s>=6?2:1;mmc.style.cssText="display:block;left:"+(cx-b-1)+"px;top:"+(cy-b-1)+"px;width:"+(s+2*b+2)+"px;height:"+(s+2*b+2)+"px;border-width:"+b+"px";mmc.classList.toggle("on",!!(cur>=0&&K(cur).green))}
+  else{const b=s>=6?2:1;mmc.style.cssText="display:block;left:"+(cx-b-1)+"px;top:"+(cy-b-1)+"px;width:"+(s+2*b+2)+"px;height:"+(s+2*b+2)+"px;border-width:"+b+"px";mmc.classList.toggle("on",!!(cur>=0&&K(cur).col))}
 }
 function miniHit(e){const r=mm.getBoundingClientRect(),{s,g,c,pad}=ML,x=e.clientX-r.left-pad,y=e.clientY-r.top-pad,col=Math.floor((x+g/2)/(s+g)),row=Math.floor((y+g/2)/(s+g));
   if(col<0||col>=c||row<0)return-1;const k=row*c+col;return k<order.length?order[k]:-1}
@@ -9036,8 +9122,7 @@ function foOpen(i){if(leaving){leaving.cancel();leaving=null;pop.classList.remov
   pop.classList.add("on");ML.n=-1;if(RM||!pop.animate||auto)return;pop.style.transformOrigin=tileOrigin(i);
   pop.animate([{opacity:0,transform:"scale(.3)"},{opacity:1,transform:"none"}],{duration:250,easing:"cubic-bezier(.2,.8,.2,1)"})}
 // branching inside focus (a word in a sentence, a chip, the minimap): remember where you came from, so Esc steps back
-function goWord(x){if(walk)stopWalk();openStep(x,null,false)}
-function back(){if(walk)stopWalk();else closePop();sc.focus({preventScroll:true})}
+function back(){probe=null;closePop();sc.focus({preventScroll:true})}
 // soft keyboard: the focus page rides on the visual viewport, and its field (with the button under it) stays in view
 const VV=window.visualViewport;
 function vvSync(){if(!VV)return;const de=document.documentElement,kb=VV.scale>1.01?0:Math.max(0,Math.round(innerHeight-VV.height-VV.offsetTop));  // pinch-zoomed: leave it
@@ -9049,7 +9134,7 @@ function keepInput(){if(!narrow()||!pop.classList.contains("on"))return;const ai
   const want=top(end)+end.offsetHeight+12-pop.clientHeight,cap=top(ai)-8,t=Math.max(0,Math.min(want,cap));if(pop.scrollTop<t||pop.scrollTop>cap)pop.scrollTop=t}
 if(VV){VV.addEventListener("resize",vvSync);VV.addEventListener("scroll",vvSync)}
 let popKey="";  // a new card or phase starts at the top of the page
-// closing waits one frame: a branch that closes and reopens (stop the walk, open a word) never flickers through the atlas
+// closing waits one frame: a branch that closes and reopens (a word, the cards view) never flickers through the atlas
 function closePop(){popKey="";step=null;link.clear();fresh.clear();tip.style.display="none";if(pop.contains(document.activeElement))sc.focus({preventScroll:true});
   if(pop.classList.contains("on")&&!closing&&!leaving){closing=1;requestAnimationFrame(()=>{closing=0;if(step||!pop.classList.contains("on"))return;
     shownFor=-1;document.body.classList.remove("fx");
@@ -9057,313 +9142,295 @@ function closePop(){popKey="";step=null;link.clear();fresh.clear();tip.style.dis
     if(RM||!pop.animate||auto){end();return}
     pop.style.transformOrigin=tileOrigin(sel);pop.classList.add("leaving");
     leaving=pop.animate([{opacity:1,transform:"none"},{opacity:0,transform:"scale(.3)"}],{duration:200,easing:"cubic-bezier(.4,0,1,1)",fill:"forwards"});leaving.onfinish=end})}
-  req();updateGo()}
+  req();updateBar()}
 $("back").onclick=()=>back();
 
 // =====================================================================
-// THE WALK + STEPS: one engine; clicking a cell opens the step its state calls for
+// STEPS: one focus page; a tile opens the card its state calls for — a new word's guess card, or a collected word's upgraded card — and the cards view runs flashcard rounds
 // =====================================================================
-let walk=null,steps=0,relearn=[],step=null,probe=null;
-function plan(){const Lg=log[day]||(log[day]={rev:0,new:0});const dl=[];for(let i=0;i<N;i++){const k=K(i);if(k.S>0&&Rof(k,day)<TARGET)dl.push(i)}return{due:dl,cands:candidates(),newQ:Math.max(0,20-Lg.new),L:Lg}}
-function pick(){
-  const rl=relearn.find(x=>steps-x.at>=5);if(rl){relearn.splice(relearn.indexOf(rl),1);return{kind:"again",i:rl.i}}
-  const P=plan();
-  if(P.due.length){let best=-1,bs=-1;P.due.forEach(i=>{const s=share(i)*(1-R(i));if(s>bs){bs=s;best=i}});return{kind:"due",i:best}}
-  const cl=[];for(let i=0;i<N;i++)if(K(i).claimed)cl.push(i);
-  if(cl.length&&steps%4===0)return{kind:"verify",i:cl[cl.length-1]};
-  if(P.newQ>0){let c=P.cands;if(!c.length){revealFrontier(6);c=candidates()}
-    if(c.length){let best=-1,bs=-1;c.forEach(i=>{const s=bestSent(i),g=s?gapOf(s,i).length:9,sc=share(i)*(g<=1?2:g===2?1.3:1)*(i===HOLA||i===MUNDO?100:1);if(sc>bs){bs=sc;best=i}});return{kind:"new",i:best}}}
-  if(cl.length)return{kind:"verify",i:cl[cl.length-1]};
-  if(relearn.length)return{kind:"again",i:relearn.shift().i};
-  return null;
-}
-function startWalk(){steps=0;relearn=[];walk={};hideTip();if(seedDone()){openSentence();return}next()}
-function next(){steps++;const s=pick();if(!s){endWalk();return}openStep(s.i,s.kind,true)}
-function endWalk(){walk=null;closePop();stats();msg(narrow()?'✓ done':'✓ done for today · <b>'+plan().due.length+'</b> left for tomorrow')}
-function stopWalk(){walk=null;probe=null;closePop();stats()}
+let step=null,probe=null,round=null;
+// Enter after a card: a word this card just brought onto the board, else the flashcard round if one is ready, else (gate open) the best new word,
+// else a collected word whose sentences still bring new words; at a dead end the frontier opens (the cascade never stalls)
+function nextUp(dry){
+  const cur=step&&step.kind!=="round"?step.i:-1,isNew=x=>x!==cur&&K(x).vis&&!K(x).col;
+  for(const o of step&&step.opened||[]){const c=o.nw.filter(isNew).sort((a,b)=>a-b);if(c.length)return{i:c[0]}}
+  if(roundReady())return{round:1};
+  if(gateClosed())return null;
+  let c=candidates().filter(x=>x!==cur);
+  if(!c.length){const u=unlockable();if(u>=0&&u!==cur)return{i:u,page:1};if(u===cur)return null;if(dry)return{i:-1};revealFrontier(6);reorder();layout();stats();save();c=candidates().filter(x=>x!==cur)}
+  return c.length?{i:pickNew(c)}:null}
+const nextLabel=nx=>!nx?'back to grid':nx.round?'flashcard round':nx.page?'next sentence':'next word';
+function continueStep(){if(!step)return;const nx=nextUp(false);if(nx&&nx.round){startRound();return}if(nx&&nx.i>=0){openStep(nx.i,null);return}closePop();sc.focus()}
+// Space on the grid: the next step of the learning journey
+function journey(){hideTip();if(practisable()&&(roundReady()||gateClosed())){startRound();return}if(gateClosed()){msg(gateLine(true));return}
+  const nx=nextUp(false);if(nx&&nx.round)startRound();else if(nx&&nx.i>=0)openStep(nx.i,null);else msg('nothing new right now · '+nextDueText())}
 
 // ---------- experienced learners: find your frontier (adaptive probe, ≤30 taps); the fog lifts over what you already know ----------
 const PG=80,LMIN=Math.log(6),LMAX=Math.log(N),gx=g=>LMIN+(LMAX-LMIN)*g/(PG-1);
 function pmed(q){let c=0;for(let g=0;g<PG;g++){c+=probe.post[g];if(c>=q)return gx(g)}return LMAX}
-function startProbe(){closePop();probe={post:new Float64Array(PG).fill(1/PG),asked:new Set(),n:0};walk={};openStep(probeTarget(),"probe",true)}
+function startProbe(){closePop();probe={post:new Float64Array(PG).fill(1/PG),asked:new Set(),n:0};openStep(probeTarget(),"probe")}
 function probeTarget(){let r=Math.round(Math.exp(pmed(.5)+(Math.random()-.5)*.5));r=Math.max(1,Math.min(N,r));let i=r-1,d=0;while(i<0||i>=N||probe.asked.has(i)||yours(i)){d++;i=r-1+(d%2?d:-d)}return i}
+const trust=(k,S)=>{const now=clock();k.col=1;k.ct=now;k.st=2;k.ls=0;k.S=S;k.D=5;k.ivl=ivlFor(S);k.last=now;k.due=now+k.ivl;k.reps=Math.max(1,k.reps)};
 function probeAnswer(i,knows){
   const lr=Math.log(i+1);let t=0;
   for(let g=0;g<PG;g++){const p=1/(1+Math.exp(-(gx(g)-lr)/.9));probe.post[g]*=knows?p:1-p;t+=probe.post[g]}
   for(let g=0;g<PG;g++)probe.post[g]/=t;
   probe.asked.add(i);probe.n++;
-  const k=K(i);if(knows){revealCell(i,"probe");k.S=20;k.last=day;k.reps=1;k.green=1;repaint(i)}  // a word you don't know stays in the fog: the probe measures, it does not reveal
+  const k=K(i);if(knows){revealCell(i,"probe");trust(k,20);repaint(i)}  // a word you don't know stays in the fog: the probe measures, it does not reveal
   const lo=pmed(.1),hi=pmed(.9);
   if(probe.n>=30||(probe.n>=14&&hi-lo<.4)||(probe.n>=6&&Math.exp(hi)<15)){finishProbe();return}
-  openStep(probeTarget(),"probe",true);
+  openStep(probeTarget(),"probe");
 }
 function finishProbe(){
   const med=Math.exp(pmed(.5));
   const Fr=med<15?0:med>.8*N?N:Math.round(Math.exp(pmed(.3)));
-  // below the frontier the fog lifts: the 300 ranks nearest it are claimed (verified in-stream), deeper ranks are trusted
-  for(let i=0;i<Fr;i++){const k=K(i);if(!k.green&&!probe.asked.has(i)){revealCell(i,"probe");if(i<Fr-300){k.S=120*(1+2*Math.random());k.last=day;k.reps=1;k.green=1}else k.claimed=1}repaint(i)}
-  probed=1;probe=null;walk=null;seeded=1;flushAppear(-1);
+  // below the frontier the fog lifts: the 300 ranks nearest it are claimed (checked when they come due), deeper ranks are trusted
+  for(let i=0;i<Fr;i++){const k=K(i);if(!k.col&&!probe.asked.has(i)){revealCell(i,"probe");if(i<Fr-300)trust(k,120*(1+2*Math.random()));else{trust(k,CLAIM_S);k.claimed=1}}repaint(i)}
+  probed=1;probe=null;seeded=1;flushAppear(-1);
   revealFrontier(12);
-  reorder();layout();save();stats();msg(Fr?'the fog lifted over the words you already know':'starting from the first word');
-  startWalk();
+  reorder();layout();save();stats();closePop();msg(Fr?'the fog lifted over the words you already know':'starting from the first word');
 }
 
-// ---------- a step: ask → reveal → spell → rate → after ----------
-const CUE={word:"word → meaning",cloze:"fill the gap"};
-function openStep(i,kind,inWalk){
+function openStep(i,kind){
   const k=K(i);hideTip();fresh.clear();
-  if(!kind)kind=k.claimed?"verify":k.green?"page":k.S>0?(due[i]?"due":"again"):"new";  // a word that is yours opens its page; it is reviewed only when due, from the page or in the Walk
-  const s=kind==="probe"?null:bestSent(i),learn=kind!=="probe"&&kind!=="verify"&&!k.green&&!k.claimed;  // not yours yet → the learn card
-  step={kind,i,phase:kind==="probe"?"probe":kind==="page"?"page":learn?"guess":"ask",learn:learn&&kind!=="page",wiki:null,miss:0,guess:"",sent:s,gap:s?gapOf(s,i):[],typed:"",verdict:null,inWalk:!!inWalk,opened:null,cue:"word"};
-  if(kind==="due"&&!learn&&s&&!step.gap.length)step.cue="cloze";
+  if(!kind)kind=k.col?"page":"new";
+  const s=kind==="probe"?null:bestSent(i);
+  step={kind,i,phase:kind,sent:s,gap:s?gapOf(s,i):[],wiki:null,opened:null,guess:"",just:null,mean:false,gateMsg:false,allS:false,nudge:false};
   sel=i;link.clear();if(s)s.ids.forEach(x=>{if(x!==i&&K(x).vis)link.add(x)});
   if(!auto){render();select(i,true)}
-  updateGo();
+  updateBar();
 }
+function goWord(x){openStep(x,null)}
 function surfaceOf(s,i){const p=s.parts.find(p=>p.alts&&p.alts.some(a=>a.includes(i)));return p?p.t:null}
-function check(w,typed,surface){const t=norm(typed);if(!t)return null;const a=norm(surface||w.w);
-  if(t===a)return{ok:1};if(strip(t)===strip(a))return{ok:1,acc:1};
-  const t2=t.replace(/^(el|la|los|las|un|una)\s+/,"");if(t2===a||strip(t2)===strip(a))return{ok:1};
+
+// ---------- judging a typed answer: lenient on case, accents, articles and typos; the learner's honesty does the rest ----------
+const STOPW=new Set(["to","the","a","an","of","is","it","in","on","for","and","or","one","some","something","someone","oneself","with","as","by","at"]);
+// accepted synonyms for glosses the matcher would miss (seed path and very frequent words)
+const SYN={hola:"hi|hey|hiya",mundo:"earth",todo:"every|whole|everyone|everybody",el:"the",la:"the",a:"to|at|towards",ser:"be|am|is|are",estar:"be|am|is|are",
+  decir:"say|tell",y:"and",que:"that|which|what|than",de:"of|from",en:"in|on|at",no:"no|not",un:"a|an|one",yo:"i",tú:"you",sí:"yes",gracias:"thank you|thanks|thx",bien:"good|well|fine|ok|okay",
+  casa:"house|home",grande:"big|large|great",pequeño:"small|little",bueno:"good",muy:"very",también:"too|also",aquí:"here",qué:"what|which",cómo:"how",tener:"have|to have",hacer:"do|make"};
+const flatEn=s=>strip(s.toLowerCase()).replace(/[^a-z' ]/g," ").replace(/\s+/g," ").trim();
+const coreEn=s=>s.replace(/^(to|the|a|an) /,"");
+function lev(a,b){if(a===b)return 0;const m=a.length,n=b.length;if(Math.abs(m-n)>2)return 3;let q=null,p=Array.from({length:n+1},(_,j)=>j);  // edit distance; a swap of two letters counts as one
+  for(let i=1;i<=m;i++){const c=[i];for(let j=1;j<=n;j++){c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));if(q&&j>1&&a[i-1]===b[j-2]&&a[i-2]===b[j-1])c[j]=Math.min(c[j],q[j-2]+1)}q=p;p=c}return p[n]}
+const near=(x,y)=>{const n=Math.max(x.length,y.length);return n>=4&&lev(x,y)<=(n>=8?2:1)};
+function judgeMeaning(i,typed){const G=flatEn(typed);if(!G)return{ok:0,empty:1};const w=words[i];
+  const acc=[...w.t.replace(/\([^)]*\)/g," ").split(/[,;/]|\bor\b/),...(SYN[w.w]||"").split("|")].map(flatEn).filter(Boolean);
+  for(const a of acc)for(const x of [G,coreEn(G)]){const y=coreEn(a);if(x===a||x===y)return{ok:1};if(near(x,y))return{ok:1,typo:1}}
+  const cw=x=>x.split(" ").filter(z=>z.length>2&&!STOPW.has(z)),gw=cw(G),aw=acc.flatMap(cw);  // a shared content word: "hello there" ~ hello, "the planet earth" ~ earth
+  if(gw.some(x=>aw.some(y=>x===y||(Math.min(x.length,y.length)>=5&&lev(x,y)<=1))))return{ok:1};
   return{ok:0}}
-function reveal(){
-  if(!step||(step.phase!=="ask"&&step.phase!=="closed"))return;
-  if(step.phase==="ask"&&step.cue==="cloze"){const ai=pop.querySelector("[data-ans]");step.typed=ai?ai.value:"";step.verdict=check(words[step.i],step.typed,step.sent?surfaceOf(step.sent,step.i):null)}
-  step.phase=step.phase==="closed"?"open":"reveal";if(!auto)render();
-}
-function toSpell(){if(!step||step.phase!=="reveal")return;step.phase="spell";if(!auto)render()}
-function spelled(){
-  if(!step||step.phase!=="spell")return;const ai=pop.querySelector("[data-ans]");step.typed=ai?ai.value:"";
-  if(step.kind==="sentence"){const ok=flat(step.typed)===flat(SEED0.es);step.verdict={ok};if(ok){step.opened=seedCascade();step.phase="after";plan();save();stats();reorder();layout();if(!auto){render();showTip(2)}}else{step.phase="spell";step.wrong=1;if(!auto)render()}return}
-  if(!norm(step.typed)){step.phase="spell";if(!auto)render();return}
-  step.verdict=check(words[step.i],step.typed,step.sent?surfaceOf(step.sent,step.i):null);
-  step.phase="rate";if(!auto)render();
-}
-// ---------- the learn card (a word that is not yours yet): guess → meet → recall, until right → yours. Nothing English is on the card before the guess. ----------
-function commitGuess(){if(!step||step.phase!=="guess")return;const ai=pop.querySelector("[data-ans]");step.guess=ai?ai.value.trim():"";step.phase="meet";if(!auto)render()}
-function toRecall(){if(!step||(step.phase!=="meet"&&step.phase!=="miss"))return;step.phase="recall";if(!auto)render()}
-function recalled(){
-  if(!step||step.phase!=="recall")return;const ai=pop.querySelector("[data-ans]");step.typed=ai?ai.value:"";if(!norm(step.typed))return;
-  step.verdict=check(words[step.i],step.typed,step.sent?surfaceOf(step.sent,step.i):null);
-  if(!step.verdict.ok){step.miss++;step.phase="miss";if(!auto)render();return}
-  step.phase="rate";answer(step.miss||step.verdict.acc?2:3);
-}
-const STOPW=new Set(["to","the","a","an","of","is","it","in","on","for","and","or","one","some","something"]);
-function guessClose(g,t){const ws=x=>strip(x.toLowerCase()).split(/[^a-z]+/).filter(x=>x.length>1&&!STOPW.has(x)),b=ws(t);return ws(g).some(x=>b.some(y=>x===y||(x.length>3&&y.length>3&&(x.startsWith(y)||y.startsWith(x)))))}
-const enOK=(s,i)=>!gapOf(s,i).length;  // a sentence's English shows only when every other word in it is yours: it would give away the others
-function suggested(){const v=step.verdict;if(!v)return 3;return v.ok?(v.acc?2:3):1}
-function answer(r){
-  if(!step)return;const{kind,i}=step,k=K(i);
-  if(kind==="probe"){probeAnswer(i,r===2);return}
-  if(step.phase!=="rate"&&step.phase!=="reveal")return;
-  const Lg=plan().L,before=nRead,wasGreen=k.green;
-  if(kind==="verify"){k.claimed=0;if(r>1){k.S=[0,0,3,20,60][r];k.last=day;k.reps=1;k.green=1}else{k.green=0;rate(i,1)}}
-  else if(kind==="new"){rate(i,r);Lg.new++}
-  else{rate(i,r,kind==="again");Lg.rev++}
-  if(r===1&&step.inWalk)relearn.push({i,at:steps});
-  let op=null;
-  if(!wasGreen&&!k.green&&r>=2&&step.verdict&&step.verdict.ok)op=turnGreen(i);  // first correct production → yours → one sentence opens
-  if(r>1&&due[i]&&!RM)anims.set(i,performance.now());
-  repaint(i);stats();save();
-  step.r=r;step.opened=op?[op]:null;step.readNew=nRead-before;step.phase="after";
-  if(auto)return;
-  if(seedDone()){openSentence();return}
-  if(!op&&!step.readNew&&r>1&&step.inWalk&&walk&&!step.learn){next();return}
-  render();if(!seeded&&k.green&&(i===HOLA||i===MUNDO))showTip(1);
-}
-function openSentence(){step={kind:"sentence",i:MUNDO,phase:"spell",sent:SEED0,gap:[],typed:"",verdict:null,inWalk:!!walk,opened:null};sel=MUNDO;link.clear();SEED0.ids.forEach(x=>link.add(x));render();select(MUNDO,true)}
-function continueStep(){if(!step)return;if(step.inWalk&&walk){next();return}const nx=nextUp(false);if(nx&&nx.i>=0){openStep(nx.i,null,false);return}closePop();sc.focus()}
-function claimWord(i){const k=K(i);if(k.green||k.claimed)return;k.claimed=1;repaint(i);const op=branch(i);stats();save();if(step&&step.i===i){step.kind="page";step.phase="page";step.learn=false;step.opened=op?[op]:null;render()}}
+function judgeEs(i,typed){const t=norm(typed).replace(/[¡!¿?.,;:]/g,"").trim();if(!t)return{ok:0,empty:1};const a=norm(words[i].w),t2=t.replace(/^(el|la|los|las|un|una)\s+/,"");
+  for(const x of [t,t2]){if(x===a)return{ok:1};if(strip(x)===strip(a))return{ok:1,acc:1}}
+  if(a.length>=5&&lev(strip(t2),strip(a))<=1)return{ok:1,typo:1};return{ok:0}}
+
+// ---------- the new-word card: one typed guess at the meaning (no English anywhere before it). Right → collected: the card upgrades and the word goes into the bucket ----------
+function submitGuess(){if(!step||step.kind!=="new"||step.phase!=="new"||gateClosed())return;const ai=pop.querySelector("[data-ans]"),g=ai?ai.value.trim():"";
+  if(!g){step.nudge=true;render();return}  // a typed guess is the commitment: there is no "no idea"
+  step.guess=g;if(judgeMeaning(step.i,g).ok)collectHere();else{step.phase="wrong";render()}}
+function collect(i){const k=K(i);if(k.col)return;k.col=1;k.ct=clock();k.st=0;k.ls=0;k.reps=0;repaint(i);stats();save()}
+function collectHere(){if(!step||gateClosed())return;const i=step.i;collect(i);step.kind="page";step.phase="page";step.just=step.guess||"✓";step.mean=false;render();showTip(1)}  // "I was right" lands here too
+function claimWord(i){const k=K(i);if(k.col)return;if(gateClosed()){msg(gateLine(true));return}trust(k,CLAIM_S);k.claimed=1;repaint(i);stats();save();
+  if(step&&step.i===i){step.kind="page";step.phase="page";step.just="claimed";render()}}
+// a sentence on an upgraded card is one object: clicking it brings all its fogged words onto the board — unless the gate is closed
+function sentClick(key){const s=SK.get(key);if(!s||!step)return;
+  if(gateClosed()){step.gateMsg=true;render();return}
+  const o=unlockSentence(s,step.i);reorder();layout();stats();save();step.opened=[o];step.gateMsg=false;step.allS=step.allS||false;render();if(o.nw.length)showTip(2)}
+const gateLine=short=>short?'due words first · <b>'+toClear()+'</b> to clear':'Due words first: practise them before new words can be added — <b>'+toClear()+'</b> to clear'+(nDue?'.':', '+nextDueText()+'.');
+function gateHTML(){return'<div class="gate" role="status">'+gateLine(false)+(practisable()?' <button class="lnk" data-act="round">practise now</button>':'')+'</div>'}
+
+// ---------- flashcard rounds: due words first, then the bucket, each group shuffled; typed, in both directions; again comes back in the same round ----------
+const shuffle=a=>{for(let j=a.length-1;j>0;j--){const r=Math.floor(Math.random()*(j+1));[a[j],a[r]]=[a[r],a[j]]}return a};
+function roundQueue(){const now=clock(),d=[],b=[];for(const i of order){const k=K(i);if(!k.col)continue;if(!k.reps)b.push(i);else if(k.due<=now)d.push(i)}
+  return[...shuffle(d).map(i=>({i,src:"due"})),...shuffle(b).map(i=>({i,src:"new"}))]}
+function startRound(first){link.clear();fresh.clear();hideTip();
+  if(!round||round.phase==="done"||round.phase==="empty"){round={q:roundQueue(),cur:null,phase:"ask",n:0,again:0,words:new Set()}}
+  else{const have=new Set(round.q.map(c=>c.i));if(round.cur)have.add(round.cur.i);roundQueue().forEach(c=>{if(!have.has(c.i))round.q.push(c)})}  // resume, plus anything that came due since
+  if(first!=null){const j=round.q.findIndex(c=>c.i===first);if(j>0)round.q.unshift(round.q.splice(j,1)[0])}
+  step={kind:"round",i:-1,phase:"round"};if(!round.cur)nextCard(true);else{step.i=round.cur.i;render()}}
+function nextCard(quiet){const R=round;R.cur=null;R.typed="";R.verdict=null;
+  while(R.q.length){const c=R.q.shift(),k=K(c.i);if(!k.col)continue;c.dir=k.ld<0?(Math.random()<.5?0:1):1-k.ld;R.cur=c;break}  // 0 Spanish → English · 1 English → Spanish; never the same direction twice in a row for a word
+  R.phase=R.cur?"ask":R.n?"done":"empty";if(step&&step.kind==="round")step.i=R.cur?R.cur.i:-1;if(!auto)render()}
+function submitCard(){const R=round;if(!R||R.phase!=="ask"||!step||step.kind!=="round")return;const ai=pop.querySelector("[data-ans]"),t=ai?ai.value.trim():"";
+  const v=R.cur.dir===0?judgeMeaning(R.cur.i,t):judgeEs(R.cur.i,t);R.typed=t;R.verdict=v;R.sug=!v.ok?1:v.acc||v.typo?2:3;R.phase="shown";render()}
+function rateCard(g){const R=round;if(!R||R.phase!=="shown")return;const{i,dir}=R.cur,k=K(i),wasDue=due[i];
+  schedule(k,g,clock());k.ld=dir;R.n++;R.words.add(i);if(g===1)R.again++;
+  if(k.due<=clock()+LEARN_AHEAD)R.q.splice(Math.min(R.q.length,3),0,{i,src:"again"});  // a learning step (again, or the next step of a new card) comes back a few cards later
+  if(wasDue&&g>1&&!RM)anims.set(i,performance.now());
+  repaint(i);stats();save();nextCard()}
+const RATES=["again","hard","medium","easy"];
+function rateRow(i,sug){const k=K(i);return'<div class="rate" role="group" aria-label="How well did you recall it?">'+RATES.map((n,j)=>'<button data-r="'+(j+1)+'" class="'+(sug===j+1?"sug":"")+'">'+n+'<small>'+(j+1)+' · '+fmtIv(preview(k,j+1))+'</small></button>').join("")+'</div>'}
 
 // =====================================================================
 // THE CARD
 // =====================================================================
 const head=w=>(w.art?'<i>'+w.art+' </i>':'')+esc(w.w);
 const field=(ph,lang,cls)=>'<input class="ans'+(cls?' '+cls:'')+'" data-ans placeholder="'+ph+'" aria-label="'+ph+'" lang="'+lang+'" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="go">';
-const GAP='<input class="gap" data-ans aria-label="the missing word" lang="es" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="go">';
 const ACC='<div class="acc" role="group" aria-label="Accented letters">'+[..."áéíóúñü"].map(c=>'<button type="button" tabindex="-1" data-ch="'+c+'">'+c+'</button>').join("")+'</div>';
 const CHECK='<div class="acts"><button class="fb pri ck" data-act="check">check<small>enter</small></button></div>';
 const POSN={verb:"verb",noun:"noun",adj:"adjective",adv:"adverb",conj:"conjunction",prep:"preposition",pron:"pronoun",det:"determiner",art:"article",num:"number",interj:"interjection"};
 const posLabel=w=>(POSN[w.pos]||w.pos)+(w.pos==="noun"&&w.art?" · "+(w.art==="el"&&!ELF.has(w.w)?"m":"f"):"");
 const lemmaOf=x=>(words[x].art?words[x].art+" ":"")+words[x].w;
-function sentHTML(s,target,mode){ // "ask" (target lit) · "gap" (target is the answer field) · "ok" (target green) · "plain". Hover = the lemma of a word on the board, never a gloss.
+function sentHTML(s,target,mode){ // "ask" (target lit) · "ok" (target green) · "plain" · "obj" (one clickable object: no per-word links). Hover = the lemma of a word on the board, never a gloss.
   return s.parts.map(p=>{
     if(!p.alts)return esc(p.t);
     if(!p.alts.length)return'<span class="tk off">'+esc(p.t)+'</span>';
     const ids=p.alts.flat().filter(x=>typeof x==="number"),isT=ids.includes(target);
-    if(mode==="gap"&&isT)return GAP;
     const lv=isT?undefined:ids.find(x=>K(x).vis);
-    let c="tk";if(isT&&mode==="ask")c+=" tg";else if(isT&&mode==="ok")c+=" ok";else if(lv===undefined)c+=" fogw";else if(!p.alts.every(a=>a.some(yours)))c+=" unk";
+    let c="tk";if(isT&&mode==="ask")c+=" tg";else if(isT&&(mode==="ok"||mode==="obj"))c+=" ok";else if(lv===undefined)c+=" fogw";else if(!p.alts.every(a=>a.some(yours)))c+=" unk";
+    if(mode==="obj")return'<span class="'+c+'">'+esc(p.t)+'</span>';
     return'<span class="'+c+'" data-ids="'+ids.join(",")+'"'+(lv!==undefined?' data-l="'+esc(lemmaOf(lv))+'"':'')+'>'+esc(p.t)+'</span>';
   }).join("");
 }
-function rateRow(i,sug){const S=K(i).S||0;const iv=r=>{if(r===1)return"10m";const s=S?S*(1+15*Math.pow(S,-.1)*(Math.exp(1-R(i))-1)*[0,0,.6,1,1.5][r]):S0[r];return fmtIv(ivlOf(s))};
-  return'<div class="rate" role="group" aria-label="Rate">'+["again","hard","good","easy"].map((n,j)=>'<button data-r="'+(j+1)+'" class="'+(sug===j+1?"sug":"")+'">'+n+'<small>'+(j+1)+' · '+iv(j+1)+'</small></button>').join("")+'</div>'}
-const enOf=new Map();  // English shown on request (word page): sentence key → text
-function sentLine(o,i,mode){const ok=enOK(o,i);if(!ok)enOf.set(o.key,o.en);
-  return'<div class="sn">'+sentHTML(o,i,mode)+(ok?'<span class="en">'+esc(o.en)+'</span>':'<button class="enb" data-en="'+o.key+'">English</button>')+'</div>'}
-function openedBody(list){return list.map(o=>'<div class="sn">'+sentHTML(o.s,-1,"plain")+(readable(o.s)?'<span class="en">'+esc(o.s.en)+'</span>':'')+
-  (o.nw.length?'<div class="chips">'+o.nw.map(x=>'<button class="chip new" data-go="'+x+'">'+esc(words[x].w)+'</button>').join("")+'<span class="cap">new on the board</span></div>':'<p class="sm">its words were already on the board</p>')+'</div>').join("")}
-// Enter after a card goes on without the atlas: a word this card just opened, else the rest of its sentence, else (after a review) the next due word, else the best new word
-function nextUp(dry){
-  const cur=step.i,ok=x=>x!==cur&&K(x).vis&&!yours(x);
-  for(const o of step.opened||[]){const c=o.nw.filter(ok).sort((a,b)=>a-b);if(c.length)return{i:c[0]}}
-  if(step.sent&&step.kind!=="sentence"){const c=gapOf(step.sent,cur).filter(ok).sort((a,b)=>a-b);if(c.length)return{i:c[0]}}
-  const P=plan();
-  if(!step.learn&&step.kind!=="sentence"){let best=-1,bs=-1;P.due.forEach(x=>{if(x===cur)return;const s=share(x)*(1-R(x));if(s>bs){bs=s;best=x}});if(best>=0)return{i:best,rev:1}}
-  let c=P.cands.filter(x=>x!==cur);if(!c.length){if(dry)return P.newQ>0?{i:-1}:null;revealFrontier(6);stats();save();c=candidates().filter(x=>x!==cur)}
-  if(!c.length)return null;let best=-1,bs=-1;c.forEach(x=>{const s=bestSent(x),g=s?gapOf(s,x).length:9,sc=share(x)*(g<=1?2:g===2?1.3:1);if(sc>bs){bs=sc;best=x}});return{i:best}}
-// the word page walks the words that are yours, in board order
-function nextLearned(d){const g=order.filter(x=>K(x).green);if(!g.length)return-1;const j=g.indexOf(step.i);return g[((j<0?(d>0?-1:0):j)+d+g.length)%g.length]}
+const enOK=(s,i)=>!gapOf(s,i).length;  // a sentence's English shows only when every other word in it is yours: it would give away the others
+// the word page walks the words that are yours (collected and beyond), in board order
+function nextLearned(d){const g=order.filter(x=>K(x).col);if(!g.length)return-1;const j=g.indexOf(step.i);return g[((j<0?(d>0?-1:0):j)+d+g.length)%g.length]}
 let shownKeys=new Set(),shownFor=-1,tense=0;
 function render(){
-  if(!step)return;const{kind,i,phase}=step,w=words[i],k=K(i),s=step.sent,v=step.verdict;
-  if(shownFor!==i){shownKeys=new Set();shownFor=i}
+  if(!step)return;const{kind,i,phase}=step;
+  const sk=kind==="round"?"r"+(round&&round.n)+(round&&round.phase):i;if(shownFor!==sk){shownKeys=new Set();shownFor=sk}
   const keys=new Set();let nIt=0;
   const item=(key,h4,body,cls)=>{keys.add(key);const keep=shownKeys.has(key);return'<div class="it'+(cls?' '+cls:'')+(keep?' keep':'')+'"'+(keep?'':' style="animation-delay:'+(90*nIt++)+'ms"')+'>'+(h4?'<h4>'+h4+'</h4>':'')+body+'</div>'};
   const Lm=[],Rm=[];let c='',ft='';
-  const KL={new:"new",verify:"you said you know this · verify",due:"due",again:"again",page:k.green?"yours":k.claimed?"claimed":"learning",probe:"finding your frontier",sentence:"your first sentence"};
-  const gapNote=s&&kind!=="probe"&&kind!=="sentence"&&kind!=="page"&&phase!=="after"?(step.gap.length?step.gap.length+' more to go in this sentence':''):kind==="page"&&due[i]?'due':'';
-  const done=phase==="after"&&(kind==="sentence"||k.green&&step.r>1);
-  c+='<div class="flab'+(done||kind==="page"&&k.green?' g':'')+'"><span>'+(step.learn?(phase==="after"&&k.green?"yours":k.S>0?"learning":"new word"):KL[kind])+(kind==="probe"?' · '+(probe.n+1):'')+'</span>'+(gapNote?'<i>'+gapNote+'</i>':'')+'</div>';
-  const enItem=x=>x&&enOK(x,i)?item("en","in English",'<p>'+esc(x.en)+'</p>'):'';
-  const grItem=()=>w.g?item("gr","grammar",'<p>'+esc(w.g)+'</p>'):'';
-  const hideWord=phase==="spell"||phase==="recall"||(phase==="ask"&&step.cue==="cloze");
-  const sentMode=phase==="guess"||phase==="meet"||phase==="miss"||phase==="reveal"||phase==="rate"||(phase==="ask"&&step.cue!=="cloze")?"ask":hideWord?"gap":phase==="after"?(k.green&&step.r>1?"ok":"ask"):null;
-  const showS=s&&kind!=="sentence"&&kind!=="probe"&&kind!=="page"&&sentMode;
-  if(kind==="page")c+=pageHTML(w,k,item,Lm,Rm);
-  else if(kind==="sentence")c+=phase==="after"?'<div class="sx">'+sentHTML(SEED0,-1,"ok").replace(/class="tk"/g,'class="tk ok"')+'</div>':'<div class="sx cueen">'+esc(SEED0.en)+'</div>';
-  else if(hideWord)c+='<div class="hd cue">'+esc(w.t)+'<small>'+posLabel(w)+'</small></div>';
-  else c+='<div class="hd'+(showS?'':' solo')+'">'+head(w)+'<small>'+posLabel(w)+'</small></div>';
-  if(showS)c+='<div class="sx">'+sentHTML(s,i,sentMode)+(phase==="ask"&&step.cue==="cloze"?'<span class="en">'+esc(s.en)+'</span>':'')+'</div>';
-  if(phase==="probe")c+='<div class="nt">Do you know what this means?</div><div class="acts"><div class="yn"><button class="fb" data-r="1">don’t<small>1</small></button><button class="fb pri" data-r="2">know<small>2</small></button></div></div>';
-  else if(phase==="guess"){
-    c+='<div class="nt">'+(s?'What might the lit word mean?':'What might it mean?')+'</div>'+field("your guess, in English","en")+'<div class="acts"><div class="yn"><button class="fb" data-act="skip">no idea</button><button class="fb pri" data-act="guess">guess<small>enter</small></button></div></div>';
-    let l='';if(!k.S&&!walk)l+='<button class="lnk" data-act="claim">I already know this</button>';
-    if(!seeded&&!probed&&i===HOLA)l+='<button class="lnk" data-act="probe">I already know some Spanish → find my frontier</button>';
-    if(l)c+='<div class="lnks">'+l+'</div>';
-  }
-  else if(phase==="meet"||phase==="miss"){
-    c+='<div class="mean">'+esc(w.t)+'</div>';
-    if(phase==="meet"&&step.guess){const ok=guessClose(step.guess,w.t);c+='<div class="gs'+(ok?' ok':'')+'">'+(ok?'✓ ':'')+'you guessed <b>'+esc(step.guess)+'</b></div>'}
-    if(phase==="miss")c+='<div class="vd bad">✗ you wrote <b>'+esc(step.typed)+'</b> — it is <b>'+esc(s?surfaceOf(s,i):w.w)+'</b></div>';
-    Lm.push(enItem(s));Rm.push(grItem());
-    c+='<div class="acts"><button class="fb pri" data-act="recall">'+(phase==="miss"?'try again':'now recall it')+'<small>enter</small></button></div>';
-  }
-  else if(phase==="ask"){
-    if(step.cue==="cloze")c+='<div class="nt">Type the missing word — or just think it.</div>'+ACC;
-    else c+='<div class="nt">'+(s?'Read it. Recall the lit word, then reveal.':'Recall the meaning, then reveal.')+'</div>';
-    c+='<div class="acts"><button class="fb pri" data-act="reveal">reveal<small>space</small></button></div>';
-  }
-  else if(phase==="spell"||phase==="recall"){
-    if(kind==="sentence")c+='<div class="nt">You know every word of your first sentence. Type it in Spanish — punctuation optional.</div>'+(step.wrong?'<div class="vd bad">not quite — <b>'+esc(SEED0.es)+'</b></div>':'')+field("type the sentence","es","wide")+ACC+CHECK;
-    else{if(!s)c+=field("type it","es");c+='<div class="nt">'+(phase==="recall"?'Now type the Spanish from memory.':'Spell it from memory.')+'</div>'+ACC+CHECK;Lm.push(enItem(s))}
-  }
-  else if(phase!=="page"){ // reveal · rate · after
-    if(phase!=="after"||kind!=="sentence")c+='<div class="mean">'+esc(w.t)+'</div>';
-    if(s&&kind!=="sentence")Lm.push(enItem(s));
-    if(kind==="sentence")Lm.push(item("en","in English",'<p>'+esc(SEED0.en)+'</p>'));
-    if(kind!=="sentence")Rm.push(grItem());
-    if(v&&(phase==="rate"||(phase==="reveal"&&step.cue==="cloze"))){
-      if(v.ok&&v.acc)c+='<div class="vd">✓ nearly — mind the accent: <b>'+esc(s?surfaceOf(s,i):w.w)+'</b></div>';
-      else if(v.ok)c+='<div class="vd ok">✓ '+esc(step.typed)+'</div>';
-      else c+='<div class="vd bad">✗ you wrote <b>'+esc(step.typed)+'</b> — it is <b>'+esc(s?surfaceOf(s,i):w.w)+'</b></div>'}
-    if(phase==="reveal")c+='<div class="acts">'+(kind==="due"?rateRow(i,suggested()):'<button class="fb pri" data-act="spell">spell it<small>enter</small></button>')+'</div>';
-    else if(phase==="rate")c+='<div class="acts">'+rateRow(i,suggested())+'</div>';
-    else{ // after
-      if(kind==="sentence")c+='<div class="nt ok"><b>✓</b> your first sentence is readable, and both words opened sentences of their own.</div>';
-      else if(k.green&&step.r>1)c+='<div class="nt ok"><b>✓ '+esc(w.w)+'</b> is yours'+(step.readNew>0?' · <b>+'+step.readNew+'</b> sentence'+(step.readNew>1?'s':'')+' readable':'')+'.</div>';
-      else if(step.r===1)c+='<div class="nt">Not yet — '+(step.inWalk&&walk?'it comes back in a few steps.':'it stays on the board as learning; try it again any time.')+'</div>';
-      else if(step.readNew>0)c+='<div class="nt ok">+<b>'+step.readNew+'</b> sentence'+(step.readNew>1?'s':'')+' readable.</div>';
-      if(step.opened)Rm.push(item("op","opened",openedBody(step.opened)));
-      if(kind!=="sentence"&&k.green&&!step.opened&&step.r>1){const other=i===HOLA?MUNDO:i===MUNDO?HOLA:-1;c+=!seeded&&other>=0&&!K(other).green?'<div class="nt">Now the other one: <button class="chip new" data-go="'+other+'">'+esc(words[other].w)+'</button> — then you will type your first sentence.</div>':'<div class="nt">No new sentence this time.</div>'}
-      const nx=step.inWalk&&walk?null:nextUp(true);step.nx=nx;
-      c+='<div class="acts"><button class="fb pri" data-act="cont">'+(step.inWalk&&walk?'continue':nx?(nx.rev?'next review':'next word'):'back to atlas')+'<small>enter</small></button></div>';
+  if(kind==="round")c+=roundHTML(item,Lm,Rm);
+  else{const w=words[i],k=K(i),s=step.sent;
+    const enItem=x=>x&&enOK(x,i)?item("en","in English",'<p>'+esc(x.en)+'</p>'):'';
+    const grItem=()=>w.g?item("gr","grammar",'<p>'+esc(w.g)+'</p>'):'';
+    if(kind==="page"){const sn=strengthName(k);c+='<div class="flab'+(sn==="green"?' g':sn==="gold"?' au':'')+'"><span>'+(k.claimed?"claimed":sn)+'</span>'+(due[i]?'<i>due</i>':'')+'</div>'+pageHTML(w,k,item,Lm,Rm)}
+    else if(kind==="probe")c+='<div class="flab"><span>finding your frontier · '+(probe.n+1)+'</span></div><div class="hd solo">'+head(w)+'<small>'+posLabel(w)+'</small></div><div class="nt">Do you know what this means?</div><div class="acts"><div class="yn"><button class="fb" data-r="1">don’t<small>1</small></button><button class="fb pri" data-r="2">know<small>2</small></button></div></div>';
+    else{ // new word: guess (typed) · wrong (the meaning, and a one-key flip: the learner's word counts)
+      c+='<div class="flab"><span>new word</span></div><div class="hd'+(s?'':' solo')+'">'+head(w)+'<small>'+posLabel(w)+'</small></div>';
+      if(s)c+='<div class="sx">'+sentHTML(s,i,"ask")+'</div>';
+      if(phase==="new"){
+        if(gateClosed())c+=gateHTML();
+        else{c+='<div class="nt">'+(s?'What does the lit word mean?':'What does it mean?')+'</div>'+field("your guess, in English","en")+(step.nudge?'<div class="vd">Type a guess — any guess.</div>':'')+CHECK;
+          let l='<button class="lnk" data-act="claim">I already know this</button>';if(!seeded&&!probed&&i===HOLA)l+='<button class="lnk" data-act="probe">I already know some Spanish → find my frontier</button>';c+='<div class="lnks">'+l+'</div>'}}
+      else{const nx=nextUp(true);step.nx=nx;
+        c+='<div class="mean">'+esc(w.t)+'</div><div class="gs">you guessed <b>'+esc(step.guess)+'</b></div><div class="nt">Not collected — it stays a new word. Guess it again any time.</div>';
+        c+='<div class="acts"><button class="fb" data-act="right">I was right<small>y</small></button><button class="fb pri" data-act="cont">'+nextLabel(nx)+'<small>enter</small></button></div>';
+        Lm.push(enItem(s));Rm.push(grItem())}
     }
   }
   // footer: the keys
-  const esc_=walk?'stop':'atlas';
-  ft='<span class="kbh">'+(kind==="probe"?'<kbd>1</kbd> don’t · <kbd>2</kbd> know · <kbd>esc</kbd> stop':kind==="page"?'<kbd>←</kbd> <kbd>→</kbd> words that are yours · <kbd>enter</kbd> next'+(due[i]?' · <kbd>space</kbd> review now':'')+' · <kbd>b</kbd> open another sentence · <kbd>esc</kbd> '+esc_:phase==="ask"?'<kbd>space</kbd> reveal · <kbd>esc</kbd> '+esc_:phase==="rate"||(phase==="reveal"&&kind==="due")?'<kbd>1–4</kbd> rate · <kbd>enter</kbd> '+["","again","hard","good","easy"][suggested()]+' · <kbd>esc</kbd> '+esc_:phase==="reveal"?'<kbd>enter</kbd> spell it':phase==="spell"||phase==="recall"?'<kbd>enter</kbd> check · <kbd>esc</kbd> '+esc_:phase==="guess"?'<kbd>enter</kbd> guess — empty is no idea · <kbd>esc</kbd> '+esc_:phase==="meet"||phase==="miss"?'<kbd>enter</kbd> '+(phase==="miss"?'try again':'recall it'):phase==="after"?'<kbd>enter</kbd> '+(step.inWalk&&walk?'continue':step.nx&&step.nx.i>=0?(step.nx.rev?'next review · ':'next word · ')+'<b>'+esc(words[step.nx.i].w)+'</b>':step.nx?'next word':'back to atlas')+' · <kbd>esc</kbd> '+esc_:'')+'</span>';
-  foOpen(i);
-  pop.classList.toggle("pg",kind==="page");
-  $("backt").textContent=walk?"stop":"atlas";
+  const nxk=nx=>!nx?'back to grid':nx.round?'flashcard round':nx.i>=0?(nx.page?'next sentence · ':'next word · ')+'<b>'+esc(words[nx.i].w)+'</b>':'next word';
+  ft='<span class="kbh">'+(kind==="probe"?'<kbd>1</kbd> don’t · <kbd>2</kbd> know · <kbd>esc</kbd> stop'
+    :kind==="round"?(round.phase==="ask"?'<kbd>enter</kbd> check — empty if you don’t know · <kbd>esc</kbd> grid':round.phase==="shown"?'<kbd>1–4</kbd> rate · <kbd>enter</kbd> '+RATES[round.sug-1]+' · <kbd>esc</kbd> grid':'<kbd>enter</kbd> '+(practisable()?'next round':'grid')+' · <kbd>esc</kbd> grid')
+    :kind==="page"?'click a sentence: its words come onto the board · <kbd>enter</kbd> '+nxk(step.nx)+' · <kbd>←</kbd> <kbd>→</kbd> your words'+(due[i]?' · <kbd>space</kbd> practise':'')+' · <kbd>m</kbd> meaning · <kbd>esc</kbd> grid'
+    :phase==="wrong"?'<kbd>y</kbd> I was right · <kbd>enter</kbd> '+nxk(step.nx)+' · <kbd>esc</kbd> grid':gateClosed()?'<kbd>esc</kbd> grid':'<kbd>enter</kbd> check · <kbd>esc</kbd> grid')+'</span>';
+  foOpen(kind==="round"?-1:i);
+  pop.classList.toggle("pg",kind==="page");pop.classList.toggle("rd",kind==="round");
+  $("backt").textContent=probe?"stop":"grid";
   foL.innerHTML=Lm.join("");foC.innerHTML=c;foR.innerHTML=Rm.join("");foF.innerHTML=ft;shownKeys=keys;syncHint();
-  wire(w,k);if(needLayout)layout();
-  if(popKey!==i+":"+phase){popKey=i+":"+phase;pop.scrollTop=0;keepInput()}
-  tip.style.display="none";drawMini();req();
+  wire();if(needLayout)layout();
+  const pk=kind==="round"?"r"+round.n+round.phase:i+":"+phase;if(popKey!==pk){popKey=pk;pop.scrollTop=0;keepInput()}
+  tip.style.display="none";drawMini();req();updateBar();
 }
-// the word page: a word that is yours is no longer practised here; the page shows it, its forms and the sentences it lives in, and every word in them leads on
-function pageHTML(w,k,item,Lm,Rm){const i=w.i;let c='<div class="hd solo">'+head(w)+'</div><div class="gl">'+esc(w.t)+'</div>';
+// the flashcard view: one card at a time, the answer typed; then the expected answer, a preselected rating (again if it was wrong) and the four buttons
+function roundHTML(item,Lm,Rm){const R=round,gc=gateClosed();let c='';
+  const lab='<div class="flab"><span>flashcards</span>'+(R.cur?'<i>'+(R.q.length+1)+' left</i>':'')+(gc?'<i>'+toClear()+' to clear</i>':'')+'</div>';
+  if(R.phase==="empty"||R.phase==="done"){
+    c+=lab+'<div class="hd solo cue">'+(R.phase==="done"?'Round done':'Nothing to practise')+'</div>';
+    c+='<div class="nt">'+(R.phase==="done"?'<b>'+R.words.size+'</b> word'+(R.words.size===1?'':'s')+(R.again?' · <b>'+R.again+'</b> needed another go':'')+' · ':'')+nextDueText()+(nBucket?' · the bucket holds <b>'+nBucket+'</b>':'')+'.</div>';
+    if(gc)c+='<div class="gate">'+gateLine(false)+'</div>';
+    c+='<div class="acts">'+(practisable()?'<button class="fb" data-act="grid">grid</button><button class="fb pri" data-act="round">another round<small>enter</small></button>':'<button class="fb pri" data-act="grid">back to grid<small>enter</small></button>')+'</div>';
+    return c}
+  const{i,dir,src}=R.cur,w=words[i],k=K(i);
+  c+=lab.replace('<span>flashcards</span>','<span>flashcards · '+(src==="due"?"due":src==="again"?"again":"first round")+'</span>');
+  if(R.phase==="ask"){
+    if(dir===0)c+='<div class="hd solo">'+head(w)+'</div><div class="nt">'+posLabel(w)+' · what does it mean? Type it in English.</div>'+field("in English","en");
+    else c+='<div class="hd solo cue">'+esc(w.t)+'</div><div class="nt">'+posLabel(w)+' · type it in Spanish.</div>'+field("en español","es")+ACC;
+    return c+CHECK}
+  const v=R.verdict,exp=dir===0?esc(w.t):head(w),typed=R.typed?'<b>'+esc(R.typed)+'</b>':'nothing';
+  c+='<div class="hd solo">'+head(w)+'</div><div class="gl">'+esc(w.t)+'</div>';
+  c+=v.ok?(v.acc?'<div class="vd">✓ nearly — mind the accent: <b>'+head(w)+'</b></div>':v.typo?'<div class="vd">✓ nearly — you typed '+typed+', it is <b>'+exp+'</b></div>':'<div class="vd ok">✓ '+typed+'</div>')
+    :'<div class="vd bad">✗ you typed '+typed+' — it is <b>'+exp+'</b></div>';
+  const s=bestSent(i);if(s){c+='<div class="sx sm">'+sentHTML(s,i,"ok")+(enOK(s,i)?'<span class="en">'+esc(s.en)+'</span>':'')+'</div>'}
+  c+='<div class="acts">'+rateRow(i,R.sug)+'</div>';
+  if(w.g)Rm.push(item("gr","grammar",'<p>'+esc(w.g)+'</p>'));
+  return c}
+// the upgraded card (any collected word): the word, its grammar and forms, and its sentences — no English gloss unless asked for. Every sentence that still has words in the fog is one clickable object.
+function pageHTML(w,k,item,Lm,Rm){const i=w.i;let c='<div class="hd solo">'+head(w)+'</div>';
+  if(step.just)c+='<div class="vd ok">✓ <b>'+esc(step.just)+'</b>'+(step.just==="claimed"?'':' — collected')+'</div>';
+  c+=step.mean?'<div class="gl">'+esc(w.t)+'</div>':'<div class="lnks"><button class="lnk" data-act="mean">meaning · m</button></div>';
   const cj=conjOf(w),nf=w.pos==="noun"?nounForms(w):null,tags=[[POSW[w.pos]||"",POSN[w.pos]||w.pos]];
   if(nf)tags.push(["gender",nf.g==="f"?"feminine":nf.g==="mf"?"masculine or feminine":"masculine"]);
   if(cj&&cj.c==="i")tags.push(["irregular-verb","irregular"]);else if(cj&&cj.c==="s")tags.push(["stem-changing-verb","stem-changing"]);
   c+='<div class="tags">'+tags.map(([id,t])=>WIKI[id]?'<button class="tag'+(step.wiki===id?' on':'')+'" data-wiki="'+id+'" title="'+esc(WIKI[id][1])+'">'+esc(t)+'</button>':'<span class="tag">'+esc(t)+'</span>').join("")+'</div>';
+  if(inBucket(k)&&step.just&&nBucket>=BUCKET_N)c+='<div class="nt">The bucket is full — a flashcard round is ready. <button class="lnk" data-act="round">start round · r</button></div>';
+  else if(inBucket(k)&&step.just)c+='<div class="nt">In the bucket · <b>'+nBucket+'</b>/'+BUCKET_N+'</div>';
+  if(due[i])c+='<div class="acts"><button class="fb quiet" data-act="practise">practise now<small>space</small></button></div>';
+  // the sentences: a just-opened one first with its new words, then the ones that still bring words (the first cascade's sentence leads), then the rest
+  const all=(INV.get(i)||[]).slice(),op=step.opened||[],opK=new Set(op.map(o=>o.s.key)),fc=new Map(all.map(s=>[s.key,fogIds(s).length]));
+  const rank=s=>opK.has(s.key)?-1e9:fc.get(s.key)?(s===FIRST?-1e8:0)+gapOf(s,i).length*100+s.n:1e6+(openedS.has(s.key)?0:1e5)+s.n;
+  all.sort((a,b)=>rank(a)-rank(b));const cap=step.allS?all.length:6;
+  let r=step.gateMsg?gateHTML():'';
+  r+=all.slice(0,cap).map(s=>{
+    if(fc.get(s.key))return'<button class="sb" data-sent="'+s.key+'" aria-label="Open this sentence: its words come onto the board">'+sentHTML(s,i,"obj")+'</button>';
+    const o=op.find(o=>o.s===s),ok=enOK(s,i);
+    return'<div class="sn">'+sentHTML(s,i,"ok")+(ok?'<span class="en">'+esc(s.en)+'</span>':'')+
+      (o?(o.nw.length?'<div class="chips">'+o.nw.map(x=>'<button class="chip new" data-go="'+x+'">'+esc(words[x].w)+'</button>').join("")+'<span class="cap">new on the board</span></div>':'<p class="sm">its words were already on the board</p>'):'')+'</div>'}).join("");
+  if(all.length>cap)r+='<button class="lnk" data-act="alls">all '+all.length+' sentences</button>';
+  if(r)c+='<div class="sents">'+r+'</div>';
   if(cj){const T=["present","preterite","imperfect","future","subjunctive","command"],TK="ptifsm",P=["yo","tú","él · usted","nosotros","vosotros","ellos · ustedes"];
     c+='<div class="forms"><div class="tz" role="tablist">'+T.map((t,j)=>'<button data-tz="'+j+'" class="'+(tense===j?'on':'')+'">'+t+'</button>').join("")+'</div>';
     c+='<table class="cj" data-s="'+tense+'"><thead><tr><th></th>'+T.map((t,j)=>'<th data-t="'+j+'">'+t+'</th>').join("")+'</tr></thead><tbody>'+P.map((p,r)=>'<tr><th scope="row">'+p+'</th>'+[...TK].map((t,j)=>{const key=t+(r+1),f=cj.o[key];return'<td data-t="'+j+'"'+(cj.irr.has(key)?' class="x"':'')+'>'+(t==="m"&&r===0?'':esc(f||""))+'</td>'}).join("")+'</tr>').join("")+'</tbody></table>';
     c+='<div class="vx"><span>gerund <b'+(cj.irr.has("g")?' class="x"':'')+'>'+esc(cj.o.g)+'</b></span><span>participle <b'+(cj.irr.has("d")?' class="x"':'')+'>'+esc(cj.o.d)+'</b></span></div></div>'}
   else if(nf)c+='<div class="forms"><div class="nf">'+nf.r.map(([a,sg,pa,pl,x])=>'<span><i>'+a+'</i> '+esc(sg)+'</span><span'+(x?' class="x"':'')+'><i>'+pa+'</i> '+esc(pl)+'</span>').join("")+'</div></div>';
   else if(w.pos==="adj"){const a=adjForms(w);c+='<div class="forms"><div class="nf">'+(a.f===w.w?'<span>'+esc(w.w)+'</span><span'+(a.x.mp?' class="x"':'')+'>'+esc(a.mp)+'</span>':'<span>'+esc(w.w)+'</span><span'+(a.x.mp?' class="x"':'')+'>'+esc(a.mp)+'</span><span'+(a.x.f?' class="x"':'')+'>'+esc(a.f)+'</span><span'+(a.x.fp?' class="x"':'')+'>'+esc(a.fp)+'</span>')+'</div></div>'}
-  if(due[i])c+='<div class="acts"><button class="fb quiet" data-act="review">review now<small>space</small></button></div>';
-  // left: what the grammar wiki says, the grammar line, memory
+  // left: what the grammar wiki says, the grammar line · right: memory
   if(step.wiki&&WIKI[step.wiki]){const e=WIKI[step.wiki];Lm.push(item("wk"+step.wiki,esc(e[0]),'<p>'+esc(e[1])+'</p><p class="sm">'+esc(e[2]).replace(/\*\*(.+?)\*\*/g,"<b>$1</b>")+'</p>'))}
   if(w.g)Lm.push(item("gr","grammar",'<p>'+esc(w.g)+'</p>'));
-  if(k.S>0)Lm.push(item("mem","memory",'<p class="sm">stable '+fmtD(k.S)+' · '+(due[i]?'due now':'next review in '+Math.max(1,Math.ceil(ivlOf(k.S)-(day-k.last)))+' d')+' · '+k.reps+' review'+(k.reps===1?'':'s')+'</p>'));
-  else if(k.claimed)Lm.push(item("mem","memory",'<p class="sm">claimed · the walk will verify it</p>'));
-  // right: every sentence it is in — the ones you opened first, a just-opened one on top with its new words
-  const op=step.opened||[],opK=new Set(op.map(o=>o.s.key)),all=(INV.get(i)||[]).filter(o=>!opK.has(o.key)).sort((a,b)=>(openedS.has(b.key)-openedS.has(a.key))||a.n-b.n);
-  const cap=step.allS?all.length:8;
-  let r=op.length?openedBody(op):'';r+=all.slice(0,cap).map(o=>sentLine(o,i,"ok")).join("");
-  if(all.length>cap)r+='<button class="lnk" data-act="alls">all '+all.length+' sentences</button>';
-  const more=(k.green||k.claimed)&&(INV.get(i)||[]).some(x=>!openedS.has(x.key)&&sentScore(x,i)!=null);
-  if(more)r+='<div><button class="lnk" data-act="branch">open another sentence · b</button></div>';
-  if(r)Rm.push(item("sl",op.length?"opened · in sentences":"in sentences",r));
+  const now=clock();
+  Rm.push(item("mem","memory",'<p class="sm">'+(inBucket(k)?'in the bucket · its first flashcard round is next'
+    :(k.claimed?'claimed · ':'')+(k.st===2?'interval '+fmtSpan(k.ivl):'learning step')+' · '+(due[i]?'due now':'next in '+fmtSpan(k.due-now))+' · stable '+fmtD(k.S)+' · '+k.reps+' rating'+(k.reps===1?'':'s')+(k.lapses?' · '+k.lapses+' lapse'+(k.lapses===1?'':'s'):''))+'</p>'));
+  step.nx=nextUp(true);
+  c+='<div class="acts"><button class="fb pri" data-act="cont">'+nextLabel(step.nx)+'<small>enter</small></button></div>';
   return c}
-function wire(w,k){
+function wire(){
   const d=pop;
-  d.querySelectorAll("[data-r]").forEach(b=>b.onclick=()=>answer(+b.dataset.r));
+  d.querySelectorAll("[data-r]").forEach(b=>b.onclick=()=>{if(!step)return;if(step.kind==="probe")probeAnswer(step.i,+b.dataset.r===2);else rateCard(+b.dataset.r)});
   d.querySelectorAll("[data-act]").forEach(b=>b.onclick=()=>{const a=b.dataset.act;
-    if(a==="reveal")reveal();else if(a==="spell")toSpell();else if(a==="cont")continueStep();
-    else if(a==="guess")commitGuess();else if(a==="skip"){const ai=d.querySelector("[data-ans]");if(ai)ai.value="";commitGuess()}else if(a==="recall")toRecall();
-    else if(a==="check"){if(step.phase==="spell")spelled();else if(step.phase==="recall")recalled()}
-    else if(a==="review")openStep(step.i,"due",false);
+    if(a==="check"){if(step.kind==="round")submitCard();else submitGuess()}
+    else if(a==="cont")continueStep();else if(a==="right")collectHere();
+    else if(a==="mean"){step.mean=true;render()}
+    else if(a==="round")startRound();else if(a==="practise")startRound(step.i);
+    else if(a==="grid"){closePop();sc.focus({preventScroll:true})}
     else if(a==="alls"){step.allS=1;render()}
-    else if(a==="claim")claimWord(step.i);else if(a==="probe")startProbe();
-    else if(a==="branch")branchHere()});
+    else if(a==="claim")claimWord(step.i);else if(a==="probe")startProbe()});
+  d.querySelectorAll("[data-sent]").forEach(b=>b.onclick=e=>{e.stopPropagation();sentClick(b.dataset.sent)});
   d.querySelectorAll("[data-go]").forEach(b=>b.onclick=e=>{e.stopPropagation();goWord(+b.dataset.go)});
   d.querySelectorAll("[data-wiki]").forEach(b=>b.onclick=()=>{step.wiki=step.wiki===b.dataset.wiki?null:b.dataset.wiki;render()});
   d.querySelectorAll("[data-tz]").forEach(b=>b.onclick=()=>{tense=+b.dataset.tz;render()});
-  d.querySelectorAll("[data-en]").forEach(b=>b.onclick=()=>{const t=enOf.get(b.dataset.en);if(t==null)return;const sp=document.createElement("span");sp.className="en";sp.textContent=t;b.replaceWith(sp)});
   const ai=d.querySelector("[data-ans]");
   d.querySelectorAll("[data-ch]").forEach(b=>{const keep=e=>e.preventDefault();b.addEventListener("pointerdown",keep);b.addEventListener("mousedown",keep);  // keep the field focused: the soft keyboard stays up
     b.onclick=()=>{if(!ai)return;const a=document.activeElement===ai?ai.selectionStart:ai.value.length,z=document.activeElement===ai?ai.selectionEnd:a;ai.setRangeText(b.dataset.ch,a,z,"end");ai.dispatchEvent(new Event("input"));ai.focus({preventScroll:true})}});
   if(ai){ai.addEventListener("focus",()=>{keepInput();setTimeout(keepInput,350)});
-    if(ai.classList.contains("gap"))ai.addEventListener("input",()=>{ai.style.width=Math.max(4,ai.value.length*.62+1.4)+"em"});
-    ai.addEventListener("keydown",e=>{e.stopPropagation();if(!step)return;if(e.key==="Enter"||e.keyCode===13){e.preventDefault();if(step.phase==="spell")spelled();else if(step.phase==="guess")commitGuess();else if(step.phase==="recall")recalled();else reveal()}if(e.key==="Escape"){e.preventDefault();back()}});
-    // touch: the keyboard opens by itself only where typing is the step (recall, spell) and a tap led here; the guess keeps "no idea" one tap away
+    ai.addEventListener("keydown",e=>{e.stopPropagation();if(!step)return;if(e.key==="Enter"||e.keyCode===13){e.preventDefault();if(step.kind==="round")submitCard();else submitGuess()}if(e.key==="Escape"){e.preventDefault();back()}});
+    // touch: the keyboard opens by itself when a tap led here (typing is the step); a page load does not pop it up
     if(!matchMedia("(hover:none)").matches)ai.focus({preventScroll:true});
-    else if((step.phase==="recall"||step.phase==="spell")&&(!navigator.userActivation||navigator.userActivation.isActive))ai.focus({preventScroll:true})}
+    else if(!navigator.userActivation||navigator.userActivation.isActive)ai.focus({preventScroll:true})}
   d.querySelectorAll(".tk[data-ids]").forEach(t=>{const ids=t.dataset.ids.split(",").map(Number);
-    t.onclick=e=>{e.stopPropagation();if(ids.includes(step.i))return;const x=ids.find(x=>K(x).vis);if(x===undefined)return;goWord(x)}});
+    t.onclick=e=>{e.stopPropagation();if(!step||ids.includes(step.i))return;const x=ids.find(x=>K(x).vis);if(x===undefined)return;goWord(x)}});
 }
-function branchHere(){if(!step)return;const op=branch(step.i);if(op){reorder();layout();stats();save();step.opened=[op];render()}}
-function updateGo(){
-  go.classList.remove("on","done");
-  if(walk){go.textContent="■ stop";simText();return}
-  if(!nYours&&!probed){go.textContent="▸ begin";simText();return}
-  const P=plan(),nn=Math.min(P.newQ,P.cands.length);
-  if(P.due.length+nn===0){go.textContent=(narrow()?"✓":"✓ done · more");go.classList.add("done")}
-  else go.textContent="▸ "+P.due.length+" due · "+nn+" new";
+// the bar: the view toggle (grid · cards, with the number due), the bucket, and — while the gate is closed — the one number that says how far it is from reopening
+function updateBar(){
+  const inR=!!(step&&step.kind==="round");$("vg").classList.toggle("on",!inR);$("vc").classList.toggle("on",inR);
+  $("vcn").textContent=nDue?String(nDue):"";
+  const bkb=$("bk");bkb.textContent=nBucket+"/"+BUCKET_N;bkb.classList.toggle("full",nBucket>=BUCKET_N);bkb.title=nBucket>=BUCKET_N?"The bucket is full: a flashcard round is ready":"The bucket: collected words waiting for their first flashcard round";
+  const cl=$("clr");cl.hidden=!gateClosed();cl.textContent=toClear()+" to clear";
   simText();
 }
-go.onclick=()=>{if(walk){stopWalk();return}const P=plan();if(!P.due.length&&(!P.newQ||!P.cands.length)){P.L.new=Math.max(0,P.L.new-10);save()}startWalk()};
-
+$("vg").onclick=()=>{if(step)closePop();sc.focus({preventScroll:true})};
+$("vc").onclick=()=>startRound();
+$("bk").onclick=()=>{if(practisable())startRound();else msg('the bucket is empty — guess a new word to collect it')};
 // =====================================================================
-// FIND = summon: a word you name appears on the board (the fog lifts over that one cell)
+// FIND = summon: a word you name appears on the board (the fog lifts over that one cell) — while the gate is closed only words already on the board open
 // =====================================================================
 fq.addEventListener("keydown",e=>{e.stopPropagation();if(e.key==="Escape"){fq.value="";fq.blur();sc.focus();return}if(e.key!=="Enter")return;e.preventDefault();
   const v=strip(fq.value.trim().toLowerCase());if(!v)return;let i=-1;for(let j=0;j<N;j++)if(words[j].norm===v){i=j;break}
   if(i<0){msg('no card for <b>'+esc(fq.value)+'</b>');return}
-  if(walk)stopWalk();const isNew=revealCell(i,"found");if(isNew){flushAppear(-1);layout();stats();save()}fq.value="";fq.blur();sc.focus({preventScroll:true});openStep(i,null,false);if(isNew)msg('<b>'+esc(words[i].w)+'</b> is on the board now');
+  if(!K(i).vis&&gateClosed()){msg(gateLine(true));return}
+  const isNew=revealCell(i,"found");if(isNew){flushAppear(-1);layout();stats();save()}fq.value="";fq.blur();sc.focus({preventScroll:true});openStep(i,null);if(isNew)msg('<b>'+esc(words[i].w)+'</b> is on the board now');
 });
 
 // =====================================================================
@@ -9374,7 +9441,7 @@ let tipT=0;
 function showHover(i,cx,cy,loupe){
   if(i<0){tip.style.display="none";return}
   tip.className="tip"+(loupe?" loupe":"");
-  const k=K(i),st=k.green?(due[i]?"due":"yours · stable "+fmtD(k.S)):k.claimed?"claimed":k.S>0?(due[i]?"due":"learning"):"new";
+  const k=K(i),sn=strengthName(k),st=(k.claimed?"claimed":sn==="collected"?"in the bucket":sn)+(sn==="green"||sn==="gold"?" · "+fmtSpan(k.ivl):"")+(due[i]?" · due":"");
   tip.innerHTML='<b>'+esc((words[i].art?words[i].art+" ":"")+words[i].w)+'</b><small>'+st+'</small>';  // lemma and state only — never the gloss, never a rank
   tip.style.display="block";const w=tip.offsetWidth,h=tip.offsetHeight;
   let x=loupe?cx-w/2:cx+14,y=loupe?cy-h-56:cy+16;
@@ -9389,7 +9456,7 @@ cv.addEventListener("pointermove",e=>{
   else if(tip.style.display==="block")showHover(i,e.clientX,e.clientY,false);
 });
 cv.addEventListener("pointerleave",()=>{hov=-1;clearTimeout(tipT);tip.style.display="none";req()});
-cv.addEventListener("pointerdown",e=>{if(e.pointerType==="touch"||e.button!==0)return;const[x,y]=local(e),i=hit(x,y);if(i<0)return;sc.focus({preventScroll:true});if(step&&step.kind==="probe")return;if(walk&&i!==sel)stopWalk();if(!walk)openStep(i,null,false)});
+cv.addEventListener("pointerdown",e=>{if(e.pointerType==="touch"||e.button!==0)return;const[x,y]=local(e),i=hit(x,y);if(i<0)return;sc.focus({preventScroll:true});if(step&&step.kind==="probe")return;e.preventDefault();openStep(i,null)});  // preventDefault: the mousedown would pull focus off the card's field
 let tt=null,pinch=null;
 cv.addEventListener("touchstart",e=>{
   if(e.touches.length===2){clearTimeout(tt&&tt.timer);tt=null;const[a,b]=e.touches;pinch={d:Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY),z:zoom,cy:(a.clientY+b.clientY)/2};return}
@@ -9406,13 +9473,13 @@ cv.addEventListener("touchend",e=>{
   if(pinch){if(e.touches.length<2)pinch=null;return}
   if(!tt)return;clearTimeout(tt.timer);const t=e.changedTouches[0];
   if(step&&step.kind==="probe"){tip.style.display="none";hov=-1;tt=null;req();return}
-  if(tt.loupe){tip.style.display="none";hov=-1;if(tt.i>=0){e.preventDefault();if(walk)stopWalk();openStep(tt.i,null,false)}}
-  else if(performance.now()-tt.t<400){const i=hit(...local(t));if(i>=0){e.preventDefault();if(walk&&i!==sel)stopWalk();if(!walk)openStep(i,null,false)}}  // preventDefault: no synthesized click may land on the sheet that just opened
+  if(tt.loupe){tip.style.display="none";hov=-1;if(tt.i>=0){e.preventDefault();openStep(tt.i,null)}}
+  else if(performance.now()-tt.t<400){const i=hit(...local(t));if(i>=0){e.preventDefault();openStep(i,null)}}  // preventDefault: no synthesized click may land on the sheet that just opened
   tt=null;
 },{passive:false});
 sc.addEventListener("wheel",e=>{if(!(e.ctrlKey||e.metaKey))return;e.preventDefault();const[x,y]=local(e);let i=hit(x,y);if(i<0)i=hit(L.W/2,y);const c=i>=0?cellXY(i):null;setZoom(zoom-e.deltaY*(e.deltaMode?0.05:0.0016),i,c?c.y-sc.scrollTop:null)},{passive:false});
 sc.addEventListener("scroll",req,{passive:true});
-document.addEventListener("pointerdown",e=>{if(pop.classList.contains("on")&&!walk&&!pop.contains(e.target)&&e.target!==cv&&!e.target.closest(".bar")&&!e.target.closest(".sim"))closePop()});
+document.addEventListener("pointerdown",e=>{if(pop.classList.contains("on")&&!probe&&!pop.contains(e.target)&&e.target!==cv&&!e.target.closest(".bar")&&!e.target.closest(".sim"))closePop()});
 new ResizeObserver(()=>{if(sc.clientWidth===L.W&&sc.clientHeight===L.vh)return;const a=sel>=0&&isVisible(sel)?sel:null;setZoom(zoom,a);stats()}).observe(sc);
 $("zm").onclick=()=>zoomStep(-1);$("zp").onclick=()=>zoomStep(1);$("z0").onclick=()=>setZoom(0);
 function moveSel(d){ // over the found cards: ←→ by rank, ↑↓ by row of the grid
@@ -9420,37 +9487,40 @@ function moveSel(d){ // over the found cards: ←→ by rank, ↑↓ by row of t
   if(sel<0||pos[sel]<0){select(order[0]);return}
   const k=pos[sel];let nk=d==="L"?k-1:d==="R"?k+1:d==="D"?k+L.cols:k-L.cols;
   if(nk<0||nk>=order.length)return;const i=order[nk];
-  if(walk)stopWalk();if(pop.classList.contains("on"))openStep(i,null,false);else select(i,false);
+  if(pop.classList.contains("on")&&step&&step.kind!=="round")openStep(i,null);else select(i,false);
 }
 document.addEventListener("keydown",e=>{
   const t=e.target;if(t===fq||t.tagName==="INPUT"||t.tagName==="TEXTAREA")return;
   if(e.ctrlKey||e.metaKey||e.altKey)return;
-  const k=e.key,open=pop.classList.contains("on")&&!!step;
+  const k=e.key,open=pop.classList.contains("on")&&!!step,onBtn=t.tagName==="BUTTON"&&!!t.closest("#pop");
   const arrow={ArrowLeft:"L",ArrowRight:"R",ArrowUp:"U",ArrowDown:"D"}[k];
   if(k==="`"){$("sim").classList.toggle("on");setTimeout(()=>setZoom(zoom),0);return}
-  // the word page: ← → and Enter step through the words that are yours; Space reviews a due one; b opens another sentence
+  if(k==="Escape"){e.preventDefault();hideTip();if(open)back();else sc.focus();return}
+  if((k==="g"||k==="G")&&$("sim").classList.contains("on")){e.preventDefault();autoLearn(k==="g"?1:10);return}  // simulation keys only with the strip showing: they must never eat a typed answer
+  {const ai=open&&k.length===1&&!onBtn&&pop.querySelector("[data-ans]");if(ai){ai.focus({preventScroll:true});return}}  // typing on a card goes into its field
+  // the flashcard view: 1–4 rate, Enter takes the preselected rating
+  if(open&&step.kind==="round"){const R=round;
+    if(R.phase==="shown"){if(/^[1-4]$/.test(k)){e.preventDefault();rateCard(+k)}else if(k==="Enter"&&!onBtn){e.preventDefault();rateCard(R.sug)}}
+    else if(R.phase!=="ask"&&k==="Enter"&&!onBtn){e.preventDefault();if(practisable())startRound();else{closePop();sc.focus()}}
+    return}
+  if(open&&step.kind==="probe"){if(k==="1"||k==="2")probeAnswer(step.i,k==="2");return}
+  // the upgraded card: ← → step through your words; Enter goes on; Space practises a due word; m shows the meaning; r starts a round
   if(open&&step.kind==="page"){
-    const onBtn=t.tagName==="BUTTON"&&t.closest("#pop");
-    if(k==="ArrowRight"||k==="ArrowLeft"||(k==="Enter"&&!onBtn)){e.preventDefault();const x=nextLearned(k==="ArrowLeft"?-1:1);if(x>=0&&x!==step.i)openStep(x,null,false);return}
+    if(k==="ArrowRight"||k==="ArrowLeft"){e.preventDefault();const x=nextLearned(k==="ArrowLeft"?-1:1);if(x>=0&&x!==step.i)openStep(x,null);return}
     if(k==="ArrowUp"||k==="ArrowDown"){e.preventDefault();return}
-    if(k===" "&&!onBtn){e.preventDefault();if(due[step.i])openStep(step.i,"due",false);return}
-    if(k==="b"){e.preventDefault();branchHere();return}
-  }
-  if(arrow){e.preventDefault();if(step&&step.kind==="probe")return;moveSel(arrow);return}
-  if(k==="Escape"){e.preventDefault();hideTip();if(open)back();else{if(walk)stopWalk();sc.focus()}return}
-  if(k==="g"||k==="G"){e.preventDefault();autoLearn(k==="g"?1:10);return}
-  if(step&&open){
-    const ph=step.phase;
-    if(step.kind==="probe"){if(k==="1"||k==="2")answer(+k);return}
-    if(k===" "||k==="Enter"){if(t.closest&&t.closest("#pop")&&t.tagName==="BUTTON"&&k==="Enter")return;e.preventDefault();
-      if(ph==="guess")commitGuess();else if(ph==="meet"||ph==="miss")toRecall();else if(ph==="recall")recalled();
-      else if(ph==="ask"||ph==="closed")reveal();else if(ph==="reveal"){if(step.kind==="due")answer(suggested());else toSpell()}else if(ph==="rate")answer(suggested());else if(ph==="after")continueStep();return}
-    if(/^[1-4]$/.test(k)&&(ph==="rate"||(ph==="reveal"&&step.kind==="due"))){e.preventDefault();answer(+k);return}
-    if(k==="k"&&!walk&&ph==="guess"&&!K(step.i).S){e.preventDefault();claimWord(step.i);return}
-    if(walk)return;
-  }
+    if(k==="Enter"&&!onBtn){e.preventDefault();continueStep();return}
+    if(k===" "&&!onBtn){e.preventDefault();if(due[step.i])startRound(step.i);return}
+    if(k==="m"&&!step.mean){e.preventDefault();step.mean=true;render();return}
+    if(k==="r"&&practisable()){e.preventDefault();startRound();return}
+    return}
+  if(open&&step.kind==="new"&&step.phase==="wrong"){
+    if(k==="y"){e.preventDefault();collectHere();return}
+    if((k==="Enter"||k===" ")&&!onBtn){e.preventDefault();continueStep();return}}
+  if(arrow){e.preventDefault();moveSel(arrow);return}
+  if(open)return;
   switch(k){
-    case"Enter":case" ":e.preventDefault();if(!open){if(k===" ")startWalk();else if(sel>=0&&K(sel).vis)openStep(sel,null,false)}break;
+    case"Enter":case" ":e.preventDefault();if(k===" ")journey();else if(sel>=0&&K(sel).vis)openStep(sel,null);break;
+    case"c":e.preventDefault();startRound();break;  // preventDefault: the key must not land in the card's field
     case"+":case"=":zoomStep(1);break;
     case"-":case"_":zoomStep(-1);break;
     case"0":setZoom(0);break;
@@ -9462,51 +9532,67 @@ document.addEventListener("keydown",e=>{
 });
 
 // =====================================================================
-// SIMULATION (prototype only): jump time; auto-learn N words the way the Walk would pick them
+// SIMULATION (prototype only): shift the clock; auto-learn N words the way the loop would (guess, collect, a round at every full bucket, due words first)
 // =====================================================================
-function simText(){if(!$("sim").classList.contains("on"))return;let g=0,l=0;KM.forEach(k=>{if(k.green)g++;else if(k.S>0)l++});const c=candidates().length;
+function simText(){if(!$("sim").classList.contains("on"))return;let l=0;KM.forEach(k=>{if(k.col&&k.reps&&!isGreen(k))l++});
   const top=[200,500,1000].map(n=>{let y=0;for(let i=0;i<n;i++)if(yours(i))y++;return '<b>'+y+'</b>/'+n}).join(" · ");
-  $("simt").innerHTML='day <b>'+day+'</b> · yours <b>'+g+'</b> · learning <b>'+l+'</b> · open tiles <b>'+c+'</b> · due <b>'+nDue+'</b> · debug, yours in top '+top}
+  $("simt").innerHTML='clock <b>+'+off.toFixed(2)+' d</b> · collected <b>'+nCol+'</b> · bucket <b>'+nBucket+'</b> · learning <b>'+l+'</b> · green <b>'+nGreen+'</b> · gold <b>'+nGold+'</b> · due <b>'+nDue+'</b> · load '+GATE_WINDOW_DAYS+' d <b>'+load7+'</b>/'+GATE_N+' · gate <b>'+(gateClosed()?'closed':'open')+'</b> · '+nextDueText()+' · debug, yours in top '+top}
+// the simulated learner rates honestly: medium when it recalls (its hidden truth for a new word, R for a review), again otherwise, until each card leaves the session
+function simRound(){const now=clock();for(let i=0;i<N;i++){const k=K(i);if(!k.col||(k.reps&&k.due>now))continue;let n=0;
+  do{const p=k.reps&&k.st===2?Math.min(.97,Rt(now-k.last,k.S)+.05):.5+.5*words[i].pt;schedule(k,Math.random()<p?3:1,now)}while(k.due<=now+LEARN_AHEAD&&n++<12);repaint(i)}}
 function autoLearn(n){
-  if(walk)stopWalk();closePop();auto=true;
-  for(let j=0;j<n;j++){const P=plan();let i=-1;
-    if(P.due.length&&Math.random()<.6){let bs=-1;P.due.forEach(x=>{const s=share(x)*(1-R(x));if(s>bs){bs=s;i=x}});const ok=Math.random()<Math.min(.97,R(i)+.1);rate(i,ok?3:1);P.L.rev++;repaint(i);continue}
-    let c=P.cands;if(!c.length){revealFrontier(6);c=candidates()}if(!c.length)break;
-    let bs=-1;c.forEach(x=>{const s=bestSent(x),g=s?gapOf(s,x).length:9,sc=share(x)*(g<=1?2:g===2?1.3:1)*(x===HOLA||x===MUNDO?100:1);if(sc>bs){bs=sc;i=x}});
-    rate(i,3);P.L.new++;turnGreen(i);
-    if(seedDone())seedCascade();
-  }
+  closePop();round=null;auto=true;
+  simRound();
+  for(let j=0;j<n;j++){let c=candidates();
+    if(!c.length){let s=null;for(let i=0;i<N;i++){if(!K(i).col)continue;s=(INV.get(i)||[]).find(x=>fogIds(x).length);if(s)break}if(s)unlockSentence(s,-1);else revealFrontier(6);c=candidates()}
+    if(!c.length)break;const i=pickNew(c);collect(i);
+    const b=bestSent(i);if(b&&fogIds(b).length)unlockSentence(b,-1);  // the learner clicks a sentence on most cards
+    if(nBucket>=BUCKET_N)simRound()}
   auto=false;reorder();layout();for(let i=0;i<N;i++)repaint(i);stats();save();draw();
 }
-function advance(d){day+=d;save();for(let i=0;i<N;i++)repaint(i);stats();req();if(nDue)showTip(3)}
-$("s1").onclick=()=>{stopWalk();advance(1)};
+function advance(d){off+=d;save();refresh()}
+function toNextDue(){stats();if(!isFinite(nextDue)){msg('nothing is scheduled');return}advance(Math.max(0,nextDue-clock())+1/86400)}
+$("s1").onclick=()=>{closePop();advance(1)};
+$("s7").onclick=()=>{closePop();advance(7)};
+$("snd").onclick=()=>{closePop();toNextDue()};
 $("sl10").onclick=()=>autoLearn(10);
 $("sl100").onclick=()=>autoLearn(100);
-$("sr").onclick=()=>{stopWalk();localStorage.removeItem("atlas-fog");location.search="?sim"};
+$("sr").onclick=()=>{closePop();localStorage.removeItem(STORE);localStorage.removeItem(STORE_V1);location.search="?sim"};
 
 // =====================================================================
-// INIT  (?reset · ?sim[=N] auto-learn N · ?all reveal everything (debug) · ?day=N · ?z=0..1 · ?open=lemma · ?walk · ?probe=auto)
+// INIT  (?reset · ?sim[=N] auto-learn N · ?all reveal everything (debug) · ?day=N clock +N days · ?z=0..1 · ?open=lemma · ?walk next step · ?cards · ?probe=auto)
 // =====================================================================
-if(Q.has("reset"))localStorage.removeItem("atlas-fog");
-const had=load();if(Q.has("day"))day=+Q.get("day");
+if(Q.has("reset")){localStorage.removeItem(STORE);localStorage.removeItem(STORE_V1)}
+const had=load();if(Q.has("day"))off=+Q.get("day")||0;
 if(Q.has("z"))zoom=+Q.get("z");
 if(!had){auto=true;revealCell(HOLA,SEED0.key);revealCell(MUNDO,SEED0.key);auto=false}
+if(!K(HOLA).vis||!K(MUNDO).vis){auto=true;revealCell(HOLA,SEED0.key);revealCell(MUNDO,SEED0.key);auto=false}  // hola and mundo are on every board
 if(Q.has("all")){auto=true;for(let i=0;i<N;i++)revealCell(i,"all");auto=false}
 for(let i=0;i<N;i++)repaint(i);
 if(Q.has("sim"))$("sim").classList.add("on");
 reorder();layout();stats();vvSync();if(narrow())fq.placeholder="find";
-if(Q.has("sim")&&+Q.get("sim")>0){auto=true;autoLearn(+Q.get("sim"));auto=false}
-if(Q.has("probe")&&Q.get("probe")==="auto"&&!probed){auto=true;startProbe();let g=0;while(step&&step.kind==="probe"&&g++<40){answer(Math.random()<words[step.i].pt?2:1)}auto=false;walk=null;step=null;closePop();stats()}
-sel=HOLA;
-if(Q.has("open")){const o=Q.get("open");openStep(IDX.has(o)?IDX.get(o):+o,null,false)}
-else if(Q.has("walk"))startWalk();
-else if(seedDone())openSentence();
-else if(!nYours&&!probed)showTip(0);
-draw();sc.focus({preventScroll:true});
-{const ai=pop.querySelector("[data-ans]");if(ai&&!matchMedia("(hover:none)").matches)ai.focus()}  // a card opened at load (reload mid-ritual, ?open) keeps its input focused
-window.__fog={revealCell,reorder,repaint,flushAppear,goWord,back,nextLearned,nextUp,ML:()=>ML,L:()=>L,cellXY,hit,sc,surfaceOf,setZoom,draw,N,words,K,IDX,bank,step:()=>step,walk:()=>walk,startWalk,answer,reveal,toSpell,spelled,commitGuess,toRecall,recalled,continueStep,openStep,autoLearn,advance,select,stats,candidates,order:()=>order,fresh,appear,glide,yours,gapOf,day:()=>day,nRead:()=>nRead,openedS,branch,startProbe,probe:()=>probe};
-window.__devnotesState=()=>!step?{screen:"atlas",sel:sel>=0?words[sel].w:null}
-  :{screen:step.kind==="sentence"?"seed":step.kind==="probe"?"probe":step.kind==="page"?"focus-word":step.learn?"focus-learn":"review",kind:step.kind,word:words[step.i].w,step:step.phase,walk:!!step.inWalk};
+if(Q.has("sim")&&+Q.get("sim")>0)autoLearn(+Q.get("sim"));
+if(Q.has("probe")&&Q.get("probe")==="auto"&&!probed){auto=true;startProbe();let g=0;while(step&&step.kind==="probe"&&g++<40)probeAnswer(step.i,Math.random()<words[step.i].pt);auto=false;step=null;closePop();stats()}
+save();sel=HOLA;
+// land on the view that is next in the learning journey: the flashcards while the gate is closed and something is due, else the grid
+if(Q.has("open")){const o=Q.get("open");openStep(IDX.has(o)?IDX.get(o):+o,null)}
+else if(Q.has("walk"))journey();
+else if(Q.has("cards")||(gateClosed()&&practisable()))startRound();
+else if(!nCol&&!probed)showTip(0);
+draw();if(!step)sc.focus({preventScroll:true});
+// time moves on its own: due words go hollow; coming back to the app after a while lands on the next step again
+setInterval(()=>{if(!document.hidden)refresh()},30000);
+let hiddenAt=0;document.addEventListener("visibilitychange",()=>{if(document.hidden){hiddenAt=Date.now();return}refresh();if(hiddenAt&&Date.now()-hiddenAt>6e5&&gateClosed()&&practisable()&&!step)startRound()});
+window.__fog={revealCell,reorder,repaint,flushAppear,goWord,back,nextLearned,nextUp,ML:()=>ML,L:()=>L,cellXY,hit,sc,surfaceOf,setZoom,draw,N,words,K,IDX,bank,SK,FIRST,step:()=>step,round:()=>round,
+  openStep,submitGuess,collectHere,sentClick,unlockSentence,fogIds,startRound,submitCard,rateCard,schedule,preview,continueStep,journey,autoLearn,advance,toNextDue,select,stats,candidates,order:()=>order,
+  fresh,appear,glide,yours,gapOf,clock,off:()=>off,nRead:()=>nRead,openedS,startProbe,probe:()=>probe,judgeMeaning,judgeEs,gateClosed,toClear,load7:()=>load7,nDue:()=>nDue,nBucket:()=>nBucket,bk,COL,due,isGreen,isGold,
+  const:{LEARNED_INTERVAL_DAYS,GOLD_DAYS,BUCKET_N,GATE_N,GATE_WINDOW_DAYS,LEARN_STEPS,RELEARN_STEPS,RETENTION}};
+window.__devnotesState=()=>{const g={gate:gateClosed()?"closed":"open",toClear:toClear(),bucket:nBucket+"/"+BUCKET_N,due:nDue};
+  if(!step)return{screen:gateClosed()?"grid-frozen":"grid",sel:sel>=0?words[sel].w:null,...g};
+  if(step.kind==="round")return{screen:"flashcards",phase:round.phase,dir:round.cur?(round.cur.dir?"en-es":"es-en"):null,word:round.cur?words[round.cur.i].w:null,left:round.q.length,...g};
+  if(step.kind==="probe")return{screen:"probe",word:words[step.i].w,...g};
+  if(step.kind==="page")return{screen:"upgraded-card",word:words[step.i].w,strength:strengthName(K(step.i)),gateMsg:step.gateMsg,...g};
+  return{screen:step.phase==="wrong"?"new-card-wrong":gateClosed()?"new-card-frozen":"new-card",word:words[step.i].w,...g}};
 </script>
 <script src="./devnotes.js" data-project="language-board" data-always defer></script>
 <script>
