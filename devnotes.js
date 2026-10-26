@@ -2,7 +2,7 @@
 (()=>{'use strict';
 if(window.__devnotesLoaded)return;window.__devnotesLoaded=1;
 const D=(document.currentScript||{}).dataset||{};
-const C={endpoint:D.endpoint||'http://localhost:7799/notes',project:D.project||location.hostname||'local',hotkey:(D.hotkey||'ctrl+alt+n').toLowerCase(),accent:D.accent||'#b4befe'};
+const C={endpoint:D.endpoint||'http://localhost:7799/notes',project:D.project||location.hostname||'local',hotkey:(D.hotkey||'ctrl+alt+j').toLowerCase(),accent:D.accent||'#b4befe'};
 const K='devnotes:'+C.project+':';
 const ls={get(k,d){try{const v=localStorage.getItem(K+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(K+k,JSON.stringify(v))}catch(e){status='local storage failed: '+e.name}}};
 let notes=ls.get('notes',[]),seq=ls.get('seq',0),on=ls.get('on',false),side=ls.get('side','r'),panel=ls.get('panel',true);
