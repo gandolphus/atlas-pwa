@@ -163,7 +163,9 @@ canvas.sk{width:100%;height:90px;background:var(--base);border:1px dashed var(--
   .bar{gap:8px;padding:0 10px}
   .lang,#zp,#zm{display:none}
   #fq{width:64px}
-  .pop{left:0 !important;right:0;top:auto !important;bottom:0;width:auto;max-height:62dvh;border-radius:10px 10px 0 0;border-width:1px 0 0;padding:18px 18px calc(14px + env(safe-area-inset-bottom))}
+  /* the sheet sits on the visual viewport (--kb = soft keyboard height, --vvh = visible height; set by vvSync) and grows when space is short */
+  .pop{left:0 !important;right:0;top:auto !important;bottom:var(--kb,0px);width:auto;max-height:max(calc(var(--vvh,100dvh)*.62),min(calc(var(--vvh,100dvh) - 8px),440px));border-radius:10px 10px 0 0;border-width:1px 0 0;padding:18px 18px calc(14px + env(safe-area-inset-bottom))}
+  .kbo .pop{padding-bottom:14px}
   .arr{display:none}
   .x{top:10px;right:10px;width:40px;height:40px;font-size:22px}
   .ph h2{font-size:30px}
@@ -175,6 +177,27 @@ canvas.sk{width:100%;height:90px;background:var(--base);border:1px dashed var(--
   .chip{font-size:14px;padding:6px 10px}
   canvas.sk{height:130px}
   .kb{display:none}
+}
+/* touch: no double-tap zoom, no pull-to-refresh or rubber-band behind the sheet; the sheet scrolls within itself */
+html{touch-action:manipulation}
+html,body{overscroll-behavior:none}
+.pop,.scroll{overscroll-behavior:contain}
+/* accent keys under a Spanish answer field: always shown, so they never hint that the answer has an accent */
+.acc{display:flex;gap:2px;margin-top:8px}
+.acc button{flex:1;height:36px;background:var(--base);border:1px solid var(--surface0);border-radius:3px;font-size:17px;color:var(--subtext1)}
+@media (hover:hover){.acc button:hover{background:var(--surface0);color:var(--text)}}
+@media (pointer:coarse){
+  input,#fq,.ans{font-size:16px}  /* under 16px iOS zooms on focus */
+  .bar{height:54px;padding-left:max(10px,env(safe-area-inset-left));padding-right:max(10px,env(safe-area-inset-right))}
+  .go,#fq,.rd{height:44px}
+  .zoom button{width:44px;height:44px}
+  .x{width:44px;height:44px}
+  .ans{min-height:44px}
+  .acc button{height:44px}
+  .lnk{min-height:44px;display:inline-flex;align-items:center;margin-top:2px}
+  button.chip{min-height:44px}
+  .big small,.yn button small{display:none}  /* key hints */
+  button:active{filter:brightness(1.35)}
 }
 @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto !important}}
 </style>
@@ -190,6 +213,7 @@ canvas.sk{width:100%;height:90px;background:var(--base);border:1px dashed var(--
 /* PWA: safe areas for standalone / notch */
 body{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right);min-height:100dvh;height:100dvh}
 .bar{height:calc(44px + env(safe-area-inset-top));padding-top:env(safe-area-inset-top)}
+@media (pointer:coarse){.bar{height:calc(54px + env(safe-area-inset-top))}}
 .sim{height:calc(28px + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom)}
 .lang,.cov{-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
 </style>
@@ -199,7 +223,7 @@ body{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-ri
   <div class="lang">es</div>
   <div class="cov"><div class="cov-t" id="covt"></div><div class="track"><i id="covb"></i></div></div>
   <button class="go" id="go" title="The Walk (space)"></button>
-  <input id="fq" type="search" placeholder="find · :verb · ción" aria-label="Find words" autocomplete="off" spellcheck="false">
+  <input id="fq" type="search" placeholder="find · :verb · ción" aria-label="Find words" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="search">
   <button class="rd" id="rd" title="Read a text (t)">read</button>
   <div class="zoom"><button id="zm" aria-label="Zoom out">−</button><button id="zp" aria-label="Zoom in">+</button></div>
 </header>
@@ -10537,6 +10561,9 @@ function autoBrace(w,text){if(/\{[^}]+\}/.test(text))return text;const fs=formsO
 const showBr=t=>esc(t).replace(/\{([^}]+)\}/g,"$1");
 const clozeBr=t=>esc(t).replace(/\{([^}]+)\}/g,"<b>____</b>");
 const head=w=>(w.art?'<i>'+w.art+' </i>':'')+esc(w.w);
+const field=(ph,lang)=>'<input class="ans" data-ans placeholder="'+ph+'" lang="'+lang+'" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="go">';
+const ACC='<div class="acc" role="group" aria-label="Accented letters">'+[..."áéíóúñü"].map(c=>'<button type="button" tabindex="-1" data-ch="'+c+'">'+c+'</button>').join("")+'</div>';
+const CHECK='<button class="big ck" data-act="check">check<small>enter</small></button>';
 const answerOf=w=>(w.art?w.art+" ":"")+w.w;
 const POSN={verb:"verb",noun:"noun",adj:"adjective",adv:"adverb",conj:"conjunction",prep:"preposition",pron:"pronoun",det:"determiner",art:"article",num:"number",interj:"interjection"};
 const posLabel=w=>(POSN[w.pos]||w.pos)+(w.pos==="noun"&&w.art?" · "+(w.art==="el"?"m":"f"):"");
@@ -10725,7 +10752,18 @@ function place(){
   else if(side)ar.style.cssText="right:-6px;top:"+ay+"px;transform:rotate(135deg)";
   else ar.style.cssText="display:none";
 }
-function closePop(){pop.classList.remove("on");pop.innerHTML="";side=null;step=null;link.clear();collide=-1;req()}
+// soft keyboard: the sheet rides on the visual viewport, and its field (with the button under it) stays in view
+const VV=window.visualViewport;
+function vvSync(){if(!VV)return;const de=document.documentElement,kb=VV.scale>1.01?0:Math.max(0,Math.round(innerHeight-VV.height-VV.offsetTop));  // pinch-zoomed: leave it
+  de.style.setProperty("--vvh",Math.round(VV.height)+"px");de.style.setProperty("--kb",kb+"px");de.classList.toggle("kbo",kb>60);
+  if(!kb&&scrollY)scrollTo(0,0);  // iOS can leave the page panned after the keyboard closes
+  keepInput()}
+function keepInput(){if(!narrow()||!pop.classList.contains("on"))return;const ai=pop.querySelector("[data-ans]");if(!ai)return;
+  const end=pop.querySelector(".ck,.yn,.acc")||ai,want=end.offsetTop+end.offsetHeight+12-pop.clientHeight,cap=ai.offsetTop-8;
+  const t=Math.max(0,Math.min(want,cap));if(pop.scrollTop<t||pop.scrollTop>cap)pop.scrollTop=t}
+if(VV){VV.addEventListener("resize",vvSync);VV.addEventListener("scroll",vvSync)}
+let popKey="";  // a new card or phase starts at the top of the sheet
+function closePop(){pop.classList.remove("on");pop.innerHTML="";popKey="";side=null;step=null;link.clear();collide=-1;req()}
 function goTo(i){if(i<0||i>=N)return;if(walk)stopWalk();if(pop.classList.contains("on"))openStep(i,null,false);else select(i,true)}
 
 // =====================================================================
@@ -10887,7 +10925,7 @@ function render(){
   else if(phase==="closed"){h+='<div class="q">'+(k.S>0?'Recall the meaning before you look.':'Guess first — even a wrong guess makes the answer stick.')+'</div><button class="big" data-act="reveal">reveal<small>space</small></button>'}
   else if(phase==="guess"){
     if(step.sent)h+='<div class="cue">'+sentHTML(step.sent,i,step.missed,"ask")+'</div>';
-    h+='<div class="q">'+(step.sent?'Every other word is yours. What might the lit one mean?':'What might it mean?')+' Guess before you look — a wrong guess still helps it stick.</div><input class="ans" data-ans placeholder="your guess, in English" autocomplete="off" autocapitalize="off" spellcheck="false"><div class="yn"><button data-act="skip">no idea</button><button data-act="guess">guess<small>enter</small></button></div>';
+    h+='<div class="q">'+(step.sent?'Every other word is yours. What might the lit one mean?':'What might it mean?')+' Guess before you look — a wrong guess still helps it stick.</div>'+field("your guess, in English","en")+'<div class="yn"><button data-act="skip">no idea</button><button data-act="guess">guess<small>enter</small></button></div>';
     h+='<button class="lnk" data-act="claim">I already know this</button>';
   }
   else if(phase==="meet"||phase==="miss"){
@@ -10901,7 +10939,7 @@ function render(){
     h+='<button class="big" data-act="recall">'+(phase==="miss"?'try again':'now recall it')+'<small>enter</small></button>';
   }
   else if(phase==="recall"){
-    h+='<div class="tr">'+esc(w.t)+'</div>'+(step.sent?'<div class="cue">'+sentHTML(step.sent,i,null,"cloze")+'<span class="en">'+esc(step.sent.en)+'</span></div>':'')+'<div class="q">Now type the Spanish from memory.</div><input class="ans" data-ans placeholder="type it" autocomplete="off" autocapitalize="off" spellcheck="false">';
+    h+='<div class="tr">'+esc(w.t)+'</div>'+(step.sent?'<div class="cue">'+sentHTML(step.sent,i,null,"cloze")+'<span class="en">'+esc(step.sent.en)+'</span></div>':'')+'<div class="q">Now type the Spanish from memory.</div>'+field("type it","es")+ACC+CHECK;
   }
   else if(phase==="done"){
     h+='<div class="tr">'+esc(w.t)+'</div><div class="vd ok">✓ <b>'+esc(answerOf(w))+'</b> — learned. It comes back in '+fmtIv(ivlOf(k.S))+'.</div><button class="big" data-act="cont">'+(step.inWalk&&walk?'continue':'close')+'<small>enter</small></button>';
@@ -10912,7 +10950,7 @@ function render(){
     else if(cue==="mine")h+='<div class="cue">'+clozeBr(k.hooks.mine)+'</div>';
     else if(cue==="chunk")h+='<div class="cue">'+clozeBr(step.frame[0])+'<span class="en">'+esc(step.frame[1])+'</span></div>';
     else if(cue==="sketch")h+='<div class="cue"><canvas class="cue-sk"></canvas></div>';
-    if(hidden)h+='<input class="ans" data-ans placeholder="type it — or just think it" autocomplete="off" autocapitalize="off" spellcheck="false">';
+    if(hidden)h+=field("type it — or just think it","es")+ACC;
     h+='<button class="big" data-act="reveal">reveal<small>space</small></button>';
   }
   else{ // reveal · hook · after · open
@@ -10938,7 +10976,7 @@ function render(){
     }
   }
   h+='<div class="kb">'+(kind==="probe"?'<kbd>1</kbd> don’t · <kbd>2</kbd> know · <kbd>esc</kbd> stop':phase==="ask"||phase==="closed"?'<kbd>space</kbd> reveal · <kbd>esc</kbd> '+(walk?'stop':'close'):phase==="reveal"?'<kbd>1–4</kbd> rate · <kbd>h</kbd> hooks · <kbd>esc</kbd> '+(walk?'stop':'close'):phase==="hook"?'<kbd>enter</kbd> continue · <kbd>esc</kbd> stop':phase==="guess"?'<kbd>enter</kbd> guess — empty is no idea · <kbd>esc</kbd> '+(walk?'stop':'close'):phase==="meet"||phase==="miss"?'<kbd>enter</kbd> '+(phase==="miss"?'try again':'recall it'):phase==="recall"?'<kbd>enter</kbd> check':phase==="done"?'<kbd>enter</kbd> '+(step.inWalk&&walk?'continue':'close'):'<kbd>←↑↓→</kbd> move · <kbd>k</kbd> claim · <kbd>esc</kbd> close')+'</div>';
-  pop.innerHTML=h;pop.classList.add("on");wire(w,k);place();
+  pop.innerHTML=h;pop.classList.add("on");wire(w,k);place();if(popKey!==i+":"+phase){popKey=i+":"+phase;pop.scrollTop=0;keepInput()}
   // linked cells: cousins and confusables get a dashed outline while the card is open
   link.clear();if(w.h&&phase!=="ask"&&phase!=="probe"&&phase!=="closed"){[...(w.h.conf||[]),...(w.h.kin||[]).filter(x=>x[1]!=="etym").map(x=>x[0].split(/\s[—–-]\s/)[0].trim().split(/[\s/]/)[0])].forEach(l=>{const j=IDX.get(l);if(j!==undefined&&j!==i)link.add(j)})}
   req();
@@ -10950,6 +10988,7 @@ function wire(w,k){
   d.querySelectorAll("[data-act]").forEach(b=>b.onclick=()=>{const a=b.dataset.act;
     if(a==="reveal")reveal();else if(a==="cont")continueStep();
     else if(a==="guess")commitGuess();else if(a==="skip"){const ai=d.querySelector("[data-ans]");if(ai)ai.value="";commitGuess()}else if(a==="recall")toRecall();
+    else if(a==="check"){if(step.phase==="recall")recalled()}
     else if(a==="deck"){step.deck=!step.deck;render()}
     else if(a==="clear-sk"){k.hooks.sketch=null;re()}
     else if(a==="ask"){openStep(step.i,"new",false)}
@@ -10967,7 +11006,14 @@ function wire(w,k){
   d.querySelectorAll("canvas.sk").forEach(c=>sketchPad(c,k,()=>{save();if(!d.querySelector("[data-act=clear-sk]"))render()}));
   d.querySelectorAll("canvas.hk-sk").forEach(c=>drawStrokes(c,k.hooks.sketch,true));
   d.querySelectorAll("canvas.cue-sk").forEach(c=>drawStrokes(c,k.hooks.sketch));
-  const ai=d.querySelector("[data-ans]");if(ai){ai.addEventListener("keydown",e=>{e.stopPropagation();if(e.key==="Enter"||(e.key===" "&&!ai.value.trim()&&step.phase!=="recall")){e.preventDefault();if(step.phase==="guess")commitGuess();else if(step.phase==="recall")recalled();else reveal()}if(e.key==="Escape"){e.preventDefault();if(walk)stopWalk();else closePop()}});if(!matchMedia("(hover:none)").matches)ai.focus()}
+  const ai=d.querySelector("[data-ans]");
+  d.querySelectorAll("[data-ch]").forEach(b=>{const keep=e=>e.preventDefault();b.addEventListener("pointerdown",keep);b.addEventListener("mousedown",keep);  // keep the field focused: the soft keyboard stays up
+    b.onclick=()=>{if(!ai)return;const a=document.activeElement===ai?ai.selectionStart:ai.value.length,z=document.activeElement===ai?ai.selectionEnd:a;ai.setRangeText(b.dataset.ch,a,z,"end");ai.focus({preventScroll:true})}});
+  if(ai){ai.addEventListener("focus",()=>{keepInput();setTimeout(keepInput,350)});
+    ai.addEventListener("keydown",e=>{e.stopPropagation();if(e.key==="Enter"||e.keyCode===13||(e.key===" "&&!ai.value.trim()&&step.phase!=="recall")){e.preventDefault();if(step.phase==="guess")commitGuess();else if(step.phase==="recall")recalled();else reveal()}if(e.key==="Escape"){e.preventDefault();if(walk)stopWalk();else closePop()}});
+    // touch: the keyboard opens by itself only in recall, where typing is the step and a tap led here; the guess keeps "no idea" one tap away
+    if(!matchMedia("(hover:none)").matches)ai.focus();
+    else if(step.phase==="recall"&&(!navigator.userActivation||navigator.userActivation.isActive))ai.focus({preventScroll:true})}
   d.querySelectorAll("input").forEach(x=>x.addEventListener("keydown",e=>e.stopPropagation()));
   // sentence tokens: hover → cell outline; tap in the ask phase marks a word you didn't get; tap after reveal goes there
   d.querySelectorAll(".tk[data-ids]").forEach(t=>{const ids=t.dataset.ids.split(",").map(Number);
@@ -11203,7 +11249,7 @@ load();if(Q.has("day"))day=+Q.get("day");
 if(Q.has("z"))zoom=+Q.get("z");else if(!localStorage.getItem("atlas-v1"))zoom=Math.log(40/PMIN)/Math.log(PMAX/PMIN);
 for(let i=0;i<N;i++)repaint(i);
 if(Q.has("sim"))$("sim").classList.add("on");
-layout();stats();if(narrow())fq.placeholder="find";
+layout();stats();vvSync();if(narrow())fq.placeholder="find";
 sc.scrollTop=Q.has("scroll")?+Q.get("scroll"):Math.max(0,cellXY(F).y-L.vh*.6);
 sel=F;
 if(Q.has("q")){fq.value=Q.get("q");fq.dispatchEvent(new Event("input"))}

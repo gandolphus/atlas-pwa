@@ -110,7 +110,7 @@ input{font:inherit}
 .open .sn .en{display:block;font-size:12px;color:var(--overlay1)}
 .open.ok{color:var(--green)}
 .open.ok b{color:var(--green)}
-.chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.chips{display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin-top:6px}
 .chip{font-size:12px;padding:3px 8px;background:var(--base);border-radius:2px;color:var(--subtext1);line-height:1.4;border:1px solid var(--surface0)}
 .chip:hover{background:var(--surface0);color:var(--text)}
 .chip.new{border-color:var(--surface1)}
@@ -129,7 +129,9 @@ input{font:inherit}
   .bar{gap:8px;padding:0 10px}
   .lang,#zp,#zm{display:none}
   #fq{width:64px}
-  .pop{left:0 !important;right:0;top:auto !important;bottom:0;width:auto;max-height:62dvh;border-radius:10px 10px 0 0;border-width:1px 0 0;padding:18px 18px calc(14px + env(safe-area-inset-bottom))}
+  /* the sheet sits on the visual viewport (--kb = soft keyboard height, --vvh = visible height; set by vvSync) and grows when space is short */
+  .pop{left:0 !important;right:0;top:auto !important;bottom:var(--kb,0px);width:auto;max-height:max(calc(var(--vvh,100dvh)*.62),min(calc(var(--vvh,100dvh) - 8px),440px));border-radius:10px 10px 0 0;border-width:1px 0 0;padding:18px 18px calc(14px + env(safe-area-inset-bottom))}
+  .kbo .pop{padding-bottom:14px}
   .arr{display:none}
   .x{top:10px;right:10px;width:40px;height:40px;font-size:22px}
   .ph h2{font-size:30px}
@@ -140,7 +142,28 @@ input{font:inherit}
   .ans{font-size:16px}
   .chip{font-size:14px;padding:6px 10px}
   .kb{display:none}
-  .hint{bottom:14px;font-size:12px}
+  .hint{bottom:calc(14px + env(safe-area-inset-bottom));font-size:12px}
+}
+/* touch: no double-tap zoom, no pull-to-refresh or rubber-band behind the sheet; the sheet scrolls within itself */
+html{touch-action:manipulation}
+html,body{overscroll-behavior:none}
+.pop,.scroll{overscroll-behavior:contain}
+/* accent keys under a Spanish answer field: always shown, so they never hint that the answer has an accent */
+.acc{display:flex;gap:2px;margin-top:8px}
+.acc button{flex:1;height:36px;background:var(--base);border:1px solid var(--surface0);border-radius:3px;font-size:17px;color:var(--subtext1)}
+@media (hover:hover){.acc button:hover{background:var(--surface0);color:var(--text)}}
+@media (pointer:coarse){
+  input,#fq,.ans{font-size:16px}  /* under 16px iOS zooms on focus */
+  .bar{height:calc(54px + env(safe-area-inset-top));padding-top:env(safe-area-inset-top);padding-left:max(10px,env(safe-area-inset-left));padding-right:max(10px,env(safe-area-inset-right))}
+  .go,#fq{height:44px}
+  .zoom button{width:44px;height:44px}
+  .x{width:44px;height:44px}
+  .acc button{height:44px}
+  .lnk{min-height:44px;display:inline-flex;align-items:center;margin-top:2px}
+  button.chip{min-height:44px;min-width:44px}
+  .ans{min-height:44px}
+  .big small,.yn button small{display:none}  /* key hints */
+  button:active{filter:brightness(1.35)}
 }
 @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto !important}}
 </style>
@@ -150,7 +173,7 @@ input{font:inherit}
   <div class="lang">es</div>
   <div class="cov"><div class="cov-t" id="covt"></div></div>
   <button class="go" id="go" title="The Walk (space)"></button>
-  <input id="fq" type="search" placeholder="find a word" aria-label="Find a word: reveals it on the board" autocomplete="off" spellcheck="false">
+  <input id="fq" type="search" placeholder="find a word" aria-label="Find a word: reveals it on the board" lang="es" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="search">
   <div class="zoom"><button id="zm" aria-label="Zoom out">−</button><button id="zp" aria-label="Zoom in">+</button><button id="z0" class="fit" aria-label="Fit what you have found">fit</button></div>
 </header>
 <main class="scroll" id="sc" tabindex="0" role="application" aria-label="The Spanish words you have found, most common first. Arrows move, Enter opens, Space walks.">
@@ -5492,6 +5515,7 @@ function stats(){
 function msg(t){clearTimeout(msgT);$("covt").innerHTML=t;msgT=setTimeout(()=>{msgT=0;$("covt").innerHTML=covText},3500)}
 // one-time hints: bit n shown once ever
 const TIP=["Two words are on the board. Click one — or press <kbd>space</kbd>.","Green means yours. Make the other one yours too, then type the sentence they make.","Every green word opens a sentence; its words appear around it. Pick any tile, or press <kbd>space</kbd> and the board picks for you.","A hollow tile is due: recall it and it fills again."];
+if(matchMedia("(hover:none)").matches){TIP[0]="Two words are on the board. Tap one, or tap <kbd>▸ begin</kbd>.";TIP[2]="Every green word opens a sentence; its words appear around it. Tap any tile, or tap <kbd>▸</kbd> and the board picks for you."}  // touch wording
 function showTip(n){if(tips&(1<<n))return;tips|=1<<n;hint.innerHTML=TIP[n];hint.classList.add("on");save()}
 function hideTip(){hint.classList.remove("on")}
 
@@ -5627,7 +5651,18 @@ function place(){
   else if(side)ar.style.cssText="right:-6px;top:"+ay+"px;transform:rotate(135deg)";
   else ar.style.cssText="display:none";
 }
-function closePop(){pop.classList.remove("on");pop.innerHTML="";side=null;step=null;link.clear();fresh.clear();req();updateGo()}
+// soft keyboard: the sheet rides on the visual viewport, and its field (with the button under it) stays in view
+const VV=window.visualViewport;
+function vvSync(){if(!VV)return;const de=document.documentElement,kb=VV.scale>1.01?0:Math.max(0,Math.round(innerHeight-VV.height-VV.offsetTop));  // pinch-zoomed: leave it
+  de.style.setProperty("--vvh",Math.round(VV.height)+"px");de.style.setProperty("--kb",kb+"px");de.classList.toggle("kbo",kb>60);
+  if(!kb&&scrollY)scrollTo(0,0);  // iOS can leave the page panned after the keyboard closes
+  keepInput()}
+function keepInput(){if(!narrow()||!pop.classList.contains("on"))return;const ai=pop.querySelector("[data-ans]");if(!ai)return;
+  const end=pop.querySelector(".ck,.yn,.acc")||ai,want=end.offsetTop+end.offsetHeight+12-pop.clientHeight,cap=ai.offsetTop-8;
+  const t=Math.max(0,Math.min(want,cap));if(pop.scrollTop<t||pop.scrollTop>cap)pop.scrollTop=t}
+if(VV){VV.addEventListener("resize",vvSync);VV.addEventListener("scroll",vvSync)}
+let popKey="";  // a new card or phase starts at the top of the sheet
+function closePop(){pop.classList.remove("on");pop.innerHTML="";popKey="";side=null;step=null;link.clear();fresh.clear();req();updateGo()}
 
 // =====================================================================
 // THE WALK + STEPS: one engine; clicking a cell opens the step its state calls for
@@ -5747,6 +5782,9 @@ function claimWord(i){const k=K(i);if(k.green||k.claimed)return;k.claimed=1;repa
 // THE CARD
 // =====================================================================
 const head=w=>(w.art?'<i>'+w.art+' </i>':'')+esc(w.w);
+const field=(ph,lang)=>'<input class="ans" data-ans placeholder="'+ph+'" lang="'+lang+'" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="go">';
+const ACC='<div class="acc" role="group" aria-label="Accented letters">'+[..."áéíóúñü"].map(c=>'<button type="button" tabindex="-1" data-ch="'+c+'">'+c+'</button>').join("")+'</div>';
+const CHECK='<button class="big ck" data-act="check">check<small>enter</small></button>';
 const POSN={verb:"verb",noun:"noun",adj:"adjective",adv:"adverb",conj:"conjunction",prep:"preposition",pron:"pronoun",det:"determiner",art:"article",num:"number",interj:"interjection"};
 const posLabel=w=>(POSN[w.pos]||w.pos)+(w.pos==="noun"&&w.art?" · "+(w.art==="el"?"m":"f"):"");
 function sentHTML(s,target,mode){ // "ask" (target lit) · "cloze" (target blanked) · "plain"
@@ -5761,13 +5799,13 @@ function sentHTML(s,target,mode){ // "ask" (target lit) · "cloze" (target blank
 }
 function rateRow(i,sug){const S=K(i).S||0;const iv=r=>{if(r===1)return"10m";const s=S?S*(1+15*Math.pow(S,-.1)*(Math.exp(1-R(i))-1)*[0,0,.6,1,1.5][r]):S0[r];return fmtIv(ivlOf(s))};
   return'<div class="rate" role="group" aria-label="Rate">'+["again","hard","good","easy"].map((n,j)=>'<button data-r="'+(j+1)+'" class="'+(sug===j+1?"sug":"")+'">'+n+'<small>'+(j+1)+' · '+iv(j+1)+'</small></button>').join("")+'</div>'}
-function openedHTML(list){if(!list||!list.length)return'';return list.map(o=>'<div class="open"><div class="lab">opened</div><div class="sn">'+sentHTML(o.s,-1,"plain")+(readable(o.s)?'<span class="en">'+esc(o.s.en)+'</span>':'')+'</div>'+(o.nw.length?'<div class="chips">'+o.nw.map(x=>'<button class="chip new" data-go="'+x+'">'+esc(words[x].w)+'</button>').join("")+'<span class="chip" style="border:0;color:var(--overlay0)">new on the board</span></div>':'<div class="q" style="margin-top:4px">its words were already on the board</div>')+'</div>').join("")}
+function openedHTML(list){if(!list||!list.length)return'';return list.map(o=>'<div class="open"><div class="lab">opened</div><div class="sn">'+sentHTML(o.s,-1,"plain")+(readable(o.s)?'<span class="en">'+esc(o.s.en)+'</span>':'')+'</div>'+(o.nw.length?'<div class="chips">'+o.nw.map(x=>'<button class="chip new" data-go="'+x+'">'+esc(words[x].w)+'</button>').join("")+'<span class="chip" style="border:0;background:none;color:var(--overlay0)">new on the board</span></div>':'<div class="q" style="margin-top:4px">its words were already on the board</div>')+'</div>').join("")}
 function render(){
   if(!step)return;const{kind,i,phase}=step,w=words[i],k=K(i),s=step.sent;
   let h='<div class="arr" id="arr"></div><button class="x" aria-label="Close">×</button>';
   const KL={new:"new",verify:"you said you know this · verify",due:"due",again:"again",browse:k.green?"yours":k.claimed?"claimed":"learning",probe:"finding your frontier",sentence:"your first sentence"};
   const gapNote=s&&kind!=="probe"&&kind!=="sentence"&&phase!=="after"?(step.gap.length?step.gap.length+' more to go in this sentence':'every other word is yours'):'';
-  h+='<div class="cl"><span>'+(step.learn?(k.S>0?"learning":"new word"):KL[kind])+(kind==="probe"?' · '+(probe.n+1):'')+'</span>'+(gapNote?'<i>'+gapNote+'</i>':'')+'</div>';
+  h+='<div class="cl"><span>'+(step.learn?(phase==="after"&&k.green?"yours":k.S>0?"learning":"new word"):KL[kind])+(kind==="probe"?' · '+(probe.n+1):'')+'</span>'+(gapNote?'<i>'+gapNote+'</i>':'')+'</div>';
   const hideWord=phase==="spell"||phase==="recall"||(phase==="ask"&&step.cue==="cloze");
   if(kind==="sentence")h+='<div class="ph"><h2>'+esc(SEED0.en)+'</h2></div>';
   else h+='<div class="ph">'+(hideWord?'<h2 class="hid">'+esc(w.t)+'</h2>':'<h2>'+head(w)+'</h2>')+'<small>'+posLabel(w)+'</small></div>';
@@ -5775,7 +5813,7 @@ function render(){
   else if(phase==="closed"){h+='<div class="q">Recall the meaning before you look.</div><button class="big" data-act="reveal">reveal<small>space</small></button>'}
   else if(phase==="guess"){
     if(s)h+='<div class="cue">'+sentHTML(s,i,"ask")+'</div>';
-    h+='<div class="q">'+(s?'What might the lit word mean?':'What might it mean?')+' Guess before you look — a wrong guess still helps it stick.</div><input class="ans" data-ans placeholder="your guess, in English" autocomplete="off" autocapitalize="off" spellcheck="false"><div class="yn"><button data-act="skip">no idea</button><button data-act="guess">guess<small>enter</small></button></div>';
+    h+='<div class="q">'+(s?'What might the lit word mean?':'What might it mean?')+' Guess before you look — a wrong guess still helps it stick.</div>'+field("your guess, in English","en")+'<div class="yn"><button data-act="skip">no idea</button><button data-act="guess">guess<small>enter</small></button></div>';
   }
   else if(phase==="meet"||phase==="miss"){
     h+='<div class="tr">'+esc(w.t)+'</div>';
@@ -5786,14 +5824,14 @@ function render(){
     h+='<button class="big" data-act="recall">'+(phase==="miss"?'try again':'now recall it')+'<small>enter</small></button>';
   }
   else if(phase==="ask"){
-    if(step.cue==="cloze"){h+='<div class="cue">'+sentHTML(s,i,"cloze")+'<span class="en">'+esc(s.en)+'</span></div><input class="ans" data-ans placeholder="type the missing word — or just think it" autocomplete="off" autocapitalize="off" spellcheck="false">'}
+    if(step.cue==="cloze"){h+='<div class="cue">'+sentHTML(s,i,"cloze")+'<span class="en">'+esc(s.en)+'</span></div>'+field("type the missing word — or just think it","es")+ACC}
     else if(s){h+='<div class="cue">'+sentHTML(s,i,"ask")+'</div><div class="q">Read it. Recall the lit word, then reveal.</div>'}
     else h+='<div class="q">Recall the meaning, then reveal.</div>';
     h+='<button class="big" data-act="reveal">reveal<small>space</small></button>';
   }
   else if(phase==="spell"||phase==="recall"){
-    if(kind==="sentence"){h+='<div class="q">You know every word of your first sentence. Type it in Spanish — punctuation optional.</div>'+(step.wrong?'<div class="vd bad">not quite — <b>'+esc(SEED0.es)+'</b></div>':'')+'<input class="ans" data-ans placeholder="type the sentence" autocomplete="off" autocapitalize="off" spellcheck="false">'}
-    else{h+=(s?'<div class="cue">'+sentHTML(s,i,"cloze")+(enOK(s,i)?'<span class="en">'+esc(s.en)+'</span>':'')+'</div>':'')+'<div class="q">'+(phase==="recall"?'Now type the Spanish from memory.':'Spell it from memory.')+'</div><input class="ans" data-ans placeholder="type it" autocomplete="off" autocapitalize="off" spellcheck="false">'}
+    if(kind==="sentence"){h+='<div class="q">You know every word of your first sentence. Type it in Spanish — punctuation optional.</div>'+(step.wrong?'<div class="vd bad">not quite — <b>'+esc(SEED0.es)+'</b></div>':'')+field("type the sentence","es")+ACC+CHECK}
+    else{h+=(s?'<div class="cue">'+sentHTML(s,i,"cloze")+(enOK(s,i)?'<span class="en">'+esc(s.en)+'</span>':'')+'</div>':'')+'<div class="q">'+(phase==="recall"?'Now type the Spanish from memory.':'Spell it from memory.')+'</div>'+field("type it","es")+ACC+CHECK}
   }
   else{ // reveal · rate · after · open
     const v=step.verdict;
@@ -5831,7 +5869,7 @@ function render(){
   if(phase==="guess"&&!k.S&&!walk)h+='<button class="lnk" data-act="claim">I already know this</button>';
   if(phase==="guess"&&!seeded&&!probed&&i===HOLA)h+='<button class="lnk" data-act="probe">I already know some Spanish → find my frontier</button>';
   h+='<div class="kb">'+(kind==="probe"?'<kbd>1</kbd> don’t · <kbd>2</kbd> know · <kbd>esc</kbd> stop':phase==="ask"||phase==="closed"?'<kbd>space</kbd> reveal · <kbd>esc</kbd> '+(walk?'stop':'close'):phase==="rate"||(phase==="reveal"&&kind==="due")?'<kbd>1–4</kbd> rate · <kbd>enter</kbd> '+["","again","hard","good","easy"][suggested()]+' · <kbd>esc</kbd> '+(walk?'stop':'close'):phase==="reveal"?'<kbd>enter</kbd> spell it':phase==="spell"||phase==="recall"?'<kbd>enter</kbd> check':phase==="guess"?'<kbd>enter</kbd> guess — empty is no idea · <kbd>esc</kbd> '+(walk?'stop':'close'):phase==="meet"||phase==="miss"?'<kbd>enter</kbd> '+(phase==="miss"?'try again':'recall it'):phase==="after"?'<kbd>enter</kbd> '+(step.inWalk&&walk?'continue':'close'):'<kbd>←→</kbd> move · <kbd>esc</kbd> close')+'</div>';
-  pop.innerHTML=h;pop.classList.add("on");wire(w,k);if(needLayout)layout();place();tip.style.display="none";req();
+  pop.innerHTML=h;pop.classList.add("on");wire(w,k);if(needLayout)layout();place();if(popKey!==i+":"+phase){popKey=i+":"+phase;pop.scrollTop=0;keepInput()}tip.style.display="none";req();
 }
 function wire(w,k){
   const d=pop;
@@ -5840,11 +5878,19 @@ function wire(w,k){
   d.querySelectorAll("[data-act]").forEach(b=>b.onclick=()=>{const a=b.dataset.act;
     if(a==="reveal")reveal();else if(a==="spell")toSpell();else if(a==="cont")continueStep();
     else if(a==="guess")commitGuess();else if(a==="skip"){const ai=d.querySelector("[data-ans]");if(ai)ai.value="";commitGuess()}else if(a==="recall")toRecall();
+    else if(a==="check"){if(step.phase==="spell")spelled();else if(step.phase==="recall")recalled()}
     else if(a==="test"){openStep(step.i,k.green||k.claimed?"due":"again",false)}
     else if(a==="claim")claimWord(step.i);else if(a==="probe")startProbe();
     else if(a==="branch"){const op=branch(step.i);if(op){reorder();layout();stats();save();step.opened=[op];render()}}});
   d.querySelectorAll("[data-go]").forEach(b=>b.onclick=e=>{e.stopPropagation();if(walk)stopWalk();openStep(+b.dataset.go,null,false)});
-  const ai=d.querySelector("[data-ans]");if(ai){ai.addEventListener("keydown",e=>{e.stopPropagation();if(e.key==="Enter"){e.preventDefault();if(step.phase==="spell")spelled();else if(step.phase==="guess")commitGuess();else if(step.phase==="recall")recalled();else reveal()}if(e.key==="Escape"){e.preventDefault();if(walk)stopWalk();else closePop()}});if(!matchMedia("(hover:none)").matches)ai.focus()}
+  const ai=d.querySelector("[data-ans]");
+  d.querySelectorAll("[data-ch]").forEach(b=>{const keep=e=>e.preventDefault();b.addEventListener("pointerdown",keep);b.addEventListener("mousedown",keep);  // keep the field focused: the soft keyboard stays up
+    b.onclick=()=>{if(!ai)return;const a=document.activeElement===ai?ai.selectionStart:ai.value.length,z=document.activeElement===ai?ai.selectionEnd:a;ai.setRangeText(b.dataset.ch,a,z,"end");ai.focus({preventScroll:true})}});
+  if(ai){ai.addEventListener("focus",()=>{keepInput();setTimeout(keepInput,350)});
+    ai.addEventListener("keydown",e=>{e.stopPropagation();if(e.key==="Enter"||e.keyCode===13){e.preventDefault();if(step.phase==="spell")spelled();else if(step.phase==="guess")commitGuess();else if(step.phase==="recall")recalled();else reveal()}if(e.key==="Escape"){e.preventDefault();if(walk)stopWalk();else closePop()}});
+    // touch: the keyboard opens by itself only where typing is the step (recall, spell) and a tap led here; the guess keeps "no idea" one tap away
+    if(!matchMedia("(hover:none)").matches)ai.focus();
+    else if((step.phase==="recall"||step.phase==="spell")&&(!navigator.userActivation||navigator.userActivation.isActive))ai.focus({preventScroll:true})}
   d.querySelectorAll(".tk[data-ids]").forEach(t=>{const ids=t.dataset.ids.split(",").map(Number);
     t.addEventListener("mouseenter",()=>{const x=ids.find(x=>K(x).vis);if(x!==undefined){hov=x;req()}});t.addEventListener("mouseleave",()=>{hov=-1;req()});
     t.onclick=e=>{e.stopPropagation();if(ids.includes(step.i))return;const x=ids.find(x=>K(x).vis)??ids[0];if(!K(x).vis)return;if(walk)stopWalk();openStep(x,null,false)}});
@@ -5990,7 +6036,7 @@ if(!had){auto=true;revealCell(HOLA,SEED0.key);revealCell(MUNDO,SEED0.key);auto=f
 if(Q.has("all")){auto=true;for(let i=0;i<N;i++)revealCell(i,"all");auto=false}
 for(let i=0;i<N;i++)repaint(i);
 if(Q.has("sim"))$("sim").classList.add("on");
-reorder();layout();stats();if(narrow())fq.placeholder="find";
+reorder();layout();stats();vvSync();if(narrow())fq.placeholder="find";
 if(Q.has("sim")&&+Q.get("sim")>0){auto=true;autoLearn(+Q.get("sim"));auto=false}
 if(Q.has("probe")&&Q.get("probe")==="auto"&&!probed){auto=true;startProbe();let g=0;while(step&&step.kind==="probe"&&g++<40){answer(Math.random()<words[step.i].pt?2:1)}auto=false;walk=null;step=null;closePop();stats()}
 sel=HOLA;
