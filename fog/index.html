@@ -55,67 +55,150 @@ input{font:inherit}
 .tip small{color:var(--overlay0);font-variant-numeric:tabular-nums;margin-left:6px}
 .tip.loupe{font-size:20px;padding:8px 14px}
 
-/* the card: a popover beside the selected cell's hundred-block */
-.pop{position:fixed;z-index:20;width:380px;max-height:calc(100dvh - 60px);overflow:hidden auto;background:var(--mantle);border:1px solid var(--surface1);border-radius:6px;padding:16px 16px 12px;display:none;scrollbar-width:thin}
-.pop.on{display:block}
-.arr{position:absolute;width:10px;height:10px;background:var(--mantle);border-left:1px solid var(--surface1);border-top:1px solid var(--surface1)}
-.x{position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:4px;color:var(--overlay1);font-size:18px}
-.x:hover{background:var(--surface0);color:var(--text)}
-.cl{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--overlay0);padding-right:30px;display:flex;gap:10px;flex-wrap:wrap}
-.cl i{font-style:normal;color:var(--lavender)}
-.ph{display:flex;align-items:baseline;gap:10px;padding-right:26px;flex-wrap:wrap;margin-top:4px}
-.ph h2{font-size:26px;font-weight:600;letter-spacing:-.01em}
-.ph h2 i{font-style:normal;font-weight:400;color:var(--subtext0)}
-.ph h2.hid{color:var(--subtext0);font-weight:500}
-.ph small{font-size:11px;color:var(--overlay0);font-variant-numeric:tabular-nums}
-.q{margin-top:12px;font-size:13px;color:var(--overlay1);line-height:1.5}
-.cue{font-size:19px;line-height:1.5;margin-top:10px}
-.cue b{color:var(--lavender);font-weight:500;letter-spacing:.06em}
-.cue .en{display:block;font-size:13px;color:var(--overlay1);font-weight:400;margin-top:4px}
-.tk{cursor:pointer;border-radius:2px;padding:0 1px}
-.tk:hover{background:var(--surface0)}
-.tk.tg{color:var(--lavender);font-weight:600}
-.tk.unk{text-decoration:underline dotted var(--overlay1);text-underline-offset:4px}
+/* the card: a full-screen focus page. The atlas recedes to a ghost behind it; the centre holds one word or sentence; the margins fill only as steps are earned.
+   One type scale for every width: --fs-s labels · --fs-m body/margins · --fs-h head · --fs-x the sentence · --fs-b controls */
+.scroll,.bar{transition:opacity .25s,filter .25s}
+body.fx .scroll{opacity:.16;filter:blur(2px)}
+body.fx .bar{opacity:0}
+body.fx .hint{display:none}
+.fo{position:fixed;inset:0;z-index:20;background:rgba(17,17,27,.93);display:none;overflow:hidden auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--surface0) transparent;
+  --fs-s:clamp(11px,.72vw,26px);--fs-m:clamp(15px,1.12vw,40px);--fs-h:clamp(20px,1.75vw,64px);--fs-x:clamp(30px,2.9vw,104px);--fs-b:clamp(14px,.95vw,34px);--gut:clamp(24px,3vw,110px);--cw:clamp(520px,38vw,1400px);
+  font-size:var(--fs-m);grid-template-columns:minmax(0,1fr) minmax(0,var(--cw)) minmax(0,1fr);grid-template-rows:auto 1fr auto;grid-template-areas:"top top top" "l c r" "ft ft ft";column-gap:var(--gut);padding:0 var(--gut)}
+.fo.on{display:grid}
+.fo.pg{--cw:clamp(560px,46vw,1700px)}
+.fo.leaving{pointer-events:none}
+.fo-top{grid-area:top;display:flex;align-items:flex-start;gap:clamp(12px,1.2vw,40px);padding-top:clamp(14px,1.3vw,48px)}
+.back{font-size:max(12px,var(--fs-s));color:var(--overlay1);letter-spacing:.04em;display:inline-flex;gap:.6em;align-items:center;padding:.45em .7em;margin-left:-.7em;border-radius:4px;white-space:nowrap}
+.back:hover{color:var(--text);background:var(--surface0)}
+.back kbd{font:inherit;font-size:.9em;border:1px solid var(--surface1);border-radius:3px;padding:0 .45em;color:var(--overlay1)}
+.back.home{margin-left:0}
+.back.home[hidden]{display:none}
+@media (hover:none){.back kbd{display:none}}
+.fhint{flex:1;min-width:0;text-align:center;font-size:max(12px,var(--fs-s));color:var(--subtext0);line-height:1.5;padding-top:.45em}
+.fhint kbd{font:inherit;color:var(--text)}
+.mmw{position:relative;flex:none;line-height:0;margin-right:-4px}
+#mm{display:block;cursor:pointer;touch-action:manipulation}
+.mmc{position:absolute;border-radius:2px;border:2px solid var(--lavender);pointer-events:none;animation:pu 1.8s ease-in-out infinite;display:none}
+.mmc.on{border-color:var(--green);animation:none}
+@keyframes pu{50%{box-shadow:0 0 0 4px #b4befe33}}
+/* centre */
+.fo-c{grid-area:c;align-self:center;display:flex;flex-direction:column;align-items:center;text-align:center;min-width:0;padding:clamp(20px,3vh,64px) 0}
+.flab{font-size:var(--fs-s);letter-spacing:.18em;text-transform:uppercase;color:var(--overlay0);display:flex;gap:1.2em;flex-wrap:wrap;justify-content:center}
+.flab i{font-style:normal;color:var(--lavender)}
+.flab.g span{color:var(--green)}
+.hd{margin-top:clamp(16px,2.2vh,48px);font-size:var(--fs-h);font-weight:600;letter-spacing:-.01em;display:flex;align-items:baseline;gap:.5em;justify-content:center;flex-wrap:wrap}
+.hd i{font-style:normal;font-weight:400;color:var(--subtext0)}
+.hd small{font-size:var(--fs-s);font-weight:400;color:var(--overlay0);letter-spacing:.06em}
+.hd.cue{color:var(--subtext0);font-weight:500}
+.hd.solo{font-size:var(--fs-x);margin-top:clamp(20px,3vh,64px)}
+.sx{margin-top:clamp(14px,2vh,40px);font-size:var(--fs-x);line-height:1.3;letter-spacing:-.01em;overflow-wrap:break-word;max-width:100%}
+.sx.cueen{color:var(--subtext0)}
+.sx .en{display:block;font-size:var(--fs-m);color:var(--overlay1);margin-top:.7em;letter-spacing:0;line-height:1.5}
+.tk{border-radius:3px;position:relative;cursor:pointer;padding:0 .04em}
+.tk.tg{color:var(--lavender);font-weight:600;box-shadow:inset 0 -.07em 0 var(--lavender)}
+.tk.ok{color:var(--green);font-weight:600}
+.tk.unk{color:var(--overlay1)}
+.tk.fogw{color:var(--overlay0);cursor:default}
 .tk.off{color:var(--overlay0);font-style:italic;cursor:default}
-.ans{width:100%;margin-top:10px;background:var(--base);border:1px solid var(--surface0);border-radius:3px;padding:8px 10px;font-size:15px;color:var(--text)}
-.ans:focus{outline:1px solid var(--lavender);border-color:transparent}
-.tr{font-size:16px;margin-top:10px}
-.gr{margin-top:10px;font-size:12px;color:var(--overlay1);border-left:2px solid var(--surface0);padding-left:9px;line-height:1.45}
-.vd{margin-top:10px;font-size:13px;line-height:1.45}
+@media (hover:hover){
+  .tk[data-l]:hover{background:var(--surface0)}
+  .tk[data-l]:hover:after{content:attr(data-l);position:absolute;left:50%;bottom:calc(100% + 6px);transform:translateX(-50%);background:var(--mantle);border:1px solid var(--surface1);border-radius:3px;padding:.15em .6em;font-size:max(13px,var(--fs-s));line-height:1.5;font-weight:400;font-style:normal;color:var(--subtext1);white-space:nowrap;z-index:3;letter-spacing:0;pointer-events:none}
+}
+.gap{font:inherit;font-weight:600;color:var(--lavender);background:var(--base);border:0;border-bottom:.07em solid var(--lavender);border-radius:4px 4px 0 0;padding:0 .2em;width:4em;max-width:100%;text-align:center;outline:none;letter-spacing:0;vertical-align:baseline}
+.gap:focus{background:var(--surface0)}
+.mean{margin-top:clamp(12px,1.8vh,36px);font-size:var(--fs-h);color:var(--subtext1);line-height:1.35}
+.nt{margin-top:clamp(12px,1.6vh,30px);line-height:1.5;color:var(--overlay1);max-width:34em}
+.nt b{color:var(--subtext1);font-weight:500}
+.nt.ok,.nt.ok b{color:var(--green)}
+.vd{margin-top:clamp(10px,1.4vh,26px);line-height:1.45}
 .vd b{font-weight:500}
 .vd.bad{color:var(--red)}
 .vd.ok{color:var(--green)}
-.gs{margin-top:6px;font-size:13px;color:var(--overlay1)}
+.gs{margin-top:.5em;color:var(--overlay1)}
 .gs b{color:var(--subtext1);font-weight:500}
 .gs.ok,.gs.ok b{color:var(--green)}
-.rate{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;margin-top:14px}
-.rate button{height:42px;background:var(--base);border-radius:2px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font-size:12px;color:var(--subtext1)}
-.rate button small{font-size:10px;color:var(--overlay0);font-variant-numeric:tabular-nums}
+.ans{display:block;width:min(100%,24em);height:2.8em;margin-top:clamp(16px,2.2vh,40px);font-size:var(--fs-b);background:var(--base);border:1px solid var(--surface0);border-radius:5px;padding:0 1em;text-align:center;color:var(--text)}
+.ans.wide{width:min(100%,30em)}
+.ans:focus{outline:none;border-color:var(--lavender)}
+.ans::placeholder{color:var(--overlay0)}
+/* accent keys under a Spanish answer field: always shown, so they never hint that the answer has an accent */
+.acc{display:flex;gap:.3em;margin-top:.8em;justify-content:center;font-size:var(--fs-b);max-width:100%}
+.acc button{width:2.5em;height:2.3em;background:var(--base);border:1px solid var(--surface0);border-radius:4px;color:var(--subtext1);font-size:1.05em}
+@media (hover:hover){.acc button:hover{background:var(--surface0);color:var(--text)}}
+.acts{display:flex;gap:.6em;justify-content:center;flex-wrap:wrap;margin-top:clamp(16px,2.4vh,44px);font-size:var(--fs-b);width:100%}
+.fb{min-width:8em;height:2.8em;padding:0 1.4em;background:var(--base);border:1px solid var(--surface0);border-radius:5px;color:var(--subtext1);white-space:nowrap}
+.fb:hover{background:var(--surface0);color:var(--text)}
+.fb.pri{border-color:#b4befe55;color:var(--lavender)}
+.fb.quiet{background:none;min-width:0;color:var(--overlay1)}
+.fb small{margin-left:.7em;font-size:.78em;color:var(--overlay0)}
+.yn{display:grid;grid-template-columns:1fr 1fr;gap:.6em;width:min(100%,22em)}
+.yn .fb{min-width:0}
+.rate{display:grid;grid-template-columns:repeat(4,1fr);gap:.4em;width:min(100%,30em)}
+.rate button{height:3.2em;background:var(--base);border:1px solid var(--surface0);border-radius:5px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.1em;color:var(--subtext1)}
+.rate button small{font-size:.72em;color:var(--overlay0);font-variant-numeric:tabular-nums}
 .rate button:hover{background:var(--surface0)}
 .rate button:first-child{color:var(--red)}
 .rate button.sug{box-shadow:inset 0 -2px 0 var(--lavender)}
-.yn{display:grid;grid-template-columns:1fr 1fr;gap:2px;margin-top:14px}
-.yn button{height:40px;background:var(--base);border-radius:2px;font-size:13px;color:var(--subtext1)}
-.yn button:hover{background:var(--surface0)}
-.yn button small{display:block;font-size:10px;color:var(--overlay0)}
-.big{width:100%;height:38px;margin-top:12px;background:var(--base);color:var(--text);border-radius:2px;font-size:13px}
-.big:hover{background:var(--surface0)}
-.big small{color:var(--overlay0);margin-left:8px;font-size:11px}
-.lnk{font-size:12px;color:var(--overlay1);padding:0;margin-top:10px;margin-right:14px}
+.lnks{margin-top:clamp(14px,2vh,36px);display:flex;gap:.4em 1.6em;justify-content:center;flex-wrap:wrap;font-size:max(12px,var(--fs-s))}
+.lnk{color:var(--overlay1);letter-spacing:.02em;padding:.3em 0}
 .lnk:hover{color:var(--text)}
-.sched{margin-top:10px;font-size:11px;color:var(--overlay0);font-variant-numeric:tabular-nums;line-height:1.5}
-.open{margin-top:12px;font-size:13px;line-height:1.5;color:var(--subtext1)}
-.open .lab{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--overlay0);margin-bottom:3px}
-.open .sn{font-size:15px;color:var(--text)}
-.open .sn .en{display:block;font-size:12px;color:var(--overlay1)}
-.open.ok{color:var(--green)}
-.open.ok b{color:var(--green)}
-.chips{display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin-top:6px}
-.chip{font-size:12px;padding:3px 8px;background:var(--base);border-radius:2px;color:var(--subtext1);line-height:1.4;border:1px solid var(--surface0)}
+.lnk[disabled]{opacity:.5;cursor:default}
+/* margins: items fade in as they are earned; an item already shown for this word stays still */
+.fo-l,.fo-r{align-self:center;min-width:0;display:flex;flex-direction:column;gap:clamp(18px,2.6vh,52px);padding:clamp(20px,3vh,64px) 0}
+.fo-l{grid-area:l;text-align:right;align-items:flex-end}
+.fo-r{grid-area:r;align-items:flex-start}
+.it{max-width:min(100%,24em);animation:in .5s ease both}
+.it.keep{animation:none}
+@keyframes in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.it h4{font-size:var(--fs-s);letter-spacing:.16em;text-transform:uppercase;color:var(--overlay0);font-weight:500;margin-bottom:.7em}
+.it p{line-height:1.5;color:var(--subtext0)}
+.it p.sm{font-size:.85em;color:var(--overlay0);margin-top:.3em}
+.it .sn{line-height:1.4;color:var(--subtext1);margin-bottom:.9em}
+.it .sn:last-child{margin-bottom:0}
+.it .sn .en{display:block;font-size:.85em;color:var(--overlay1);margin-top:.15em}
+.it.ok p{color:var(--green)}
+.it.ok b{font-weight:500}
+.enb{font-size:.78em;color:var(--overlay0);margin-left:.5em;border-bottom:1px dotted var(--overlay0)}
+.enb:hover{color:var(--text)}
+.chips{display:flex;flex-wrap:wrap;align-items:center;gap:.4em;margin-top:.5em}
+.fo-l .chips{justify-content:flex-end}
+.chip{font-size:.85em;padding:.25em .8em;border-radius:1em;background:var(--base);border:1px solid var(--surface0);color:var(--subtext1);line-height:1.4}
 .chip:hover{background:var(--surface0);color:var(--text)}
-.chip.new{border-color:var(--surface1)}
-.kb{margin-top:10px;font-size:10px;color:var(--overlay0);letter-spacing:.03em;line-height:1.6}
-.kb kbd{font:inherit;color:var(--overlay1)}
+.chip.new{color:var(--lavender);border-color:#b4befe44}
+.chips .cap{font-size:.78em;color:var(--overlay0)}
+/* the word page (a word that is yours): the word, its attributes, its sentences */
+.gl{margin-top:.35em;font-size:var(--fs-h);color:var(--subtext1);line-height:1.35}
+.tags{display:flex;gap:.5em;flex-wrap:wrap;justify-content:center;margin-top:clamp(12px,1.6vh,30px)}
+.tag{font-size:max(12px,var(--fs-s));letter-spacing:.06em;padding:.3em .9em;border-radius:1em;border:1px solid var(--surface1);color:var(--subtext0)}
+.tag:hover,.tag.on{color:var(--lavender);border-color:#b4befe66}
+.forms{margin-top:clamp(18px,2.8vh,52px);max-width:100%}
+.cj{border-collapse:collapse;font-size:calc(var(--fs-m)*.94);font-variant-numeric:tabular-nums}
+.cj th{font-weight:500;color:var(--overlay0);font-size:var(--fs-s);letter-spacing:.1em;text-transform:uppercase;padding:.2em .75em .6em;text-align:left;white-space:nowrap}
+.cj td{padding:.24em .75em;text-align:left;color:var(--subtext1);white-space:nowrap}
+.cj th[scope=row]{text-transform:none;letter-spacing:0;font-size:calc(var(--fs-m)*.78);color:var(--overlay0);text-align:right;padding:.24em .9em .24em 0;font-weight:400}
+.cj td.x{color:var(--lavender)}
+.cj td.cur{background:#b4befe14;border-radius:3px}
+.vx{margin-top:.9em;font-size:calc(var(--fs-m)*.9);color:var(--overlay0);display:flex;gap:.4em 1.6em;justify-content:center;flex-wrap:wrap}
+.vx b{color:var(--subtext1);font-weight:500}
+.vx b.x{color:var(--lavender)}
+.tz{display:none}
+.nf{display:grid;grid-template-columns:auto auto;gap:.35em 2.2em;font-size:calc(var(--fs-h)*.8);text-align:left;justify-content:center}
+.nf span{color:var(--subtext1)}
+.nf i{font-style:normal;color:var(--overlay1)}
+.nf .x{color:var(--lavender)}
+.nf small{grid-column:1/-1;font-size:var(--fs-s);letter-spacing:.1em;text-transform:uppercase;color:var(--overlay0);margin-top:.4em}
+/* footer: what Enter does, and the keys */
+.fo-ft{grid-area:ft;display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:.3em 1.4em;min-height:clamp(48px,4.4vw,120px);font-size:max(11px,var(--fs-s));color:var(--overlay0);text-align:center;padding-bottom:env(safe-area-inset-bottom)}
+.fo-ft kbd{font:inherit;border:1px solid var(--surface1);border-radius:3px;padding:0 .4em;color:var(--overlay1)}
+.fo-ft b{color:var(--subtext1);font-weight:500}
+@media (max-width:1100px){
+  .fo{grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto auto 1fr;grid-template-areas:"top" "c" "l" "r" "ft";padding:0 max(16px,env(safe-area-inset-left)) 0 max(16px,env(safe-area-inset-right))}
+  .fo-c{align-self:start;padding-bottom:clamp(16px,3vh,40px)}
+  .fo-l,.fo-r{align-self:start;text-align:left;align-items:stretch;padding:0 0 clamp(16px,3vh,32px)}
+  .fo-l .chips{justify-content:flex-start}
+  .it{max-width:none}
+  .fo-ft{align-items:flex-end;padding-bottom:calc(14px + env(safe-area-inset-bottom))}
+}
 
 /* simulation strip: prototype only, hidden unless ?sim or ` */
 .sim{flex:none;height:28px;display:none;align-items:center;gap:10px;padding:0 14px;background:var(--mantle);border-top:1px solid var(--crust);font-size:11px;color:var(--overlay0);font-variant-numeric:tabular-nums;white-space:nowrap;overflow-x:auto;scrollbar-width:none}
@@ -129,40 +212,44 @@ input{font:inherit}
   .bar{gap:8px;padding:0 10px}
   .lang,#zp,#zm{display:none}
   #fq{width:64px}
-  /* the sheet sits on the visual viewport (--kb = soft keyboard height, --vvh = visible height; set by vvSync) and grows when space is short */
-  .pop{left:0 !important;right:0;top:auto !important;bottom:var(--kb,0px);width:auto;max-height:max(calc(var(--vvh,100dvh)*.62),min(calc(var(--vvh,100dvh) - 8px),440px));border-radius:10px 10px 0 0;border-width:1px 0 0;padding:18px 18px calc(14px + env(safe-area-inset-bottom))}
-  .kbo .pop{padding-bottom:14px}
-  .arr{display:none}
-  .x{top:10px;right:10px;width:40px;height:40px;font-size:22px}
-  .ph h2{font-size:30px}
-  .cue{font-size:21px}.tr{font-size:17px}
-  .rate button{height:54px;font-size:14px}
-  .yn button{height:50px;font-size:15px}
-  .big{height:46px;font-size:15px}
-  .ans{font-size:16px}
-  .chip{font-size:14px;padding:6px 10px}
-  .kb{display:none}
+  /* the focus page sits on the visual viewport (--kb = soft keyboard height, --vvh = visible height; set by vvSync) and scrolls within itself */
+  .fo{top:auto;bottom:var(--kb,0px);height:var(--vvh,100dvh);padding-top:env(safe-area-inset-top);--fs-s:11px;--fs-m:16px;--fs-h:22px;--fs-x:clamp(24px,7.4vw,32px);--fs-b:16px;--gut:16px}
+  .fo-top{padding-top:8px}
+  .kbh{display:none}
+  .fo-c{padding-top:14px}
+  .hd.solo{font-size:clamp(30px,10vw,40px)}
+  .acc{width:100%;gap:2px}
+  .acc button{flex:1;width:auto}
+  .acts .fb{flex:1}
+  .yn,.rate{width:100%}
+  .cj{font-size:17px}
   .hint{bottom:calc(14px + env(safe-area-inset-bottom));font-size:12px}
 }
-/* touch: no double-tap zoom, no pull-to-refresh or rubber-band behind the sheet; the sheet scrolls within itself */
+/* word page, one column: the conjugation shows one tense at a time, chosen above the table */
+@media (max-width:720px){
+  .tz{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin-bottom:10px}
+  .tz button{font-size:13px;padding:0 12px;min-height:36px;border-radius:18px;border:1px solid var(--surface0);color:var(--overlay1)}
+  .tz button.on{color:var(--lavender);border-color:#b4befe66}
+  .cj [data-t]{display:none}
+  .cj[data-s="0"] [data-t="0"],.cj[data-s="1"] [data-t="1"],.cj[data-s="2"] [data-t="2"],.cj[data-s="3"] [data-t="3"],.cj[data-s="4"] [data-t="4"],.cj[data-s="5"] [data-t="5"]{display:table-cell}
+}
+/* touch: no double-tap zoom, no pull-to-refresh or rubber-band behind the page; the page scrolls within itself */
 html{touch-action:manipulation}
 html,body{overscroll-behavior:none}
-.pop,.scroll{overscroll-behavior:contain}
-/* accent keys under a Spanish answer field: always shown, so they never hint that the answer has an accent */
-.acc{display:flex;gap:2px;margin-top:8px}
-.acc button{flex:1;height:36px;background:var(--base);border:1px solid var(--surface0);border-radius:3px;font-size:17px;color:var(--subtext1)}
-@media (hover:hover){.acc button:hover{background:var(--surface0);color:var(--text)}}
+.fo,.scroll{overscroll-behavior:contain}
 @media (pointer:coarse){
-  input,#fq,.ans{font-size:16px}  /* under 16px iOS zooms on focus */
+  #fq{font-size:16px}  /* under 16px iOS zooms on focus */
+  .fo .ans{font-size:max(16px,var(--fs-b))}
   .bar{height:calc(54px + env(safe-area-inset-top));padding-top:env(safe-area-inset-top);padding-left:max(10px,env(safe-area-inset-left));padding-right:max(10px,env(safe-area-inset-right))}
   .go,#fq{height:44px}
   .zoom button{width:44px;height:44px}
-  .x{width:44px;height:44px}
-  .acc button{height:44px}
-  .lnk{min-height:44px;display:inline-flex;align-items:center;margin-top:2px}
-  button.chip{min-height:44px;min-width:44px}
-  .ans{min-height:44px}
-  .big small,.yn button small{display:none}  /* key hints */
+  .back{min-height:44px}
+  .acc button,.tz button{min-height:44px}
+  .lnk{min-height:44px;display:inline-flex;align-items:center}
+  button.chip,.tag,.enb{min-height:44px;min-width:44px;display:inline-flex;align-items:center;justify-content:center}
+  .enb{border-bottom:0;text-decoration:underline dotted}
+  .ans,.fb{min-height:44px}
+  .fb small{display:none}  /* key hints */
   button:active{filter:brightness(1.35)}
 }
 @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto !important}}
@@ -184,7 +271,11 @@ html,body{overscroll-behavior:none}
   <span class="lab">simulation · not product ui</span><span id="simt"></span>
   <button id="s1">+1 day</button><button id="sl10">learn 10</button><button id="sl100">learn 100</button><button id="sr">reset</button>
 </footer>
-<div class="pop" id="pop" role="dialog" aria-label="Word card"></div>
+<div class="fo" id="pop" role="dialog" aria-modal="true" aria-label="Word">
+  <div class="fo-top"><button class="back" id="back"><kbd>esc</kbd><span id="backt">atlas</span></button><button class="back home" id="home" hidden>atlas</button><div class="fhint" id="fhint"></div><div class="mmw"><canvas id="mm" aria-hidden="true"></canvas><i class="mmc" id="mmc"></i></div></div>
+  <div class="fo-l" id="foL"></div><div class="fo-c" id="foC"></div><div class="fo-r" id="foR"></div>
+  <div class="fo-ft" id="foF"></div>
+</div>
 <div class="tip" id="tip"></div>
 <div class="vh" id="live" aria-live="polite"></div>
 
@@ -192,6 +283,7 @@ html,body{overscroll-behavior:none}
 "use strict";
 const $=id=>document.getElementById(id);
 const sc=$("sc"),cv=$("cv"),sp=$("sp"),pop=$("pop"),tip=$("tip"),fq=$("fq"),go=$("go"),hint=$("hint");
+const foL=$("foL"),foC=$("foC"),foR=$("foR"),foF=$("foF"),mm=$("mm"),mmc=$("mmc"),fhint=$("fhint");
 const ctx=cv.getContext("2d",{alpha:false});
 const Q=new URLSearchParams(location.search);
 const RM=matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -5403,9 +5495,10 @@ const N=Math.max(100,Math.min(words.length,+(Q.get("n")||5000)));words.length=N;
   hw.forEach((o,lw)=>{if(!IDX.has(lw))return;const i=words.findIndex(w=>w.w===lw&&w.pos===o.pos),j=i>=0?i:IDX.get(lw);words[j].t=o.t;words[j].real=1;IDX.set(lw,j)});
   for(const lw in MY){const i=IDX.get(lw);if(i!==undefined){words[i].t=MY[lw];words[i].real=1}}
 }
+const ELF=new Set("agua alma arma área águila aula ala hambre hacha habla hada ancla arpa asa".split(" "));  // feminine, but el in the singular: el agua, las aguas
 const shortGloss=t=>{let s=t.split(/;|\(/)[0].trim();if(s.length>44)s=s.slice(0,42).replace(/\s\S*$/,"")+"…";return s||t};
 words.forEach((w,i)=>{w.i=i;w.id=w.w+"#"+w.pos;w.norm=strip(w.w);if(!w.real)w.t=shortGloss(w.t);
-  if(w.pos==="noun"&&(w.real||FEM.includes(w.w)))w.art=w.w==="gracias"?"las":FEM.includes(w.w)?"la":"el";
+  if(w.pos==="noun"&&(w.real||FEM.includes(w.w)))w.art=w.w==="gracias"?"las":FEM.includes(w.w)&&!ELF.has(w.w)?"la":"el";
   w.g=IDX.get(w.w)===i&&GR[w.w]||"";
   // hidden truth for the simulated learner only (B1-ish, ~1,400 words, patchy)
   const p=1/(1+Math.exp(-(Math.log(1400)-Math.log(i+1))/.55));w.pt=Math.max(.02,Math.min(.98,p+(Math.sin(i*12.9898)*.15)));
@@ -5432,6 +5525,3264 @@ const bank=[...SEED.split("\n").map((l,j)=>{const[es,en]=l.split("|");return mkS
 const SK=new Map(bank.map(s=>[s.key,s]));
 const INV=new Map();bank.forEach(s=>s.ids.forEach(x=>{if(!INV.has(x))INV.set(x,[]);INV.get(x).push(s)}));
 const HOLA=IDX.get("hola"),MUNDO=IDX.get("mundo"),SEED0=bank[0];
+// inflection: regular rules + exceptions from Wiktionary (kaikki), top 5,000 lemmas · verbs: lemma|class (i irregular · s stem-changing · o spelling)|cell=form,… (p present · t preterite · i imperfect · f future · s present subjunctive · m imperative · 1–6 person · g gerund · d participle) · nouns: lemma|gender|irregular plural|feminine · adjectives: lemma|feminine|masc. plural|fem. plural
+const INFL={V:`ser|i|p1=soy,p2=eres,p3=es,p4=somos,p5=sois,p6=son,t1=fui,t2=fuiste,t3=fue,t4=fuimos,t5=fuisteis,t6=fueron,i1=era,i2=eras,i3=era,i4=éramos,i5=erais,i6=eran,s1=sea,s2=seas,s3=sea,s4=seamos,s5=seáis,s6=sean,m2=sé
+estar|i|p1=estoy,p2=estás,p3=está,p6=están,t1=estuve,t2=estuviste,t3=estuvo,t4=estuvimos,t5=estuvisteis,t6=estuvieron,s1=esté,s2=estés,s3=esté,s6=estén
+haber|i|p1=he,p2=has,p3=ha,p4=hemos,p6=han,t1=hube,t2=hubiste,t3=hubo,t4=hubimos,t5=hubisteis,t6=hubieron,f1=habré,f2=habrás,f3=habrá,f4=habremos,f5=habréis,f6=habrán,s1=haya,s2=hayas,s3=haya,s4=hayamos,s5=hayáis,s6=hayan,m2=habe
+ir|i|p1=voy,p2=vas,p3=va,p4=vamos,p5=vais,p6=van,t1=fui,t2=fuiste,t3=fue,t4=fuimos,t5=fuisteis,t6=fueron,i1=iba,i2=ibas,i3=iba,i4=íbamos,i5=ibais,i6=iban,s1=vaya,s2=vayas,s3=vaya,s4=vayamos,s5=vayáis,s6=vayan,g=yendo,m2=ve,m4=vamos
+tener|i|p1=tengo,p2=tienes,p3=tiene,p6=tienen,t1=tuve,t2=tuviste,t3=tuvo,t4=tuvimos,t5=tuvisteis,t6=tuvieron,f1=tendré,f2=tendrás,f3=tendrá,f4=tendremos,f5=tendréis,f6=tendrán,s1=tenga,s2=tengas,s3=tenga,s4=tengamos,s5=tengáis,s6=tengan,m2=ten
+hacer|i|p1=hago,t1=hice,t2=hiciste,t3=hizo,t4=hicimos,t5=hicisteis,t6=hicieron,f1=haré,f2=harás,f3=hará,f4=haremos,f5=haréis,f6=harán,s1=haga,s2=hagas,s3=haga,s4=hagamos,s5=hagáis,s6=hagan,d=hecho,m2=haz
+poder|i|p1=puedo,p2=puedes,p3=puede,p6=pueden,t1=pude,t2=pudiste,t3=pudo,t4=pudimos,t5=pudisteis,t6=pudieron,f1=podré,f2=podrás,f3=podrá,f4=podremos,f5=podréis,f6=podrán,s1=pueda,s2=puedas,s3=pueda,s6=puedan,g=pudiendo
+decir|i|p1=digo,p2=dices,p3=dice,p6=dicen,t1=dije,t2=dijiste,t3=dijo,t4=dijimos,t5=dijisteis,t6=dijeron,f1=diré,f2=dirás,f3=dirá,f4=diremos,f5=diréis,f6=dirán,s1=diga,s2=digas,s3=diga,s4=digamos,s5=digáis,s6=digan,g=diciendo,d=dicho,m2=di
+saber|i|p1=sé,t1=supe,t2=supiste,t3=supo,t4=supimos,t5=supisteis,t6=supieron,f1=sabré,f2=sabrás,f3=sabrá,f4=sabremos,f5=sabréis,f6=sabrán,s1=sepa,s2=sepas,s3=sepa,s4=sepamos,s5=sepáis,s6=sepan
+querer|i|p1=quiero,p2=quieres,p3=quiere,p6=quieren,t1=quise,t2=quisiste,t3=quiso,t4=quisimos,t5=quisisteis,t6=quisieron,f1=querré,f2=querrás,f3=querrá,f4=querremos,f5=querréis,f6=querrán,s1=quiera,s2=quieras,s3=quiera,s6=quieran
+ver|i|p1=veo,p5=veis,t1=vi,t3=vio,i1=veía,i2=veías,i3=veía,i4=veíamos,i5=veíais,i6=veían,s1=vea,s2=veas,s3=vea,s4=veamos,s5=veáis,s6=vean,d=visto
+creer|o|t2=creíste,t3=creyó,t4=creímos,t5=creísteis,t6=creyeron,g=creyendo,d=creído
+dar|i|p1=doy,p5=dais,t1=di,t2=diste,t3=dio,t4=dimos,t5=disteis,t6=dieron,s1=dé,s3=dé,s5=deis
+pensar|s|p1=pienso,p2=piensas,p3=piensa,p6=piensan,s1=piense,s2=pienses,s3=piense,s6=piensen
+venir|i|p1=vengo,p2=vienes,p3=viene,p6=vienen,t1=vine,t2=viniste,t3=vino,t4=vinimos,t5=vinisteis,t6=vinieron,f1=vendré,f2=vendrás,f3=vendrá,f4=vendremos,f5=vendréis,f6=vendrán,s1=venga,s2=vengas,s3=venga,s4=vengamos,s5=vengáis,s6=vengan,g=viniendo,m2=ven
+sentir|s|p1=siento,p2=sientes,p3=siente,p6=sienten,t3=sintió,t6=sintieron,s1=sienta,s2=sientas,s3=sienta,s4=sintamos,s5=sintáis,s6=sientan,g=sintiendo
+volver|i|p1=vuelvo,p2=vuelves,p3=vuelve,p6=vuelven,s1=vuelva,s2=vuelvas,s3=vuelva,s6=vuelvan,d=vuelto
+encontrar|s|p1=encuentro,p2=encuentras,p3=encuentra,p6=encuentran,s1=encuentre,s2=encuentres,s3=encuentre,s6=encuentren
+parecer|i|p1=parezco,s1=parezca,s2=parezcas,s3=parezca,s4=parezcamos,s5=parezcáis,s6=parezcan
+oír|i|p1=oigo,p2=oyes,p3=oye,p4=oímos,p6=oyen,t2=oíste,t3=oyó,t4=oímos,t5=oísteis,t6=oyeron,s1=oiga,s2=oigas,s3=oiga,s4=oigamos,s5=oigáis,s6=oigan,g=oyendo,d=oído,m5=oíd
+poner|i|p1=pongo,t1=puse,t2=pusiste,t3=puso,t4=pusimos,t5=pusisteis,t6=pusieron,f1=pondré,f2=pondrás,f3=pondrá,f4=pondremos,f5=pondréis,f6=pondrán,s1=ponga,s2=pongas,s3=ponga,s4=pongamos,s5=pongáis,s6=pongan,d=puesto,m2=pon
+salir|i|p1=salgo,f1=saldré,f2=saldrás,f3=saldrá,f4=saldremos,f5=saldréis,f6=saldrán,s1=salga,s2=salgas,s3=salga,s4=salgamos,s5=salgáis,s6=salgan,m2=sal
+conocer|i|p1=conozco,s1=conozca,s2=conozcas,s3=conozca,s4=conozcamos,s5=conozcáis,s6=conozcan
+llegar|o|t1=llegué,s1=llegue,s2=llegues,s3=llegue,s4=lleguemos,s5=lleguéis,s6=lleguen
+seguir|i|p1=sigo,p2=sigues,p3=sigue,p6=siguen,t3=siguió,t6=siguieron,s1=siga,s2=sigas,s3=siga,s4=sigamos,s5=sigáis,s6=sigan,g=siguiendo
+morir|i|p1=muero,p2=mueres,p3=muere,p6=mueren,t3=murió,t6=murieron,s1=muera,s2=mueras,s3=muera,s4=muramos,s5=muráis,s6=mueran,g=muriendo,d=muerto
+entender|s|p1=entiendo,p2=entiendes,p3=entiende,p6=entienden,s1=entienda,s2=entiendas,s3=entienda,s6=entiendan
+perder|s|p1=pierdo,p2=pierdes,p3=pierde,p6=pierden,s1=pierda,s2=pierdas,s3=pierda,s6=pierdan
+buscar|o|t1=busqué,s1=busque,s2=busques,s3=busque,s4=busquemos,s5=busquéis,s6=busquen
+sentar|s|p1=siento,p2=sientas,p3=sienta,p6=sientan,s1=siente,s2=sientes,s3=siente,s6=sienten
+contar|s|p1=cuento,p2=cuentas,p3=cuenta,p6=cuentan,s1=cuente,s2=cuentes,s3=cuente,s6=cuenten
+pedir|s|p1=pido,p2=pides,p3=pide,p6=piden,t3=pidió,t6=pidieron,s1=pida,s2=pidas,s3=pida,s4=pidamos,s5=pidáis,s6=pidan,g=pidiendo
+traer|i|p1=traigo,t1=traje,t2=trajiste,t3=trajo,t4=trajimos,t5=trajisteis,t6=trajeron,s1=traiga,s2=traigas,s3=traiga,s4=traigamos,s5=traigáis,s6=traigan,g=trayendo,d=traído
+empezar|s|p1=empiezo,p2=empiezas,p3=empieza,p6=empiezan,t1=empecé,s1=empiece,s2=empieces,s3=empiece,s4=empecemos,s5=empecéis,s6=empiecen
+suponer|i|p1=supongo,t1=supuse,t2=supusiste,t3=supuso,t4=supusimos,t5=supusisteis,t6=supusieron,f1=supondré,f2=supondrás,f3=supondrá,f4=supondremos,f5=supondréis,f6=supondrán,s1=suponga,s2=supongas,s3=suponga,s4=supongamos,s5=supongáis,s6=supongan,d=supuesto,m2=supón
+conseguir|i|p1=consigo,p2=consigues,p3=consigue,p6=consiguen,t3=consiguió,t6=consiguieron,s1=consiga,s2=consigas,s3=consiga,s4=consigamos,s5=consigáis,s6=consigan,g=consiguiendo
+recordar|s|p1=recuerdo,p2=recuerdas,p3=recuerda,p6=recuerdan,s1=recuerde,s2=recuerdes,s3=recuerde,s6=recuerden
+sacar|o|t1=saqué,s1=saque,s2=saques,s3=saque,s4=saquemos,s5=saquéis,s6=saquen
+dormir|s|p1=duermo,p2=duermes,p3=duerme,p6=duermen,t3=durmió,t6=durmieron,s1=duerma,s2=duermas,s3=duerma,s4=durmamos,s5=durmáis,s6=duerman,g=durmiendo
+mantener|i|p1=mantengo,p2=mantienes,p3=mantiene,p6=mantienen,t1=mantuve,t2=mantuviste,t3=mantuvo,t4=mantuvimos,t5=mantuvisteis,t6=mantuvieron,f1=mantendré,f2=mantendrás,f3=mantendrá,f4=mantendremos,f5=mantendréis,f6=mantendrán,s1=mantenga,s2=mantengas,s3=mantenga,s4=mantengamos,s5=mantengáis,s6=mantengan,m2=mantén
+pagar|o|t1=pagué,s1=pague,s2=pagues,s3=pague,s4=paguemos,s5=paguéis,s6=paguen
+abrir|i|d=abierto
+significar|o|t1=signifiqué,s1=signifique,s2=signifiques,s3=signifique,s4=signifiquemos,s5=signifiquéis,s6=signifiquen
+jugar|i|p1=juego,p2=juegas,p3=juega,p6=juegan,t1=jugué,s1=juegue,s2=juegues,s3=juegue,s4=juguemos,s5=juguéis,s6=jueguen
+enviar|o|p1=envío,p2=envías,p3=envía,p6=envían,s1=envíe,s2=envíes,s3=envíe,s6=envíen
+mover|s|p1=muevo,p2=mueves,p3=mueve,p6=mueven,s1=mueva,s2=muevas,s3=mueva,s6=muevan
+leer|o|t2=leíste,t3=leyó,t4=leímos,t5=leísteis,t6=leyeron,g=leyendo,d=leído
+detener|i|p1=detengo,p2=detienes,p3=detiene,p6=detienen,t1=detuve,t2=detuviste,t3=detuvo,t4=detuvimos,t5=detuvisteis,t6=detuvieron,f1=detendré,f2=detendrás,f3=detendrá,f4=detendremos,f5=detendréis,f6=detendrán,s1=detenga,s2=detengas,s3=detenga,s4=detengamos,s5=detengáis,s6=detengan,m2=detén
+tocar|o|t1=toqué,s1=toque,s2=toques,s3=toque,s4=toquemos,s5=toquéis,s6=toquen
+caer|i|p1=caigo,t2=caíste,t3=cayó,t4=caímos,t5=caísteis,t6=cayeron,s1=caiga,s2=caigas,s3=caiga,s4=caigamos,s5=caigáis,s6=caigan,g=cayendo,d=caído
+escribir|i|d=escrito
+divertir|s|p1=divierto,p2=diviertes,p3=divierte,p6=divierten,t3=divirtió,t6=divirtieron,s1=divierta,s2=diviertas,s3=divierta,s4=divirtamos,s5=divirtáis,s6=diviertan,g=divirtiendo
+coger|o|p1=cojo,s1=coja,s2=cojas,s3=coja,s4=cojamos,s5=cojáis,s6=cojan
+mostrar|s|p1=muestro,p2=muestras,p3=muestra,p6=muestran,s1=muestre,s2=muestres,s3=muestre,s6=muestren
+comenzar|s|p1=comienzo,p2=comienzas,p3=comienza,p6=comienzan,t1=comencé,s1=comience,s2=comiences,s3=comience,s4=comencemos,s5=comencéis,s6=comiencen
+valer|i|p1=valgo,f1=valdré,f2=valdrás,f3=valdrá,f4=valdremos,f5=valdréis,f6=valdrán,s1=valga,s2=valgas,s3=valga,s4=valgamos,s5=valgáis,s6=valgan
+romper|i|d=roto
+convertir|s|p1=convierto,p2=conviertes,p3=convierte,p6=convierten,t3=convirtió,t6=convirtieron,s1=convierta,s2=conviertas,s3=convierta,s4=convirtamos,s5=convirtáis,s6=conviertan,g=convirtiendo
+cerrar|s|p1=cierro,p2=cierras,p3=cierra,p6=cierran,s1=cierre,s2=cierres,s3=cierre,s6=cierren
+sonar|s|p1=sueno,p2=suenas,p3=suena,p6=suenan,s1=suene,s2=suenes,s3=suene,s6=suenen
+confiar|o|p1=confío,p2=confías,p3=confía,p6=confían,s1=confíe,s2=confíes,s3=confíe,s6=confíen
+mentir|s|p1=miento,p2=mientes,p3=miente,p6=mienten,t3=mintió,t6=mintieron,s1=mienta,s2=mientas,s3=mienta,s4=mintamos,s5=mintáis,s6=mientan,g=mintiendo
+equivocar|o|t1=equivoqué,s1=equivoque,s2=equivoques,s3=equivoque,s4=equivoquemos,s5=equivoquéis,s6=equivoquen
+servir|s|p1=sirvo,p2=sirves,p3=sirve,p6=sirven,t3=sirvió,t6=sirvieron,s1=sirva,s2=sirvas,s3=sirva,s4=sirvamos,s5=sirváis,s6=sirvan,g=sirviendo
+probar|s|p1=pruebo,p2=pruebas,p3=prueba,p6=prueban,s1=pruebe,s2=pruebes,s3=pruebe,s6=prueben
+descubrir|i|d=descubierto
+andar|i|t1=anduve,t2=anduviste,t3=anduvo,t4=anduvimos,t5=anduvisteis,t6=anduvieron
+desaparecer|i|p1=desaparezco,s1=desaparezca,s2=desaparezcas,s3=desaparezca,s4=desaparezcamos,s5=desaparezcáis,s6=desaparezcan
+explicar|o|t1=expliqué,s1=explique,s2=expliques,s3=explique,s4=expliquemos,s5=expliquéis,s6=expliquen
+despertar|s|p1=despierto,p2=despiertas,p3=despierta,p6=despiertan,s1=despierte,s2=despiertes,s3=despierte,s6=despierten
+referir|s|p1=refiero,p2=refieres,p3=refiere,p6=refieren,t3=refirió,t6=refirieron,s1=refiera,s2=refieras,s3=refiera,s4=refiramos,s5=refiráis,s6=refieran,g=refiriendo
+elegir|i|p1=elijo,p2=eliges,p3=elige,p6=eligen,t3=eligió,t6=eligieron,s1=elija,s2=elijas,s3=elija,s4=elijamos,s5=elijáis,s6=elijan,g=eligiendo
+acercar|o|t1=acerqué,s1=acerque,s2=acerques,s3=acerque,s4=acerquemos,s5=acerquéis,s6=acerquen
+proteger|o|p1=protejo,s1=proteja,s2=protejas,s3=proteja,s4=protejamos,s5=protejáis,s6=protejan
+soler|s|p1=suelo,p2=sueles,p3=suele,p6=suelen,s1=suela,s2=suelas,s3=suela,s6=suelan
+aparecer|i|p1=aparezco,s1=aparezca,s2=aparezcas,s3=aparezca,s4=aparezcamos,s5=aparezcáis,s6=aparezcan
+agradecer|i|p1=agradezco,s1=agradezca,s2=agradezcas,s3=agradezca,s4=agradezcamos,s5=agradezcáis,s6=agradezcan
+volar|s|p1=vuelo,p2=vuelas,p3=vuela,p6=vuelan,s1=vuele,s2=vueles,s3=vuele,s6=vuelen
+preferir|s|p1=prefiero,p2=prefieres,p3=prefiere,p6=prefieren,t3=prefirió,t6=prefirieron,s1=prefiera,s2=prefieras,s3=prefiera,s4=prefiramos,s5=prefiráis,s6=prefieran,g=prefiriendo
+soltar|s|p1=suelto,p2=sueltas,p3=suelta,p6=sueltan,s1=suelte,s2=sueltes,s3=suelte,s6=suelten
+continuar|o|p1=continúo,p2=continúas,p3=continúa,p6=continúan,s1=continúe,s2=continúes,s3=continúe,s6=continúen
+conducir|i|p1=conduzco,t1=conduje,t2=condujiste,t3=condujo,t4=condujimos,t5=condujisteis,t6=condujeron,s1=conduzca,s2=conduzcas,s3=conduzca,s4=conduzcamos,s5=conduzcáis,s6=conduzcan
+destruir|i|p1=destruyo,p2=destruyes,p3=destruye,p6=destruyen,t3=destruyó,t6=destruyeron,s1=destruya,s2=destruyas,s3=destruya,s4=destruyamos,s5=destruyáis,s6=destruyan,g=destruyendo
+devolver|i|p1=devuelvo,p2=devuelves,p3=devuelve,p6=devuelven,s1=devuelva,s2=devuelvas,s3=devuelva,s6=devuelvan,d=devuelto
+ofrecer|i|p1=ofrezco,s1=ofrezca,s2=ofrezcas,s3=ofrezca,s4=ofrezcamos,s5=ofrezcáis,s6=ofrezcan
+reír|i|p1=río,p2=ríes,p3=ríe,p4=reímos,p6=ríen,t2=reíste,t3=rio,t4=reímos,t5=reísteis,t6=rieron,s1=ría,s2=rías,s3=ría,s4=riamos,s5=riais,s6=rían,g=riendo,d=reído,m5=reíd
+apostar|s|p1=apuesto,p2=apuestas,p3=apuesta,p6=apuestan,s1=apueste,s2=apuestes,s3=apueste,s6=apuesten
+actuar|o|p1=actúo,p2=actúas,p3=actúa,p6=actúan,s1=actúe,s2=actúes,s3=actúe,s6=actúen
+atacar|o|t1=ataqué,s1=ataque,s2=ataques,s3=ataque,s4=ataquemos,s5=ataquéis,s6=ataquen
+merecer|i|p1=merezco,s1=merezca,s2=merezcas,s3=merezca,s4=merezcamos,s5=merezcáis,s6=merezcan
+obtener|i|p1=obtengo,p2=obtienes,p3=obtiene,p6=obtienen,t1=obtuve,t2=obtuviste,t3=obtuvo,t4=obtuvimos,t5=obtuvisteis,t6=obtuvieron,f1=obtendré,f2=obtendrás,f3=obtendrá,f4=obtendremos,f5=obtendréis,f6=obtendrán,s1=obtenga,s2=obtengas,s3=obtenga,s4=obtengamos,s5=obtengáis,s6=obtengan,m2=obtén
+averiguar|o|t1=averigüé,s1=averigüe,s2=averigües,s3=averigüe,s4=averigüemos,s5=averigüéis,s6=averigüen
+dirigir|o|p1=dirijo,s1=dirija,s2=dirijas,s3=dirija,s4=dirijamos,s5=dirijáis,s6=dirijan
+recoger|o|p1=recojo,s1=recoja,s2=recojas,s3=recoja,s4=recojamos,s5=recojáis,s6=recojan
+entregar|o|t1=entregué,s1=entregue,s2=entregues,s3=entregue,s4=entreguemos,s5=entreguéis,s6=entreguen
+crecer|i|p1=crezco,s1=crezca,s2=crezcas,s3=crezca,s4=crezcamos,s5=crezcáis,s6=crezcan
+nacer|i|p1=nazco,s1=nazca,s2=nazcas,s3=nazca,s4=nazcamos,s5=nazcáis,s6=nazcan
+despedir|s|p1=despido,p2=despides,p3=despide,p6=despiden,t3=despidió,t6=despidieron,s1=despida,s2=despidas,s3=despida,s4=despidamos,s5=despidáis,s6=despidan,g=despidiendo
+reunir|s|p1=reúno,p2=reúnes,p3=reúne,p6=reúnen,s1=reúna,s2=reúnas,s3=reúna,s6=reúnan
+encargar|o|t1=encargué,s1=encargue,s2=encargues,s3=encargue,s4=encarguemos,s5=encarguéis,s6=encarguen
+costar|s|p1=cuesto,p2=cuestas,p3=cuesta,p6=cuestan,s1=cueste,s2=cuestes,s3=cueste,s6=cuesten
+doler|s|p1=duelo,p2=dueles,p3=duele,p6=duelen,s1=duela,s2=duelas,s3=duela,s6=duelan
+acordar|s|p1=acuerdo,p2=acuerdas,p3=acuerda,p6=acuerdan,s1=acuerde,s2=acuerdes,s3=acuerde,s6=acuerden
+reconocer|i|p1=reconozco,s1=reconozca,s2=reconozcas,s3=reconozca,s4=reconozcamos,s5=reconozcáis,s6=reconozcan
+construir|i|p1=construyo,p2=construyes,p3=construye,p6=construyen,t3=construyó,t6=construyeron,s1=construya,s2=construyas,s3=construya,s4=construyamos,s5=construyáis,s6=construyan,g=construyendo
+pegar|o|t1=pegué,s1=pegue,s2=pegues,s3=pegue,s4=peguemos,s5=peguéis,s6=peguen
+herir|s|p1=hiero,p2=hieres,p3=hiere,p6=hieren,t3=hirió,t6=hirieron,s1=hiera,s2=hieras,s3=hiera,s4=hiramos,s5=hiráis,s6=hieran,g=hiriendo
+huir|i|p1=huyo,p2=huyes,p3=huye,p5=huis,p6=huyen,t1=hui,t3=huyó,t6=huyeron,s1=huya,s2=huyas,s3=huya,s4=huyamos,s5=huyáis,s6=huyan,g=huyendo
+oler|s|p1=huelo,p2=hueles,p3=huele,p6=huelen,s1=huela,s2=huelas,s3=huela,s6=huelan
+acostar|s|p1=acuesto,p2=acuestas,p3=acuesta,p6=acuestan,s1=acueste,s2=acuestes,s3=acueste,s6=acuesten
+utilizar|o|t1=utilicé,s1=utilice,s2=utilices,s3=utilice,s4=utilicemos,s5=utilicéis,s6=utilicen
+cubrir|i|d=cubierto
+resolver|i|p1=resuelvo,p2=resuelves,p3=resuelve,p6=resuelven,s1=resuelva,s2=resuelvas,s3=resuelva,s6=resuelvan,d=resuelto
+vestir|s|p1=visto,p2=vistes,p3=viste,p6=visten,t3=vistió,t6=vistieron,s1=vista,s2=vistas,s3=vista,s4=vistamos,s5=vistáis,s6=vistan,g=vistiendo
+convencer|o|p1=convenzo,s1=convenza,s2=convenzas,s3=convenza,s4=convenzamos,s5=convenzáis,s6=convenzan
+demostrar|s|p1=demuestro,p2=demuestras,p3=demuestra,p6=demuestran,s1=demuestre,s2=demuestres,s3=demuestre,s6=demuestren
+lanzar|o|t1=lancé,s1=lance,s2=lances,s3=lance,s4=lancemos,s5=lancéis,s6=lancen
+apagar|o|t1=apagué,s1=apague,s2=apagues,s3=apague,s4=apaguemos,s5=apaguéis,s6=apaguen
+cruzar|o|t1=crucé,s1=cruce,s2=cruces,s3=cruce,s4=crucemos,s5=crucéis,s6=crucen
+negar|i|p1=niego,p2=niegas,p3=niega,p6=niegan,t1=negué,s1=niegue,s2=niegues,s3=niegue,s4=neguemos,s5=neguéis,s6=nieguen
+investigar|o|t1=investigué,s1=investigue,s2=investigues,s3=investigue,s4=investiguemos,s5=investiguéis,s6=investiguen
+pertenecer|i|p1=pertenezco,s1=pertenezca,s2=pertenezcas,s3=pertenezca,s4=pertenezcamos,s5=pertenezcáis,s6=pertenezcan
+colgar|i|p1=cuelgo,p2=cuelgas,p3=cuelga,p6=cuelgan,t1=colgué,s1=cuelgue,s2=cuelgues,s3=cuelgue,s4=colguemos,s5=colguéis,s6=cuelguen
+alcanzar|o|t1=alcancé,s1=alcance,s2=alcances,s3=alcance,s4=alcancemos,s5=alcancéis,s6=alcancen
+largar|o|t1=largué,s1=largue,s2=largues,s3=largue,s4=larguemos,s5=larguéis,s6=larguen
+comprobar|s|p1=compruebo,p2=compruebas,p3=comprueba,p6=comprueban,s1=compruebe,s2=compruebes,s3=compruebe,s6=comprueben
+sugerir|s|p1=sugiero,p2=sugieres,p3=sugiere,p6=sugieren,t3=sugirió,t6=sugirieron,s1=sugiera,s2=sugieras,s3=sugiera,s4=sugiramos,s5=sugiráis,s6=sugieran,g=sugiriendo
+repetir|s|p1=repito,p2=repites,p3=repite,p6=repiten,t3=repitió,t6=repitieron,s1=repita,s2=repitas,s3=repita,s4=repitamos,s5=repitáis,s6=repitan,g=repitiendo
+encender|s|p1=enciendo,p2=enciendes,p3=enciende,p6=encienden,s1=encienda,s2=enciendas,s3=encienda,s6=enciendan
+soñar|s|p1=sueño,p2=sueñas,p3=sueña,p6=sueñan,s1=sueñe,s2=sueñes,s3=sueñe,s6=sueñen
+permanecer|i|p1=permanezco,s1=permanezca,s2=permanezcas,s3=permanezca,s4=permanezcamos,s5=permanezcáis,s6=permanezcan
+cargar|o|t1=cargué,s1=cargue,s2=cargues,s3=cargue,s4=carguemos,s5=carguéis,s6=carguen
+deshacer|i|p1=deshago,t1=deshice,t2=deshiciste,t3=deshizo,t4=deshicimos,t5=deshicisteis,t6=deshicieron,f1=desharé,f2=desharás,f3=deshará,f4=desharemos,f5=desharéis,f6=desharán,s1=deshaga,s2=deshagas,s3=deshaga,s4=deshagamos,s5=deshagáis,s6=deshagan,d=deshecho,m2=deshaz
+perseguir|i|p1=persigo,p2=persigues,p3=persigue,p6=persiguen,t3=persiguió,t6=persiguieron,s1=persiga,s2=persigas,s3=persiga,s4=persigamos,s5=persigáis,s6=persigan,g=persiguiendo
+obligar|o|t1=obligué,s1=obligue,s2=obligues,s3=obligue,s4=obliguemos,s5=obliguéis,s6=obliguen
+rendir|s|p1=rindo,p2=rindes,p3=rinde,p6=rinden,t3=rindió,t6=rindieron,s1=rinda,s2=rindas,s3=rinda,s4=rindamos,s5=rindáis,s6=rindan,g=rindiendo
+enterrar|s|p1=entierro,p2=entierras,p3=entierra,p6=entierran,s1=entierre,s2=entierres,s3=entierre,s6=entierren
+defender|s|p1=defiendo,p2=defiendes,p3=defiende,p6=defienden,s1=defienda,s2=defiendas,s3=defienda,s6=defiendan
+arriesgar|o|t1=arriesgué,s1=arriesgue,s2=arriesgues,s3=arriesgue,s4=arriesguemos,s5=arriesguéis,s6=arriesguen
+incluir|i|p1=incluyo,p2=incluyes,p3=incluye,p6=incluyen,t3=incluyó,t6=incluyeron,s1=incluya,s2=incluyas,s3=incluya,s4=incluyamos,s5=incluyáis,s6=incluyan,g=incluyendo
+encerrar|s|p1=encierro,p2=encierras,p3=encierra,p6=encierran,s1=encierre,s2=encierres,s3=encierre,s6=encierren
+fingir|o|p1=finjo,s1=finja,s2=finjas,s3=finja,s4=finjamos,s5=finjáis,s6=finjan
+sonreír|i|p1=sonrío,p2=sonríes,p3=sonríe,p4=sonreímos,p6=sonríen,t2=sonreíste,t3=sonrió,t4=sonreímos,t5=sonreísteis,t6=sonrieron,s1=sonría,s2=sonrías,s3=sonría,s4=sonriamos,s5=sonriáis,s6=sonrían,g=sonriendo,d=sonreído,m5=sonreíd
+escoger|o|p1=escojo,s1=escoja,s2=escojas,s3=escoja,s4=escojamos,s5=escojáis,s6=escojan
+amenazar|o|t1=amenacé,s1=amenace,s2=amenaces,s3=amenace,s4=amenacemos,s5=amenacéis,s6=amenacen
+criar|o|p1=crío,p2=crías,p3=cría,p5=criais,p6=crían,t1=crie,t3=crio,s1=críe,s2=críes,s3=críe,s5=crieis,s6=críen
+identificar|o|t1=identifiqué,s1=identifique,s2=identifiques,s3=identifique,s4=identifiquemos,s5=identifiquéis,s6=identifiquen
+avanzar|o|t1=avancé,s1=avance,s2=avances,s3=avance,s4=avancemos,s5=avancéis,s6=avancen
+advertir|s|p1=advierto,p2=adviertes,p3=advierte,p6=advierten,t3=advirtió,t6=advirtieron,s1=advierta,s2=adviertas,s3=advierta,s4=advirtamos,s5=advirtáis,s6=adviertan,g=advirtiendo
+colocar|o|t1=coloqué,s1=coloque,s2=coloques,s3=coloque,s4=coloquemos,s5=coloquéis,s6=coloquen
+dedicar|o|t1=dediqué,s1=dedique,s2=dediques,s3=dedique,s4=dediquemos,s5=dediquéis,s6=dediquen
+rechazar|o|t1=rechacé,s1=rechace,s2=rechaces,s3=rechace,s4=rechacemos,s5=rechacéis,s6=rechacen
+organizar|o|t1=organicé,s1=organice,s2=organices,s3=organice,s4=organicemos,s5=organicéis,s6=organicen
+avergonzar|i|p1=avergüenzo,p2=avergüenzas,p3=avergüenza,p6=avergüenzan,t1=avergoncé,s1=avergüence,s2=avergüences,s3=avergüence,s4=avergoncemos,s5=avergoncéis,s6=avergüencen
+juzgar|o|t1=juzgué,s1=juzgue,s2=juzgues,s3=juzgue,s4=juzguemos,s5=juzguéis,s6=juzguen
+vencer|o|p1=venzo,s1=venza,s2=venzas,s3=venza,s4=venzamos,s5=venzáis,s6=venzan
+pescar|o|t1=pesqué,s1=pesque,s2=pesques,s3=pesque,s4=pesquemos,s5=pesquéis,s6=pesquen
+sostener|i|p1=sostengo,p2=sostienes,p3=sostiene,p6=sostienen,t1=sostuve,t2=sostuviste,t3=sostuvo,t4=sostuvimos,t5=sostuvisteis,t6=sostuvieron,f1=sostendré,f2=sostendrás,f3=sostendrá,f4=sostendremos,f5=sostendréis,f6=sostendrán,s1=sostenga,s2=sostengas,s3=sostenga,s4=sostengamos,s5=sostengáis,s6=sostengan,m2=sostén
+marcar|o|t1=marqué,s1=marque,s2=marques,s3=marque,s4=marquemos,s5=marquéis,s6=marquen
+arrancar|o|t1=arranqué,s1=arranque,s2=arranques,s3=arranque,s4=arranquemos,s5=arranquéis,s6=arranquen
+realizar|o|t1=realicé,s1=realice,s2=realices,s3=realice,s4=realicemos,s5=realicéis,s6=realicen
+atender|s|p1=atiendo,p2=atiendes,p3=atiende,p6=atienden,s1=atienda,s2=atiendas,s3=atienda,s6=atiendan
+confesar|s|p1=confieso,p2=confiesas,p3=confiesa,p6=confiesan,s1=confiese,s2=confieses,s3=confiese,s6=confiesen
+rezar|o|t1=recé,s1=rece,s2=reces,s3=rece,s4=recemos,s5=recéis,s6=recen
+establecer|i|p1=establezco,s1=establezca,s2=establezcas,s3=establezca,s4=establezcamos,s5=establezcáis,s6=establezcan
+producir|i|p1=produzco,t1=produje,t2=produjiste,t3=produjo,t4=produjimos,t5=produjisteis,t6=produjeron,s1=produzca,s2=produzcas,s3=produzca,s4=produzcamos,s5=produzcáis,s6=produzcan
+prohibir|s|p1=prohíbo,p2=prohíbes,p3=prohíbe,p6=prohíben,s1=prohíba,s2=prohíbas,s3=prohíba,s6=prohíban
+indicar|o|t1=indiqué,s1=indique,s2=indiques,s3=indique,s4=indiquemos,s5=indiquéis,s6=indiquen
+provocar|o|t1=provoqué,s1=provoque,s2=provoques,s3=provoque,s4=provoquemos,s5=provoquéis,s6=provoquen
+lucir|i|p1=luzco,s1=luzca,s2=luzcas,s3=luzca,s4=luzcamos,s5=luzcáis,s6=luzcan
+cagar|o|t1=cagué,s1=cague,s2=cagues,s3=cague,s4=caguemos,s5=caguéis,s6=caguen
+practicar|o|t1=practiqué,s1=practique,s2=practiques,s3=practique,s4=practiquemos,s5=practiquéis,s6=practiquen
+bendecir|i|p1=bendigo,p2=bendices,p3=bendice,p6=bendicen,t1=bendije,t2=bendijiste,t3=bendijo,t4=bendijimos,t5=bendijisteis,t6=bendijeron,s1=bendiga,s2=bendigas,s3=bendiga,s4=bendigamos,s5=bendigáis,s6=bendigan,g=bendiciendo
+atraer|i|p1=atraigo,t1=atraje,t2=atrajiste,t3=atrajo,t4=atrajimos,t5=atrajisteis,t6=atrajeron,s1=atraiga,s2=atraigas,s3=atraiga,s4=atraigamos,s5=atraigáis,s6=atraigan,g=atrayendo,d=atraído
+cazar|o|t1=cacé,s1=cace,s2=caces,s3=cace,s4=cacemos,s5=cacéis,s6=cacen
+proponer|i|p1=propongo,t1=propuse,t2=propusiste,t3=propuso,t4=propusimos,t5=propusisteis,t6=propusieron,f1=propondré,f2=propondrás,f3=propondrá,f4=propondremos,f5=propondréis,f6=propondrán,s1=proponga,s2=propongas,s3=proponga,s4=propongamos,s5=propongáis,s6=propongan,d=propuesto,m2=propón
+morder|s|p1=muerdo,p2=muerdes,p3=muerde,p6=muerden,s1=muerda,s2=muerdas,s3=muerda,s6=muerdan
+castigar|o|t1=castigué,s1=castigue,s2=castigues,s3=castigue,s4=castiguemos,s5=castiguéis,s6=castiguen
+publicar|o|t1=publiqué,s1=publique,s2=publiques,s3=publique,s4=publiquemos,s5=publiquéis,s6=publiquen
+atravesar|s|p1=atravieso,p2=atraviesas,p3=atraviesa,p6=atraviesan,s1=atraviese,s2=atravieses,s3=atraviese,s6=atraviesen
+requerir|s|p1=requiero,p2=requieres,p3=requiere,p6=requieren,t3=requirió,t6=requirieron,s1=requiera,s2=requieras,s3=requiera,s4=requiramos,s5=requiráis,s6=requieran,g=requiriendo
+aprobar|s|p1=apruebo,p2=apruebas,p3=aprueba,p6=aprueban,s1=apruebe,s2=apruebes,s3=apruebe,s6=aprueben
+comunicar|o|t1=comuniqué,s1=comunique,s2=comuniques,s3=comunique,s4=comuniquemos,s5=comuniquéis,s6=comuniquen
+contener|i|p1=contengo,p2=contienes,p3=contiene,p6=contienen,t1=contuve,t2=contuviste,t3=contuvo,t4=contuvimos,t5=contuvisteis,t6=contuvieron,f1=contendré,f2=contendrás,f3=contendrá,f4=contendremos,f5=contendréis,f6=contendrán,s1=contenga,s2=contengas,s3=contenga,s4=contengamos,s5=contengáis,s6=contengan,m2=contén
+impedir|s|p1=impido,p2=impides,p3=impide,p6=impiden,t3=impidió,t6=impidieron,s1=impida,s2=impidas,s3=impida,s4=impidamos,s5=impidáis,s6=impidan,g=impidiendo
+destrozar|o|t1=destrocé,s1=destroce,s2=destroces,s3=destroce,s4=destrocemos,s5=destrocéis,s6=destrocen
+describir|i|d=descrito
+vengar|o|t1=vengué,s1=vengue,s2=vengues,s3=vengue,s4=venguemos,s5=venguéis,s6=venguen
+guiar|o|p1=guío,p2=guías,p3=guía,p5=guiais,p6=guían,t1=guie,t3=guio,s1=guíe,s2=guíes,s3=guíe,s5=guieis,s6=guíen
+reducir|i|p1=reduzco,t1=reduje,t2=redujiste,t3=redujo,t4=redujimos,t5=redujisteis,t6=redujeron,s1=reduzca,s2=reduzcas,s3=reduzca,s4=reduzcamos,s5=reduzcáis,s6=reduzcan
+apretar|s|p1=aprieto,p2=aprietas,p3=aprieta,p6=aprietan,s1=apriete,s2=aprietes,s3=apriete,s6=aprieten
+ahogar|o|t1=ahogué,s1=ahogue,s2=ahogues,s3=ahogue,s4=ahoguemos,s5=ahoguéis,s6=ahoguen
+drogar|o|t1=drogué,s1=drogue,s2=drogues,s3=drogue,s4=droguemos,s5=droguéis,s6=droguen
+localizar|o|t1=localicé,s1=localice,s2=localices,s3=localice,s4=localicemos,s5=localicéis,s6=localicen
+poseer|o|t2=poseíste,t3=poseyó,t4=poseímos,t5=poseísteis,t6=poseyeron,g=poseyendo,d=poseído
+arrepentir|s|p1=arrepiento,p2=arrepientes,p3=arrepiente,p6=arrepienten,t3=arrepintió,t6=arrepintieron,s1=arrepienta,s2=arrepientas,s3=arrepienta,s4=arrepintamos,s5=arrepintáis,s6=arrepientan,g=arrepintiendo
+abrazar|o|t1=abracé,s1=abrace,s2=abraces,s3=abrace,s4=abracemos,s5=abracéis,s6=abracen
+satisfacer|i|p1=satisfago,t1=satisfice,t2=satisficiste,t3=satisfizo,t4=satisficimos,t5=satisficisteis,t6=satisficieron,f1=satisfaré,f2=satisfarás,f3=satisfará,f4=satisfaremos,f5=satisfaréis,f6=satisfarán,s1=satisfaga,s2=satisfagas,s3=satisfaga,s4=satisfagamos,s5=satisfagáis,s6=satisfagan,d=satisfecho
+quejarse|i|p1=me quejo,p2=te quejas,p3=se queja,p4=nos quejamos,p5=os quejáis,p6=se quejan,t1=me quejé,t2=te quejaste,t3=se quejó,t4=nos quejamos,t5=os quejasteis,t6=se quejaron,i1=me quejaba,i2=te quejabas,i3=se quejaba,i4=nos quejábamos,i5=os quejabais,i6=se quejaban,f1=me quejaré,f2=te quejarás,f3=se quejará,f4=nos quejaremos,f5=os quejaréis,f6=se quejarán,s1=me queje,s2=te quejes,s3=se queje,s4=nos quejemos,s5=os quejéis,s6=se quejen,g=quejándose,d=quejado,m2=quéjate,m3=quéjese,m4=quejémonos,m5=quejaos,m6=quéjense
+llover|i|p1=-,p2=-,p3=llueve,p4=-,p5=-,p6=-,t1=-,t2=-,t4=-,t5=-,t6=-,i1=-,i2=-,i4=-,i5=-,i6=-,f1=-,f2=-,f4=-,f5=-,f6=-,s1=-,s2=-,s3=llueva,s4=-,s5=-,s6=-,m2=-,m3=-,m5=-
+interrogar|o|t1=interrogué,s1=interrogue,s2=interrogues,s3=interrogue,s4=interroguemos,s5=interroguéis,s6=interroguen
+espiar|o|p1=espío,p2=espías,p3=espía,p6=espían,s1=espíe,s2=espíes,s3=espíe,s6=espíen
+aterrizar|o|t1=aterricé,s1=aterrice,s2=aterrices,s3=aterrice,s4=aterricemos,s5=aterricéis,s6=aterricen
+rogar|i|p1=ruego,p2=ruegas,p3=ruega,p6=ruegan,t1=rogué,s1=ruegue,s2=ruegues,s3=ruegue,s4=roguemos,s5=roguéis,s6=rueguen
+garantizar|o|t1=garanticé,s1=garantice,s2=garantices,s3=garantice,s4=garanticemos,s5=garanticéis,s6=garanticen
+tranquilizar|o|t1=tranquilicé,s1=tranquilice,s2=tranquilices,s3=tranquilice,s4=tranquilicemos,s5=tranquilicéis,s6=tranquilicen
+exponer|i|p1=expongo,t1=expuse,t2=expusiste,t3=expuso,t4=expusimos,t5=expusisteis,t6=expusieron,f1=expondré,f2=expondrás,f3=expondrá,f4=expondremos,f5=expondréis,f6=expondrán,s1=exponga,s2=expongas,s3=exponga,s4=expongamos,s5=expongáis,s6=expongan,d=expuesto,m2=expón
+almorzar|s|p1=almuerzo,p2=almuerzas,p3=almuerza,p6=almuerzan,t1=almorcé,s1=almuerce,s2=almuerces,s3=almuerce,s4=almorcemos,s5=almorcéis,s6=almuercen
+recomendar|s|p1=recomiendo,p2=recomiendas,p3=recomienda,p6=recomiendan,s1=recomiende,s2=recomiendes,s3=recomiende,s6=recomienden
+colar|s|p1=cuelo,p2=cuelas,p3=cuela,p6=cuelan,s1=cuele,s2=cueles,s3=cuele,s6=cuelen
+forzar|s|p1=fuerzo,p2=fuerzas,p3=fuerza,p6=fuerzan,t1=forcé,s1=fuerce,s2=fuerces,s3=fuerce,s4=forcemos,s5=forcéis,s6=fuercen
+tender|s|p1=tiendo,p2=tiendes,p3=tiende,p6=tienden,s1=tienda,s2=tiendas,s3=tienda,s6=tiendan
+surgir|o|p1=surjo,s1=surja,s2=surjas,s3=surja,s4=surjamos,s5=surjáis,s6=surjan
+apetecer|i|p1=apetezco,s1=apetezca,s2=apetezcas,s3=apetezca,s4=apetezcamos,s5=apetezcáis,s6=apetezcan
+maldecir|i|p1=maldigo,p2=maldices,p3=maldice,p6=maldicen,t1=maldije,t2=maldijiste,t3=maldijo,t4=maldijimos,t5=maldijisteis,t6=maldijeron,s1=maldiga,s2=maldigas,s3=maldiga,s4=maldigamos,s5=maldigáis,s6=maldigan,g=maldiciendo
+calentar|s|p1=caliento,p2=calientas,p3=calienta,p6=calientan,s1=caliente,s2=calientes,s3=caliente,s6=calienten
+distraer|i|p1=distraigo,t1=distraje,t2=distrajiste,t3=distrajo,t4=distrajimos,t5=distrajisteis,t6=distrajeron,s1=distraiga,s2=distraigas,s3=distraiga,s4=distraigamos,s5=distraigáis,s6=distraigan,g=distrayendo,d=distraído
+traducir|i|p1=traduzco,t1=traduje,t2=tradujiste,t3=tradujo,t4=tradujimos,t5=tradujisteis,t6=tradujeron,s1=traduzca,s2=traduzcas,s3=traduzca,s4=traduzcamos,s5=traduzcáis,s6=traduzcan
+retener|i|p1=retengo,p2=retienes,p3=retiene,p6=retienen,t1=retuve,t2=retuviste,t3=retuvo,t4=retuvimos,t5=retuvisteis,t6=retuvieron,f1=retendré,f2=retendrás,f3=retendrá,f4=retendremos,f5=retendréis,f6=retendrán,s1=retenga,s2=retengas,s3=retenga,s4=retengamos,s5=retengáis,s6=retengan,m2=retén
+extender|s|p1=extiendo,p2=extiendes,p3=extiende,p6=extienden,s1=extienda,s2=extiendas,s3=extienda,s6=extiendan
+chocar|o|t1=choqué,s1=choque,s2=choques,s3=choque,s4=choquemos,s5=choquéis,s6=choquen
+tragar|o|t1=tragué,s1=trague,s2=tragues,s3=trague,s4=traguemos,s5=traguéis,s6=traguen
+rodar|s|p1=ruedo,p2=ruedas,p3=rueda,p6=ruedan,s1=ruede,s2=ruedes,s3=ruede,s6=rueden
+analizar|o|t1=analicé,s1=analice,s2=analices,s3=analice,s4=analicemos,s5=analicéis,s6=analicen
+sacrificar|o|t1=sacrifiqué,s1=sacrifique,s2=sacrifiques,s3=sacrifique,s4=sacrifiquemos,s5=sacrifiquéis,s6=sacrifiquen
+pudrir|i|d=podrido
+reemplazar|o|t1=reemplacé,s1=reemplace,s2=reemplaces,s3=reemplace,s4=reemplacemos,s5=reemplacéis,s6=reemplacen
+verificar|o|t1=verifiqué,s1=verifique,s2=verifiques,s3=verifique,s4=verifiquemos,s5=verifiquéis,s6=verifiquen
+exigir|o|p1=exijo,s1=exija,s2=exijas,s3=exija,s4=exijamos,s5=exijáis,s6=exijan
+enloquecer|i|p1=enloquezco,s1=enloquezca,s2=enloquezcas,s3=enloquezca,s4=enloquezcamos,s5=enloquezcáis,s6=enloquezcan
+obedecer|i|p1=obedezco,s1=obedezca,s2=obedezcas,s3=obedezca,s4=obedezcamos,s5=obedezcáis,s6=obedezcan
+medir|s|p1=mido,p2=mides,p3=mide,p6=miden,t3=midió,t6=midieron,s1=mida,s2=midas,s3=mida,s4=midamos,s5=midáis,s6=midan,g=midiendo
+esforzar|s|p1=esfuerzo,p2=esfuerzas,p3=esfuerza,p6=esfuerzan,t1=esforcé,s1=esfuerce,s2=esfuerces,s3=esfuerce,s4=esforcemos,s5=esforcéis,s6=esfuercen
+temblar|s|p1=tiemblo,p2=tiemblas,p3=tiembla,p6=tiemblan,s1=tiemble,s2=tiembles,s3=tiemble,s6=tiemblen
+vaciar|o|p1=vacío,p2=vacías,p3=vacía,p6=vacían,s1=vacíe,s2=vacíes,s3=vacíe,s6=vacíen
+suplicar|o|t1=supliqué,s1=suplique,s2=supliques,s3=suplique,s4=supliquemos,s5=supliquéis,s6=supliquen
+oponer|i|p1=opongo,t1=opuse,t2=opusiste,t3=opuso,t4=opusimos,t5=opusisteis,t6=opusieron,f1=opondré,f2=opondrás,f3=opondrá,f4=opondremos,f5=opondréis,f6=opondrán,s1=oponga,s2=opongas,s3=oponga,s4=opongamos,s5=opongáis,s6=opongan,d=opuesto,m2=opón
+complicar|o|t1=compliqué,s1=complique,s2=compliques,s3=complique,s4=compliquemos,s5=compliquéis,s6=compliquen
+implicar|o|t1=impliqué,s1=implique,s2=impliques,s3=implique,s4=impliquemos,s5=impliquéis,s6=impliquen
+disponer|i|p1=dispongo,t1=dispuse,t2=dispusiste,t3=dispuso,t4=dispusimos,t5=dispusisteis,t6=dispusieron,f1=dispondré,f2=dispondrás,f3=dispondrá,f4=dispondremos,f5=dispondréis,f6=dispondrán,s1=disponga,s2=dispongas,s3=disponga,s4=dispongamos,s5=dispongáis,s6=dispongan,d=dispuesto,m2=dispón
+invertir|s|p1=invierto,p2=inviertes,p3=invierte,p6=invierten,t3=invirtió,t6=invirtieron,s1=invierta,s2=inviertas,s3=invierta,s4=invirtamos,s5=invirtáis,s6=inviertan,g=invirtiendo
+embarazar|o|t1=embaracé,s1=embarace,s2=embaraces,s3=embarace,s4=embaracemos,s5=embaracéis,s6=embaracen
+competir|s|p1=compito,p2=compites,p3=compite,p6=compiten,t3=compitió,t6=compitieron,s1=compita,s2=compitas,s3=compita,s4=compitamos,s5=compitáis,s6=compitan,g=compitiendo
+logar|i|p1=luego,p2=luegas,p3=luega,p6=luegan,t1=logué,s1=luegue,s2=luegues,s3=luegue,s4=loguemos,s5=loguéis,s6=lueguen
+fabricar|o|t1=fabriqué,s1=fabrique,s2=fabriques,s3=fabrique,s4=fabriquemos,s5=fabriquéis,s6=fabriquen
+transferir|s|p1=transfiero,p2=transfieres,p3=transfiere,p6=transfieren,t3=transfirió,t6=transfirieron,s1=transfiera,s2=transfieras,s3=transfiera,s4=transfiramos,s5=transfiráis,s6=transfieran,g=transfiriendo
+pervertir|s|p1=pervierto,p2=perviertes,p3=pervierte,p6=pervierten,t3=pervirtió,t6=pervirtieron,s1=pervierta,s2=perviertas,s3=pervierta,s4=pervirtamos,s5=pervirtáis,s6=perviertan,g=pervirtiendo
+graduar|o|p1=gradúo,p2=gradúas,p3=gradúa,p6=gradúan,s1=gradúe,s2=gradúes,s3=gradúe,s6=gradúen
+aplicar|o|t1=apliqué,s1=aplique,s2=apliques,s3=aplique,s4=apliquemos,s5=apliquéis,s6=apliquen
+fallecer|i|p1=fallezco,s1=fallezca,s2=fallezcas,s3=fallezca,s4=fallezcamos,s5=fallezcáis,s6=fallezcan
+empacar|o|t1=empaqué,s1=empaque,s2=empaques,s3=empaque,s4=empaquemos,s5=empaquéis,s6=empaquen
+complacer|i|p1=complazco,s1=complazca,s2=complazcas,s3=complazca,s4=complazcamos,s5=complazcáis,s6=complazcan
+entretener|i|p1=entretengo,p2=entretienes,p3=entretiene,p6=entretienen,t1=entretuve,t2=entretuviste,t3=entretuvo,t4=entretuvimos,t5=entretuvisteis,t6=entretuvieron,f1=entretendré,f2=entretendrás,f3=entretendrá,f4=entretendremos,f5=entretendréis,f6=entretendrán,s1=entretenga,s2=entretengas,s3=entretenga,s4=entretengamos,s5=entretengáis,s6=entretengan,m2=entretén
+convenir|i|p1=convengo,p2=convienes,p3=conviene,p6=convienen,t1=convine,t2=conviniste,t3=convino,t4=convinimos,t5=convinisteis,t6=convinieron,f1=convendré,f2=convendrás,f3=convendrá,f4=convendremos,f5=convendréis,f6=convendrán,s1=convenga,s2=convengas,s3=convenga,s4=convengamos,s5=convengáis,s6=convengan,g=conviniendo,m2=convén
+testificar|o|t1=testifiqué,s1=testifique,s2=testifiques,s3=testifique,s4=testifiquemos,s5=testifiquéis,s6=testifiquen
+agregar|o|t1=agregué,s1=agregue,s2=agregues,s3=agregue,s4=agreguemos,s5=agreguéis,s6=agreguen
+aislar|s|p1=aíslo,p2=aíslas,p3=aísla,p6=aíslan,s1=aísle,s2=aísles,s3=aísle,s6=aíslen
+interferir|s|p1=interfiero,p2=interfieres,p3=interfiere,p6=interfieren,t3=interfirió,t6=interfirieron,s1=interfiera,s2=interfieras,s3=interfiera,s4=interfiramos,s5=interfiráis,s6=interfieran,g=interfiriendo
+amanecer|i|p1=-,p2=-,p4=-,p5=-,p6=-,t1=-,t2=-,t4=-,t5=-,t6=-,i1=-,i2=-,i4=-,i5=-,i6=-,f1=-,f2=-,f4=-,f5=-,f6=-,s1=-,s2=-,s3=amanezca,s4=-,s5=-,s6=-,m2=-,m3=-,m5=-
+caber|i|p1=quepo,t1=cupe,t2=cupiste,t3=cupo,t4=cupimos,t5=cupisteis,t6=cupieron,f1=cabré,f2=cabrás,f3=cabrá,f4=cabremos,f5=cabréis,f6=cabrán,s1=quepa,s2=quepas,s3=quepa,s4=quepamos,s5=quepáis,s6=quepan
+descargar|o|t1=descargué,s1=descargue,s2=descargues,s3=descargue,s4=descarguemos,s5=descarguéis,s6=descarguen
+envolver|i|p1=envuelvo,p2=envuelves,p3=envuelve,p6=envuelven,s1=envuelva,s2=envuelvas,s3=envuelva,s6=envuelvan,d=envuelto
+corregir|i|p1=corrijo,p2=corriges,p3=corrige,p6=corrigen,t3=corrigió,t6=corrigieron,s1=corrija,s2=corrijas,s3=corrija,s4=corrijamos,s5=corrijáis,s6=corrijan,g=corrigiendo
+navegar|o|t1=navegué,s1=navegue,s2=navegues,s3=navegue,s4=naveguemos,s5=naveguéis,s6=naveguen
+distinguir|o|p1=distingo,s1=distinga,s2=distingas,s3=distinga,s4=distingamos,s5=distingáis,s6=distingan
+provenir|i|p1=provengo,p2=provienes,p3=proviene,p6=provienen,t1=provine,t2=proviniste,t3=provino,t4=provinimos,t5=provinisteis,t6=provinieron,f1=provendré,f2=provendrás,f3=provendrá,f4=provendremos,f5=provendréis,f6=provendrán,s1=provenga,s2=provengas,s3=provenga,s4=provengamos,s5=provengáis,s6=provengan,g=proviniendo,m2=provén
+fiar|o|p1=fío,p2=fías,p3=fía,p5=fiais,p6=fían,t1=fie,t3=fio,s1=fíe,s2=fíes,s3=fíe,s5=fieis,s6=fíen
+despegar|o|t1=despegué,s1=despegue,s2=despegues,s3=despegue,s4=despeguemos,s5=despeguéis,s6=despeguen
+secar|o|t1=sequé,s1=seque,s2=seques,s3=seque,s4=sequemos,s5=sequéis,s6=sequen
+quebrar|s|p1=quiebro,p2=quiebras,p3=quiebra,p6=quiebran,s1=quiebre,s2=quiebres,s3=quiebre,s6=quiebren
+autorizar|o|t1=autoricé,s1=autorice,s2=autorices,s3=autorice,s4=autoricemos,s5=autoricéis,s6=autoricen
+gobernar|s|p1=gobierno,p2=gobiernas,p3=gobierna,p6=gobiernan,s1=gobierne,s2=gobiernes,s3=gobierne,s6=gobiernen
+prever|i|p1=preveo,p2=prevés,p3=prevé,p6=prevén,i1=preveía,i2=preveías,i3=preveía,i4=preveíamos,i5=preveíais,i6=preveían,s1=prevea,s2=preveas,s3=prevea,s4=preveamos,s5=preveáis,s6=prevean,d=previsto
+aterrorizar|o|t1=aterroricé,s1=aterrorice,s2=aterrorices,s3=aterrorice,s4=aterroricemos,s5=aterroricéis,s6=aterroricen
+desafiar|o|p1=desafío,p2=desafías,p3=desafía,p6=desafían,s1=desafíe,s2=desafíes,s3=desafíe,s6=desafíen
+helar|s|p1=hielo,p2=hielas,p3=hiela,p6=hielan,s1=hiele,s2=hieles,s3=hiele,s6=hielen
+fluir|i|p1=fluyo,p2=fluyes,p3=fluye,p5=fluis,p6=fluyen,t1=flui,t3=fluyó,t6=fluyeron,s1=fluya,s2=fluyas,s3=fluya,s4=fluyamos,s5=fluyáis,s6=fluyan,g=fluyendo
+educar|o|t1=eduqué,s1=eduque,s2=eduques,s3=eduque,s4=eduquemos,s5=eduquéis,s6=eduquen
+encubrir|i|d=encubierto
+liar|o|p1=lío,p2=lías,p3=lía,p5=liais,p6=lían,t1=lie,t3=lio,s1=líe,s2=líes,s3=líe,s5=lieis,s6=líen
+picar|o|t1=piqué,s1=pique,s2=piques,s3=pique,s4=piquemos,s5=piquéis,s6=piquen
+ascender|s|p1=asciendo,p2=asciendes,p3=asciende,p6=ascienden,s1=ascienda,s2=asciendas,s3=ascienda,s6=asciendan
+componer|i|p1=compongo,t1=compuse,t2=compusiste,t3=compuso,t4=compusimos,t5=compusisteis,t6=compusieron,f1=compondré,f2=compondrás,f3=compondrá,f4=compondremos,f5=compondréis,f6=compondrán,s1=componga,s2=compongas,s3=componga,s4=compongamos,s5=compongáis,s6=compongan,d=compuesto,m2=compón
+disfrazar|o|t1=disfracé,s1=disfrace,s2=disfraces,s3=disfrace,s4=disfracemos,s5=disfracéis,s6=disfracen
+introducir|i|p1=introduzco,t1=introduje,t2=introdujiste,t3=introdujo,t4=introdujimos,t5=introdujisteis,t6=introdujeron,s1=introduzca,s2=introduzcas,s3=introduzca,s4=introduzcamos,s5=introduzcáis,s6=introduzcan
+insinuar|o|p1=insinúo,p2=insinúas,p3=insinúa,p6=insinúan,s1=insinúe,s2=insinúes,s3=insinúe,s6=insinúen
+enfocar|o|t1=enfoqué,s1=enfoque,s2=enfoques,s3=enfoque,s4=enfoquemos,s5=enfoquéis,s6=enfoquen
+justificar|o|t1=justifiqué,s1=justifique,s2=justifiques,s3=justifique,s4=justifiquemos,s5=justifiquéis,s6=justifiquen
+enfriar|o|p1=enfrío,p2=enfrías,p3=enfría,p6=enfrían,s1=enfríe,s2=enfríes,s3=enfríe,s6=enfríen
+reventar|s|p1=reviento,p2=revientas,p3=revienta,p6=revientan,s1=reviente,s2=revientes,s3=reviente,s6=revienten
+criticar|o|t1=critiqué,s1=critique,s2=critiques,s3=critique,s4=critiquemos,s5=critiquéis,s6=critiquen
+freír|i|p1=frío,p2=fríes,p3=fríe,p4=freímos,p6=fríen,t2=freíste,t3=frio,t4=freímos,t5=freísteis,t6=frieron,s1=fría,s2=frías,s3=fría,s4=friamos,s5=friais,s6=frían,g=friendo,d=freído,m5=freíd
+descender|s|p1=desciendo,p2=desciendes,p3=desciende,p6=descienden,s1=descienda,s2=desciendas,s3=descienda,s6=desciendan
+envejecer|i|p1=envejezco,s1=envejezca,s2=envejezcas,s3=envejezca,s4=envejezcamos,s5=envejezcáis,s6=envejezcan
+predecir|i|p1=predigo,p2=predices,p3=predice,p6=predicen,t1=predije,t2=predijiste,t3=predijo,t4=predijimos,t5=predijisteis,t6=predijeron,s1=prediga,s2=predigas,s3=prediga,s4=predigamos,s5=predigáis,s6=predigan,g=prediciendo,d=predicho
+seducir|i|p1=seduzco,t1=seduje,t2=sedujiste,t3=sedujo,t4=sedujimos,t5=sedujisteis,t6=sedujeron,s1=seduzca,s2=seduzcas,s3=seduzca,s4=seduzcamos,s5=seduzcáis,s6=seduzcan
+fugar|o|t1=fugué,s1=fugue,s2=fugues,s3=fugue,s4=fuguemos,s5=fuguéis,s6=fuguen
+desviar|o|p1=desvío,p2=desvías,p3=desvía,p6=desvían,s1=desvíe,s2=desvíes,s3=desvíe,s6=desvíen
+tropezar|s|p1=tropiezo,p2=tropiezas,p3=tropieza,p6=tropiezan,t1=tropecé,s1=tropiece,s2=tropieces,s3=tropiece,s4=tropecemos,s5=tropecéis,s6=tropiecen
+concordar|s|p1=concuerdo,p2=concuerdas,p3=concuerda,p6=concuerdan,s1=concuerde,s2=concuerdes,s3=concuerde,s6=concuerden
+intervenir|i|p1=intervengo,p2=intervienes,p3=interviene,p6=intervienen,t1=intervine,t2=interviniste,t3=intervino,t4=intervinimos,t5=intervinisteis,t6=intervinieron,f1=intervendré,f2=intervendrás,f3=intervendrá,f4=intervendremos,f5=intervendréis,f6=intervendrán,s1=intervenga,s2=intervengas,s3=intervenga,s4=intervengamos,s5=intervengáis,s6=intervengan,g=interviniendo,m2=intervén
+sofisticar|o|t1=sofistiqué,s1=sofistique,s2=sofistiques,s3=sofistique,s4=sofistiquemos,s5=sofistiquéis,s6=sofistiquen
+extraer|i|p1=extraigo,t1=extraje,t2=extrajiste,t3=extrajo,t4=extrajimos,t5=extrajisteis,t6=extrajeron,s1=extraiga,s2=extraigas,s3=extraiga,s4=extraigamos,s5=extraigáis,s6=extraigan,g=extrayendo,d=extraído
+disminuir|i|p1=disminuyo,p2=disminuyes,p3=disminuye,p6=disminuyen,t3=disminuyó,t6=disminuyeron,s1=disminuya,s2=disminuyas,s3=disminuya,s4=disminuyamos,s5=disminuyáis,s6=disminuyan,g=disminuyendo
+hervir|s|p1=hiervo,p2=hierves,p3=hierve,p6=hierven,t3=hirvió,t6=hirvieron,s1=hierva,s2=hiervas,s3=hierva,s4=hirvamos,s5=hirváis,s6=hiervan,g=hirviendo
+interponer|i|p1=interpongo,t1=interpuse,t2=interpusiste,t3=interpuso,t4=interpusimos,t5=interpusisteis,t6=interpusieron,f1=interpondré,f2=interpondrás,f3=interpondrá,f4=interpondremos,f5=interpondréis,f6=interpondrán,s1=interponga,s2=interpongas,s3=interponga,s4=interpongamos,s5=interpongáis,s6=interpongan,d=interpuesto,m2=interpón
+variar|o|p1=varío,p2=varías,p3=varía,p6=varían,s1=varíe,s2=varíes,s3=varíe,s6=varíen
+yacer|i|p1=yazco,s1=yazca,s2=yazcas,s3=yazca,s4=yazcamos,s5=yazcáis,s6=yazcan
+acertar|s|p1=acierto,p2=aciertas,p3=acierta,p6=aciertan,s1=acierte,s2=aciertes,s3=acierte,s6=acierten
+derretir|s|p1=derrito,p2=derrites,p3=derrite,p6=derriten,t3=derritió,t6=derritieron,s1=derrita,s2=derritas,s3=derrita,s4=derritamos,s5=derritáis,s6=derritan,g=derritiendo
+concernir|i|p1=-,p2=-,p3=concierne,p4=-,p5=-,p6=conciernen,t1=-,t2=-,t4=-,t5=-,i1=-,i2=-,i4=-,i5=-,f1=-,f2=-,f4=-,f5=-,s1=-,s2=-,s3=concierna,s4=-,s5=-,s6=conciernan,m2=-,m3=-,m5=-,m6=-
+imponer|i|p1=impongo,t1=impuse,t2=impusiste,t3=impuso,t4=impusimos,t5=impusisteis,t6=impusieron,f1=impondré,f2=impondrás,f3=impondrá,f4=impondremos,f5=impondréis,f6=impondrán,s1=imponga,s2=impongas,s3=imponga,s4=impongamos,s5=impongáis,s6=impongan,d=impuesto,m2=impón
+vagar|o|t1=vagué,s1=vague,s2=vagues,s3=vague,s4=vaguemos,s5=vaguéis,s6=vaguen
+adquirir|s|p1=adquiero,p2=adquieres,p3=adquiere,p6=adquieren,s1=adquiera,s2=adquieras,s3=adquiera,s6=adquieran
+atascar|o|t1=atasqué,s1=atasque,s2=atasques,s3=atasque,s4=atasquemos,s5=atasquéis,s6=atasquen
+placer|i|p1=plazco,s1=plazca,s2=plazcas,s3=plazca,s4=plazcamos,s5=plazcáis,s6=plazcan
+aparcar|o|t1=aparqué,s1=aparque,s2=aparques,s3=aparque,s4=aparquemos,s5=aparquéis,s6=aparquen
+prevenir|i|p1=prevengo,p2=previenes,p3=previene,p6=previenen,t1=previne,t2=previniste,t3=previno,t4=previnimos,t5=previnisteis,t6=previnieron,f1=prevendré,f2=prevendrás,f3=prevendrá,f4=prevendremos,f5=prevendréis,f6=prevendrán,s1=prevenga,s2=prevengas,s3=prevenga,s4=prevengamos,s5=prevengáis,s6=prevengan,g=previniendo,m2=prevén
+reconstruir|i|p1=reconstruyo,p2=reconstruyes,p3=reconstruye,p6=reconstruyen,t3=reconstruyó,t6=reconstruyeron,s1=reconstruya,s2=reconstruyas,s3=reconstruya,s4=reconstruyamos,s5=reconstruyáis,s6=reconstruyan,g=reconstruyendo
+paralizar|o|t1=paralicé,s1=paralice,s2=paralices,s3=paralice,s4=paralicemos,s5=paralicéis,s6=paralicen
+civilizar|o|t1=civilicé,s1=civilice,s2=civilices,s3=civilice,s4=civilicemos,s5=civilicéis,s6=civilicen
+desconocer|i|p1=desconozco,s1=desconozca,s2=desconozcas,s3=desconozca,s4=desconozcamos,s5=desconozcáis,s6=desconozcan
+deslizar|o|t1=deslicé,s1=deslice,s2=deslices,s3=deslice,s4=deslicemos,s5=deslicéis,s6=deslicen
+calificar|o|t1=califiqué,s1=califique,s2=califiques,s3=califique,s4=califiquemos,s5=califiquéis,s6=califiquen
+revolver|i|p1=revuelvo,p2=revuelves,p3=revuelve,p6=revuelven,s1=revuelva,s2=revuelvas,s3=revuelva,s6=revuelvan,d=revuelto
+halagar|o|t1=halagué,s1=halague,s2=halagues,s3=halague,s4=halaguemos,s5=halaguéis,s6=halaguen
+ligar|o|t1=ligué,s1=ligue,s2=ligues,s3=ligue,s4=liguemos,s5=liguéis,s6=liguen
+modificar|o|t1=modifiqué,s1=modifique,s2=modifiques,s3=modifique,s4=modifiquemos,s5=modifiquéis,s6=modifiquen
+desvanecer|i|p1=desvanezco,s1=desvanezca,s2=desvanezcas,s3=desvanezca,s4=desvanezcamos,s5=desvanezcáis,s6=desvanezcan
+concluir|i|p1=concluyo,p2=concluyes,p3=concluye,p6=concluyen,t3=concluyó,t6=concluyeron,s1=concluya,s2=concluyas,s3=concluya,s4=concluyamos,s5=concluyáis,s6=concluyan,g=concluyendo
+florecer|i|p1=florezco,s1=florezca,s2=florezcas,s3=florezca,s4=florezcamos,s5=florezcáis,s6=florezcan
+abogar|o|t1=abogué,s1=abogue,s2=abogues,s3=abogue,s4=aboguemos,s5=aboguéis,s6=aboguen
+convocar|o|t1=convoqué,s1=convoque,s2=convoques,s3=convoque,s4=convoquemos,s5=convoquéis,s6=convoquen
+aterrar|s|p1=atierro,p2=atierras,p3=atierra,p6=atierran,s1=atierre,s2=atierres,s3=atierre,s6=atierren
+familiarizar|o|t1=familiaricé,s1=familiarice,s2=familiarices,s3=familiarice,s4=familiaricemos,s5=familiaricéis,s6=familiaricen
+sustituir|i|p1=sustituyo,p2=sustituyes,p3=sustituye,p6=sustituyen,t3=sustituyó,t6=sustituyeron,s1=sustituya,s2=sustituyas,s3=sustituya,s4=sustituyamos,s5=sustituyáis,s6=sustituyan,g=sustituyendo
+entrometerse|i|p1=me entrometo,p2=te entrometes,p3=se entromete,p4=nos entrometemos,p5=os entrometéis,p6=se entrometen,t1=me entrometí,t2=te entrometiste,t3=se entrometió,t4=nos entrometimos,t5=os entrometisteis,t6=se entrometieron,i1=me entrometía,i2=te entrometías,i3=se entrometía,i4=nos entrometíamos,i5=os entrometíais,i6=se entrometían,f1=me entrometeré,f2=te entrometerás,f3=se entrometerá,f4=nos entrometeremos,f5=os entrometeréis,f6=se entrometerán,s1=me entrometa,s2=te entrometas,s3=se entrometa,s4=nos entrometamos,s5=os entrometáis,s6=se entrometan,g=entrometiéndose,d=entrometido,m2=entrométete,m3=entrométase,m4=entrometámonos,m5=entrometeos,m6=entrométanse
+finalizar|o|t1=finalicé,s1=finalice,s2=finalices,s3=finalice,s4=finalicemos,s5=finalicéis,s6=finalicen
+proveer|i|t2=proveíste,t3=proveyó,t4=proveímos,t5=proveísteis,t6=proveyeron,g=proveyendo,d=provisto
+ubicar|o|t1=ubiqué,s1=ubique,s2=ubiques,s3=ubique,s4=ubiquemos,s5=ubiquéis,s6=ubiquen
+fotografiar|o|p1=fotografío,p2=fotografías,p3=fotografía,p6=fotografían,s1=fotografíe,s2=fotografíes,s3=fotografíe,s6=fotografíen
+contribuir|i|p1=contribuyo,p2=contribuyes,p3=contribuye,p6=contribuyen,t3=contribuyó,t6=contribuyeron,s1=contribuya,s2=contribuyas,s3=contribuya,s4=contribuyamos,s5=contribuyáis,s6=contribuyan,g=contribuyendo
+ejercer|o|p1=ejerzo,s1=ejerza,s2=ejerzas,s3=ejerza,s4=ejerzamos,s5=ejerzáis,s6=ejerzan
+oscurecer|i|p1=oscurezco,s1=oscurezca,s2=oscurezcas,s3=oscurezca,s4=oscurezcamos,s5=oscurezcáis,s6=oscurezcan
+tentar|s|p1=tiento,p2=tientas,p3=tienta,p6=tientan,s1=tiente,s2=tientes,s3=tiente,s6=tienten
+cabalgar|o|t1=cabalgué,s1=cabalgue,s2=cabalgues,s3=cabalgue,s4=cabalguemos,s5=cabalguéis,s6=cabalguen
+conmover|s|p1=conmuevo,p2=conmueves,p3=conmueve,p6=conmueven,s1=conmueva,s2=conmuevas,s3=conmueva,s6=conmuevan
+amargar|o|t1=amargué,s1=amargue,s2=amargues,s3=amargue,s4=amarguemos,s5=amarguéis,s6=amarguen`,
+N:`vez|f
+cosa|f
+día|m
+hombre|m
+casa|f
+tiempo|m
+verdad|f
+año|m
+favor|m
+señor|m||señora
+noche|f
+dios|m||diosa
+vida|f
+amigo|m||amiga
+padre|m||madre
+acuerdo|m
+trabajo|m
+gente|f
+hijo|m||hija
+mujer|f
+momento|m
+problema|m
+hora|f
+mundo|m
+lugar|m
+dinero|m
+tipo|m
+madre|f
+persona|f
+chico|m||chica
+parte|f
+chica|f
+papá|m||mamá
+nombre|m
+mamá|f
+niño|m||niña
+mano|f
+razón|f
+idea|f
+policía|f
+semana|f
+minuto|m
+hermano|m||hermana
+familia|f
+amor|m
+caso|m
+forma|f
+lado|m
+cabeza|f
+señora|f
+historia|f
+estado|m
+cariño|m
+hecho|m
+tío|m||tía
+bien|m
+manera|f
+puerta|f
+camino|m
+mañana|f
+ojo|m
+mes|m
+palabra|f
+mierda|f
+jefe|m||jefa
+hija|f
+ciudad|f
+arma|f
+corazón|m
+muerte|f
+suerte|f
+punto|m
+agua|f
+esposa|f
+doctor|m||doctora
+clase|f
+supuesto|m
+realidad|f
+miedo|m
+equipo|m
+juego|m
+coche|m
+ayuda|f
+fin|m
+número|m
+cuerpo|m
+cara|f
+pregunta|f
+cuenta|f
+hermana|f
+fiesta|f
+auto|m
+tierra|f
+teléfono|m
+vuelta|f
+mi|f|míes
+prueba|f
+muchacho|m||muchacha
+oportunidad|f
+guerra|f
+plan|m
+habitación|f
+escuela|f
+orden|f|órdenes
+luz|f
+espera|f
+capitán|m||capitana
+libro|m
+modo|m
+foto|f
+tarde|f
+pie|m
+negocio|m
+película|f
+cielo|m
+dólar|m
+sangre|f
+bebé|mf
+par|m
+millón|m
+niña|f
+sueño|m
+perro|m||perra
+noticia|f
+sitio|m
+comida|f
+recuerdo|m
+asunto|m
+oficina|f
+calle|f
+cama|f
+lista|f
+país|m|países
+paso|m
+puta|f
+seguro|m
+agente|mf
+seguridad|f
+final|m
+pueblo|m
+marido|m
+fuerza|f
+cambio|m
+carta|f
+resto|m
+mensaje|m
+viaje|m
+hospital|m
+música|f
+fuego|m
+paz|f
+sentido|m
+error|m
+demonio|m
+diablo|m||diabla
+relación|f
+derecho|m
+caballero|m||caballera
+ropa|f
+grupo|m
+café|m
+abogado|m||abogada
+señorita|f
+daño|m
+joven|mf|jóvenes
+compañero|m||compañera
+rey|m||reina
+presidente|m||presidenta
+línea|f
+información|f
+asesinato|m
+voz|f
+nada|f
+control|m
+respuesta|f
+cliente|m||cliente
+víctima|f
+sistema|m
+frente|f
+atención|f
+baño|m
+caja|f
+sexo|m
+cámara|f
+canción|f
+pena|f
+profesor|m||profesora
+novia|f
+boca|f
+llave|f
+servicio|m
+campo|m
+falta|f
+papel|m
+dolor|m
+ley|f
+mente|f
+decisión|f
+caballo|m||yegua
+vino|m
+compañía|f
+situación|f
+trato|m
+aire|m
+llama|f
+gracia|f
+culpa|f
+estrella|f
+muerto|m
+tienda|f
+hotel|m
+pelo|m
+edad|f
+secreto|m
+medio|m
+reunión|f
+ser|m
+accidente|m
+montón|m
+carrera|f
+barco|m
+regalo|m
+novio|m||novia
+cargo|m
+boda|f
+mesa|f
+dirección|f
+avión|m
+brazo|m
+cita|f
+través|m
+mitad|f
+idiota|mf
+broma|f
+centro|m
+detective|mf||detective
+señal|f
+programa|m
+lamento|m
+principio|m
+sí|m
+ataque|m
+soldado|mf||soldada
+crimen|m|crímenes
+nave|f
+placer|m
+hambre|f
+traje|m
+investigación|f
+droga|f
+ejército|m
+deseo|m
+loco|m||loca
+abuela|f
+universidad|f
+asesino|m||asesina
+médico|mf||médica
+club|m|clubs
+contacto|m
+cárcel|f
+pierna|f
+acción|f
+toma|f
+puesto|m
+consejo|m
+don|m||doña
+perdón|m
+tren|m
+prisa|f
+cumpleaños|m|cumpleaños
+futuro|m
+alma|f
+duda|f
+gobierno|m
+haz|m
+cuidado|m
+embargo|m
+escena|f
+animal|m
+sorpresa|f
+tema|m
+mentira|f
+abuelo|m||abuela
+silencio|m
+director|m||directora
+edificio|m
+regla|f
+ventana|f
+piso|m
+sala|f
+dama|f
+fondo|m
+mal|m
+testigo|mf
+espalda|f
+llamada|f
+locura|f
+matrimonio|m
+peligro|m
+maestro|m||maestra
+maldición|f
+tía|f
+sol|m
+cerveza|f
+rato|m
+esposo|m||esposa
+cerebro|m
+banco|m
+espacio|m
+teniente|m||teniente
+gusto|m
+odio|m
+permiso|m
+basura|f
+color|mf
+bar|m
+misión|f
+libertad|f
+opción|f
+opinión|f
+pista|f
+honor|m
+golpe|m
+corte|m
+árbol|m
+máquina|f
+dedo|m
+carajo|m
+energía|f
+mayoría|f
+mar|mf
+bomba|f
+infierno|m
+salud|f
+partido|m
+departamento|m
+posición|f
+suelo|m
+vista|f
+zona|f
+paciente|mf
+base|f
+carne|f
+informe|m
+obra|f
+nivel|m
+bolsa|f
+pasado|m
+prisión|f
+zapato|m
+oro|m
+planeta|m
+especie|f
+tarjeta|f
+estación|f
+imagen|f|imágenes
+segundo|m
+éxito|m
+operación|f
+hogar|m
+posibilidad|f
+banda|f
+juez|mf||juez
+sentimiento|m
+arte|mf
+destino|m
+motivo|m
+juicio|m
+diferencia|f
+miembro|m||miembro
+metro|m
+sargento|mf||sargento
+porqué|m
+esperanza|f
+movimiento|m
+veras|f
+resultado|m
+entrada|f
+causa|f
+experiencia|f
+nota|f
+tontería|f
+enemigo|m||enemiga
+precio|m
+intento|m
+pareja|f
+radio|mf
+ejemplo|m
+té|m
+video|m
+elección|f
+guardia|m
+valor|m
+pelea|f
+héroe|m||heroína
+cuestión|f
+iglesia|f
+objetivo|m
+gato|m||gata
+era|f
+pistola|f
+respeto|m
+espíritu|m
+culo|m
+respecto|m
+beso|m
+tanto|m
+pared|f
+nena|f
+apartamento|m
+copa|f
+empresa|f
+poder|m
+colega|mf
+tony|m|tonys
+reina|f
+encuentro|m
+cena|f
+unidad|f
+río|m
+isla|f
+herida|f
+detalle|m
+vistazo|m
+comandante|mf||comandante
+visita|f
+estudio|m
+sal|f
+conversación|f
+batalla|f
+felicidad|f
+sur|m
+camión|m
+trago|m
+piel|f
+vuelo|m
+riesgo|m
+flor|f
+estilo|m
+cocina|f
+disculpa|f
+asiento|m
+trampa|f
+fantasma|m
+norte|m
+monstruo|m
+salida|f
+registro|m
+majestad|f
+montaña|f
+anillo|m
+líder|m||líder
+cuello|m
+diente|m
+piedra|f
+enfermedad|f
+efecto|m
+presión|f
+verano|m
+huella|f
+repente|m
+restaurante|m
+código|m
+botella|f
+estudiante|mf
+sonido|m
+defensa|f
+bala|f
+cuarto|m
+interés|m
+turno|m
+ruido|m
+condición|f
+propósito|m
+laboratorio|m
+silla|f
+emergencia|f
+marca|f
+justicia|f
+intención|f
+viejo|m||vieja
+coronel|m||coronel
+calor|m
+proyecto|m
+pedazo|m
+reloj|m
+cine|m
+memoria|f
+archivo|m
+área|f
+vacación|f
+gana|f
+taxi|m
+este|m
+mía|f
+confianza|f
+marcha|f
+periódico|m
+cuchillo|m
+disparo|m
+red|f
+baile|m
+cabo|m
+cadáver|m
+necesidad|f
+príncipe|m
+cantidad|f
+derecha|f
+ladrón|m||ladrona
+plato|m
+autobús|m
+tiro|m
+viento|m
+pieza|f
+inspector|m||inspectora
+victoria|f
+enfermero|m||enfermera
+bola|f
+nariz|f
+examen|m|exámenes
+colegio|m
+inglés|m
+regreso|m
+juro|m
+leche|f
+bosque|m
+dueño|m||dueña
+oído|m
+medicina|f
+desastre|m
+contrato|m
+televisión|f
+acto|m
+agujero|m
+escalera|f
+playa|f
+cinta|f
+pecho|m
+evidencia|f
+ángel|m
+pastel|m
+show|m|shows
+lucha|f
+hueso|m
+luna|f
+robo|m
+señoría|f
+truco|m
+parque|m
+pan|m
+voto|m
+época|f
+espectáculo|m
+serie|f
+fuente|f
+prensa|f
+grado|m
+siglo|m
+primero|m
+huevo|m
+velocidad|f
+oferta|f
+pez|m
+propiedad|f
+papi|m
+rayo|m
+naturaleza|f
+disco|f
+responsabilidad|f
+espada|f
+artista|mf
+ministro|m||ministra
+jardín|m
+princesa|f
+izquierda|f
+peso|m
+modelo|m
+interior|m
+teoría|f
+hielo|m
+página|f
+sombrero|m
+socio|m||socia
+universo|m
+belleza|f
+cerdo|m||cerda
+pájaro|m
+planta|f
+distancia|f
+personal|m
+premio|m
+paseo|m
+tarea|f
+pensamiento|m
+prisionero|m||prisionera
+imbécil|mf
+dato|m
+artículo|m
+puente|m
+aspecto|m
+declaración|f
+magia|f
+vergüenza|f
+mercado|m
+apoyo|m
+carretera|f
+viernes|m|viernes
+kilómetro|m
+criatura|f
+responsable|mf
+ciencia|f
+habilidad|f
+talento|m
+negro|m
+domingo|m
+búsqueda|f
+venta|f
+jugador|m||jugadora
+visión|f
+sociedad|f
+carga|f
+sábado|m
+correo|m
+público|m
+pérdida|f
+límite|m
+cuento|m
+conexión|f
+pintura|f
+oscuridad|f
+vecino|m||vecina
+entrenador|m||entrenadora
+mando|m
+humor|m
+amenaza|f
+amante|mf
+gas|m
+computadora|f
+tribunal|m
+acceso|m
+papa|m
+descanso|m
+teatro|m
+toque|m
+camisa|f
+escenario|m
+frío|m
+loca|f
+vestido|m
+extraño|m||extraña
+bolsillo|m
+motor|m
+lección|f
+genio|m
+invitado|m||invitada
+escucha|f
+esfuerzo|m
+campamento|m
+promesa|f
+uso|m
+compra|f
+crédito|m
+proceso|m
+lengua|f
+tenia|f
+fútbol|m
+pelota|f
+rostro|m
+homicidio|m
+polvo|m
+sensación|f
+pago|m
+tormenta|f
+lástima|f
+entrevista|f
+piloto|mf||piloto
+oeste|m
+aventura|f
+discurso|m
+sombra|f
+actor|m||actriz
+autoridad|f
+ocasión|f
+voluntad|f
+documento|m
+almuerzo|m
+copia|f
+bienvenida|f
+secretario|m||secretaria
+queso|m
+mapa|m
+esquina|f
+general|m||general
+cabello|m
+revista|f
+aeropuerto|m
+baja|f
+oso|m||osa
+pecado|m
+chocolate|m
+sheriff|m|sheriffs
+objeto|m
+cigarrillo|m
+cadena|f
+blanco|m
+temporada|f
+mami|f
+tv|f
+paquete|m
+personaje|m
+salón|m
+pesadilla|f
+vaso|m
+techo|m
+rata|f
+alcalde|m||alcaldesa
+fe|f
+pollo|m
+lluvia|f
+internet|mf|internets
+alcohol|m
+muñeca|f
+contra|m
+comienzo|m
+desayuno|m
+diario|m
+rodilla|f
+curso|m
+maleta|f
+diversión|f
+tesoro|m
+protección|f
+fotografía|f
+lío|m
+olor|m
+tonto|m||tonta
+instituto|m
+material|m
+medida|f
+solución|f
+humano|m||humana
+estómago|m
+lobo|m||loba
+bebida|f
+bruja|f
+rueda|f
+culpable|mf
+inocente|mf
+empleo|m
+risa|f
+tecnología|f
+firma|f
+deuda|f
+emoción|f
+venganza|f
+rastro|m
+incendio|m
+milla|f
+tamaño|m
+barrio|m
+tumba|f
+granja|f
+nieve|f
+bote|m
+ciento|m
+cirugía|f
+tuya|f
+bolso|m
+camioneta|f
+asistente|m||asistente
+amo|m||ama
+comunidad|f
+conocimiento|m
+altura|f
+amistad|f
+reino|m
+compromiso|m
+roca|f
+taza|f
+producto|m
+nación|f
+hombro|m
+evento|m
+ala|f
+costa|f
+explosión|f
+rumor|m
+cuerda|f
+sospechoso|m||sospechosa
+vehículo|m
+perra|f
+lago|m
+felicitación|f
+rock|m|rocks
+calma|f
+labio|m
+galleta|f
+fábrica|f
+fortuna|f
+lunes|m|lunes
+sobrino|m||sobrina
+conductor|m||conductora
+moneda|f
+fecha|f
+billete|m
+jurado|m||jurada
+ira|f
+inteligencia|f
+campaña|f
+ventaja|f
+decir|m
+agencia|f
+sonrisa|f
+canal|m
+milagro|m
+alegría|f
+campeón|m||campeona
+espejo|m
+torre|f
+muestra|f
+violencia|f
+friend|m|friends
+ritmo|m
+letra|f
+whisky|m|whiskys
+excusa|f
+pizza|f
+carro|m
+frontera|f
+cable|m
+chaqueta|f
+tratamiento|m
+borracho|m||borracha
+patrón|m||patrona
+mina|f
+pantalones|m
+bordo|m
+política|f
+habla|f
+hoja|f
+sesión|f
+bastardo|m||bastarda
+comunicación|f
+explicación|f
+vaca|f
+pasillo|m
+fila|f
+coincidencia|f
+entrenamiento|m
+moda|f
+grito|m
+pase|m
+concierto|m
+delito|m
+senador|m||senadora
+ruta|f
+tribu|f
+vampiro|m||vampiresa
+armario|m
+anuncio|m
+meta|f
+comisario|m||comisaria
+actividad|f
+cáncer|m
+ama|f
+presencia|f
+empleado|m||empleada
+pene|m
+miles|m
+palacio|m
+combate|m
+ambulancia|f
+importancia|f
+cuadro|m
+impresión|f
+sección|f
+criminal|mf
+despacho|m
+desgracia|f
+ciudadano|m||ciudadana
+escritor|m||escritora
+camarero|m||camarera
+serpiente|f
+celda|f
+sótano|m
+pata|f
+hierba|f
+funeral|m
+desgraciado|m||desgraciada
+misterio|m
+lord|m|lores
+identidad|f
+mirada|f
+traducción|f
+suicidio|m
+clave|f
+mono|m||mona
+versión|f
+chiste|m
+gloria|f
+madera|f
+conejo|m||coneja
+azúcar|mf
+educación|f
+arena|f
+invierno|m
+periodista|mf
+piscina|f
+botón|m
+título|m
+tropa|f
+juguete|m
+gay|mf|gais
+licencia|f
+maravilla|f
+cabrón|m
+pantalón|m
+saludo|m
+episodio|m
+tráfico|m
+zorra|f
+término|m
+circunstancia|f
+generación|f
+dragón|m||dragona
+análisis|m|análisis
+primo|m||prima
+dulce|m
+humanidad|f
+nube|f
+vía|f
+placa|f
+busca|f
+sopa|f
+cristal|m
+comportamiento|m
+conferencia|f
+abrigo|m
+círculo|m
+mama|f
+lágrima|f
+deporte|m
+oreja|f
+océano|m
+arresto|m
+desafío|m
+conciencia|f
+pesar|m
+bestia|f
+lady|f|ladies
+beneficio|m
+pastilla|f
+preocupación|f
+sujeto|m
+identificación|f
+trabajador|m||trabajadora
+kilo|m
+esclavo|m||esclava
+divorcio|m
+subtítulo|m
+sofá|m
+miel|f
+apuesta|f
+curiosidad|f
+prostituto|m||prostituta
+castillo|m
+teta|f
+tanque|m
+paciencia|f
+crisis|f|crisis
+ordenador|m
+vigilancia|f
+azul|m
+media|f
+ejercicio|m
+corriente|f
+aviso|m
+consecuencia|f
+organización|f
+impuesto|m
+familiar|m
+helado|m
+actitud|f
+palo|m
+escritorio|m
+frase|f
+vega|f
+parecer|m
+virus|m|virus
+gira|f
+distrito|m
+uniforme|m
+marco|m
+gobernador|m||gobernadora
+incidente|m
+pavo|m
+sacerdote|mf||sacerdotisa
+grande|mf
+casualidad|f
+rojo|m
+garganta|f
+experimento|m
+máscara|f
+veneno|m
+favorito|m||favorita
+camarada|mf
+comentario|m
+muro|m
+recurso|m
+indio|m||india
+salsa|f
+lisa|f
+violación|f
+comité|m
+trozo|m
+túnel|m
+costumbre|f
+competencia|f
+moto|f
+reacción|f
+largo|m
+cinturón|m
+reserva|f
+ensayo|m
+biblioteca|f
+humo|m
+terreno|m
+reputación|f
+almacén|m
+práctica|f
+helicóptero|m
+alteza|f
+cultura|f
+instrucción|f
+robot|m|robots
+experto|m||experta
+jueves|m|jueves
+medianoche|f
+patio|m
+ganador|m||ganadora
+colina|f
+alarma|f
+ambiente|m
+primavera|f
+barra|f
+plata|f
+martes|m|martes
+docena|f
+pantalla|f
+división|f
+parada|f
+metal|m
+alumno|m||alumna
+actuación|f
+templo|m
+dibujo|m
+emperador|m||emperatriz
+estupidez|f
+castigo|m
+bicicleta|f
+sándwich|m
+ruego|m
+centavo|m
+territorio|m
+transporte|m
+museo|m
+superficie|f
+discusión|f
+terapia|f
+fan|mf|fans
+cola|f
+fantasía|f
+miss|f
+judío|m||judía
+cañón|m
+leyenda|f
+dormitorio|m
+signo|m
+depósito|m
+libra|f
+alto|m
+ron|m
+refugio|m
+grano|m
+raza|f
+cartel|m
+científico|m||científica
+pasión|f
+asco|m
+tono|m
+sabor|m
+real|m
+chef|mf|chefs
+adulto|m||adulta
+vacío|m
+demanda|f
+grabación|f
+capacidad|f
+batería|f
+collar|m
+completo|m
+alemán|m||alemana
+alquiler|m
+paliza|f
+tripulación|f
+método|m
+fiebre|f
+madame|f
+bandera|f
+guante|m
+piano|m
+invitación|f
+ceremonia|f
+puto|m||puta
+extranjero|m||extranjera
+clínica|f
+masa|f
+expediente|m
+gigante|m||giganta
+camiseta|f
+julio|m
+ronda|f
+rehén|mf
+condado|m
+orgullo|m
+sacrificio|m
+revolución|f
+tele|f
+punta|f
+ma|f
+herramienta|f
+fiscal|m||fiscal
+concurso|m
+pasta|f
+guion|m
+temperatura|f
+asalto|m
+candidato|m||candidata
+encargo|m
+manzana|f
+alimento|m
+charla|f
+acusación|f
+gasolina|f
+saber|m
+industria|f
+ave|f
+pariente|mf||pariente
+capítulo|m
+fuerte|m
+imaginación|f
+procedimiento|m
+instante|m
+boleto|m
+tina|f
+dicho|m
+onda|f
+alerta|f
+abrazo|m
+personalidad|f
+ascensor|m
+elemento|m
+raíz|f
+tatuaje|m
+socorro|m
+apellido|m
+nervio|m
+gallina|f
+instinto|m
+vendedor|m||vendedora
+mentiroso|m||mentirosa
+extra|mf
+puerto|m
+nacimiento|m
+gasto|m
+virgen|mf|vírgenes
+patata|f
+cartera|f
+francés|m||francesa
+diamante|m
+comisaría|f
+aceite|m
+pasaporte|m
+cura|f
+golf|m
+tradición|f
+tubo|m
+coño|m
+adolescente|mf
+tensión|f
+hamburguesa|f
+novela|f
+pulso|m
+toalla|f
+fruta|f
+construcción|f
+rescate|m
+actriz|f
+ratón|m||ratona
+religión|f
+ánimo|m
+función|f
+arreglo|m
+ducha|f
+niñera|f
+corona|f
+rosa|f
+imperio|m
+presentación|f
+diseño|m
+tarta|f
+lectura|f
+anciano|m||anciana
+petición|f
+gusano|m
+perfil|m
+junta|f
+móvil|m
+custodia|f
+campana|f
+estrategia|f
+calidad|f
+molestia|f
+frecuencia|f
+escándalo|m
+saco|m
+doctora|f
+célula|f
+queja|f
+cabaña|f
+paraíso|m
+audiencia|f
+porquería|f
+caza|f
+tigre|m||tigresa
+excelencia|f
+plaza|f
+expresión|f
+aliento|m
+guerrero|m||guerrera
+texto|m
+nieto|m||nieta
+uña|f
+lealtad|f
+pánico|m
+dispositivo|m
+rollo|m
+tiburón|m
+arroz|m
+alianza|f
+símbolo|m
+producción|f
+disfraz|m
+miércoles|m|miércoles
+cheque|m
+norma|f
+reto|m
+gimnasio|m
+entrega|f
+lenguaje|m
+progreso|m
+americano|m||americana
+garaje|m
+profesional|mf
+ayudante|mf||ayudante
+león|m||leona
+guitarra|f
+heroína|f
+lujo|m
+sirviente|mf||sirviente
+ingeniero|m||ingeniera
+confesión|f
+limpieza|f
+influencia|f
+vecindario|m
+gerente|m||gerente
+pulmón|m
+patada|f
+bombero|m||bombera
+ilusión|f
+hada|f
+ola|f
+cocinero|m||cocinera
+capital|m
+enamorado|m||enamorada
+carácter|m|caracteres
+pandilla|f
+colección|f
+gota|f
+aldea|f
+préstamo|m
+cobarde|mf
+cantante|mf
+béisbol|m
+publicidad|f
+bota|f
+oxígeno|m
+coartada|f
+huésped|m||huésped
+tragedia|f
+salto|m
+sufrimiento|m
+medicamento|m
+celular|m
+escudo|m
+testimonio|m
+oración|f
+desierto|m
+juventud|f
+cirujano|m||cirujana
+duro|m
+probabilidad|f
+resistencia|f
+auxilio|m
+debilidad|f
+existencia|f
+capa|f
+doble|m
+inútil|mf
+impacto|m
+payaso|m||payasa
+caída|f
+clima|m
+caramelo|m
+propuesta|f
+total|m
+aguja|f
+dificultad|f
+cementerio|m
+navidad|f
+plano|m
+partida|f
+pirata|mf
+lata|f
+combustible|m
+equipaje|m
+multitud|f
+casco|m
+idioma|m
+valle|m
+secuestro|m
+perdedor|m||perdedora
+traición|f
+mayo|m
+guardián|m||guardiana
+gafas|f
+caos|m|caos
+traidor|m||traidora
+pasajero|m||pasajera
+alfombra|f
+callejón|m
+encanto|m
+embajador|m||embajadora
+aprecio|m
+as|m
+inmunidad|f
+recompensa|f
+zombi|mf
+conde|m||condesa
+bendición|f
+rifle|m
+mago|m
+poema|m
+representante|mf
+local|m
+ensalada|f
+viuda|f
+origen|m|orígenes
+coraje|m
+borde|m
+fracaso|m
+pico|m
+espía|mf
+figura|f
+refuerzo|m
+factura|f
+cuartel|m
+pato|m||pata
+comisión|f
+advertencia|f
+web|f|webs
+alternativa|f
+terror|m
+flota|f
+globo|m
+postre|m
+apariencia|f
+recibo|m
+escrito|m
+aniversario|m
+corbata|f
+drama|m
+corredor|m
+sueldo|m
+mm|m|mms
+aplauso|m
+cima|f
+mascota|f
+chaval|m||chavala
+champán|m
+antecedente|m
+revés|m
+jaula|f
+prioridad|f
+misil|m
+destrucción|f
+rutina|f
+residencia|f
+salchicha|f
+jugo|m
+soltero|m||soltera
+lanzamiento|m
+pluma|f
+medalla|f
+consejero|m||consejera
+reportero|m||reportera
+cazador|m||cazadora
+columna|f
+continuación|f
+materia|f
+electricidad|f
+técnica|f
+etapa|f
+encantador|m||encantadora
+plazo|m
+respiración|f
+productor|m||productora
+aparato|m
+síntoma|m
+circo|m
+filme|m
+adiós|m
+cabina|f
+mediodía|m
+festival|m
+píldora|f
+guía|mf
+bicho|m
+psiquiatra|mf
+septiembre|m
+porno|m
+conflicto|m
+conclusión|f
+década|f
+gatito|m||gatita
+aliado|m||aliada
+instrumento|m
+recepción|f
+cabra|f
+elefante|m||elefanta
+estructura|f
+cachorro|m||cachorra
+maquillaje|m
+rama|f
+inversión|f
+propietario|m||propietaria
+galaxia|f
+cicatriz|f
+estacionamiento|m
+rob|m
+marica|m
+protocolo|m
+posesión|f
+infancia|f
+instalación|f
+giro|m
+mantequilla|f
+rubia|f
+cuñado|m||cuñada
+satélite|m
+enhorabuena|f
+historial|m
+ganancia|f
+agenda|f
+cierre|m
+fianza|f
+población|f
+cero|m
+colonia|f
+solicitud|f
+extremo|m
+reporte|m
+cráneo|m
+testamento|m
+músculo|m
+sello|m
+micrófono|m
+taller|m
+referencia|f
+obligación|f
+estatua|f
+período|m
+sector|m
+semilla|f
+suministro|m
+región|f
+órgano|m
+conducta|f
+rango|m
+pescado|m
+cole|m
+academia|f
+sentencia|f
+pozo|m
+brillante|m
+petróleo|m
+arco|m
+macho|m
+remedio|m
+oveja|f
+casino|m
+abril|m
+excepción|f
+escuadrón|m
+cafetería|f
+toro|m
+rumbo|m
+tabla|f
+tiroteo|m
+hoyo|m
+estrés|m
+ceniza|f
+insecto|m
+junio|m
+júnior|m
+trono|m
+temor|m
+novedad|f
+tirador|m||tiradora
+fenómeno|m
+fraude|m
+horno|m
+receta|f
+joya|f
+manta|f
+presupuesto|m
+autopsia|f
+boom|m|booms
+patrulla|f
+acabado|m
+hígado|m
+logro|m
+álbum|m|álbums
+cocaína|f
+naranja|f
+lesión|f
+concepto|m
+lápiz|m
+gravedad|f
+autor|m||autora
+cajón|m
+reconocimiento|m
+gesto|m
+lana|f
+potencia|f
+maíz|m
+oficial|mf
+descripción|f
+motel|m
+hilo|m
+furgoneta|f
+salario|m
+transmisión|f
+ubicación|f
+impulso|m
+potencial|m
+ruina|f
+comando|m
+sospecha|f
+lesbiana|f
+civilización|f
+militar|mf
+dosis|f|dosis
+horario|m
+chino|m||china
+liga|f
+músico|m||música
+masaje|m
+ganado|m
+pastor|m||pastora
+horror|m
+acento|m
+perspectiva|f
+combinación|f
+almohada|f
+capullo|m
+heredero|m||heredera
+we|mf|wees
+trauma|m
+munición|f
+audición|f
+chip|m|chips
+interrogatorio|m
+profesión|f
+octubre|m
+ridículo|m
+aumento|m
+alcance|m
+lámpara|f
+exposición|f
+perrito|m||perrita
+cohete|m
+ruso|m||rusa
+economía|f
+cigarro|m
+profundidad|f
+puño|m
+barón|m||baronesa
+crítica|f
+congreso|m
+fallo|m
+escala|f
+chofer|mf
+abeja|f
+granjero|m||granjera
+alguacil|m
+crema|f
+pensión|f
+infección|f
+lazo|m
+muelle|m
+graduación|f
+marihuana|f
+matón|m||matona
+ejecución|f
+cueva|f
+ciego|m||ciega
+ataúd|m
+pañuelo|m
+hábito|m
+padrino|m||madrina
+ángulo|m
+psicópata|mf
+tortuga|f
+tonelada|f
+privilegio|m
+llegada|f
+argumento|m
+compasión|f
+mosca|f
+vidrio|m
+fama|f
+conspiración|f
+desarrollo|m
+cómplice|mf
+damas|f
+mensajero|m||mensajera
+poesía|f
+huelga|f
+retraso|m
+técnico|m||técnica
+poeta|mf||poeta
+asociación|f
+fase|f
+descubrimiento|m
+flecha|f
+retrato|m
+despedida|f
+baby|m|babys
+presa|f
+acero|m
+cubo|m
+monte|m
+nene|mf||nena
+fuga|f
+pasaje|m
+circuito|m
+facultad|f
+selva|f
+póquer|m
+ballena|f
+verde|m
+mancha|f
+agosto|m
+juramento|m
+ministerio|m
+vodka|mf
+hechizo|m
+cortina|f
+brindis|m|brindis
+individuo|m
+autopista|f
+dieta|f
+maricón|m||maricona
+sindicato|m
+fortaleza|f
+celos|m
+riqueza|f
+radiación|f
+multa|f
+ingreso|m
+abuso|m
+alfa|f
+costilla|f
+bigote|m
+autorización|f
+bajo|m
+sirena|f
+malo|m||mala
+intercambio|m
+desaparición|f
+avance|m
+riñón|m
+tristeza|f
+nido|m
+creación|f
+forense|mf
+presentimiento|m
+almirante|mf
+preso|m||presa
+freno|m
+comedia|f
+desfile|m
+calcetín|m
+noviembre|m
+escritura|f
+editor|m||editora
+mochila|f
+directo|m
+licor|m
+eternidad|f
+tratado|m
+galería|f
+comedor|m
+rancho|m
+gene|m
+maletín|m
+tejido|m
+pila|f
+engaño|m
+vagina|f
+cuero|m
+perfume|m
+costo|m
+marzo|m
+terrorista|mf
+dimensión|f
+fotógrafo|m||fotógrafa
+grasa|f
+formación|f
+azar|m
+gatillo|m
+dignidad|f
+matrícula|f
+comercio|m
+administración|f
+margen|m|márgenes
+ídolo|m||ídola
+centímetro|m
+objeción|f
+plataforma|f
+atmósfera|f
+feria|f
+rana|f
+clan|m
+mafia|f
+radar|m
+saca|f
+piedad|f
+hierro|m
+bandido|m||bandida
+siesta|f
+central|f
+shock|m|shocks
+bailarina|f
+tumor|m
+embajada|f
+otoño|m
+observación|f
+coro|m
+cálculo|m
+diosa|f
+martillo|m
+desorden|m|desórdenes
+duque|m||duquesa
+barba|f
+caridad|f
+menú|m
+urgencia|f
+sábana|f
+falda|f
+creencia|f
+sugerencia|f
+ausencia|f
+diciembre|m
+gilipollas|mf|gilipollas
+bloque|m
+euro|m
+cerradura|f
+garantía|f
+susto|m
+tobillo|m
+beca|f
+condón|m
+curva|f
+inicio|m
+turista|mf
+unión|f
+romance|m
+timbre|m
+ji|f|jíes
+servidor|m||servidora
+república|f
+vena|f
+hemorragia|f
+inyección|f
+mercancía|f
+confusión|f
+mansión|f
+especial|m
+celebración|f
+conjunto|m
+amanecer|m
+investigador|m||investigadora
+campeonato|m
+rabia|f
+villa|f
+be|f
+tenis|m
+paga|f
+etiqueta|f
+burbuja|f
+test|m|test
+modales|mf
+edición|f
+orilla|f
+canto|m
+mariposa|f
+telegrama|m
+debate|m
+sencillo|m
+matemáticas|f
+avenida|f
+dentista|mf
+cruz|f
+cifra|f
+biblia|f
+pagaré|m
+hall|m|halls
+chance|mf
+negra|f
+propina|f
+delincuente|mf
+cordero|m||cordera
+balón|m
+barril|m
+volumen|m|volúmenes
+obstáculo|m
+poli|mf
+egoísta|mf
+enero|m
+monja|f
+enano|m||enana
+defecto|m
+alivio|m
+cadera|f
+alrededor|m
+apuro|m
+hembra|f
+cuerno|m
+rival|mf
+bañera|f
+taco|m
+canalla|f
+lotería|f
+deber|m
+clavo|m
+torta|f
+fría|f
+supervivencia|f
+récord|m|récords
+agresión|f
+secuencia|f
+retiro|m
+disposición|f
+distracción|f
+ambición|f
+privacidad|f
+apetito|m
+partícula|f
+recuperación|f
+chiflado|m||chiflada
+monje|m||monja
+particular|m
+exterior|m
+especialista|mf
+condena|f
+cubierta|f
+secundaria|f
+linterna|f
+miseria|f
+contraseña|f
+cal|f
+directora|f
+litro|m
+pañal|m
+tela|f
+marinero|m||marinera
+malentendido|m
+rehabilitación|f
+traficante|mf
+ascenso|m
+chimenea|f
+vicepresidente|m||vicepresidente
+portero|m||portera
+cristiano|m||cristiana
+brigada|f
+asistencia|f
+crío|m||cría
+coca|f
+duelo|m
+bondad|f
+pantano|m
+cóctel|m
+herencia|f
+marina|f
+negociación|f
+muñeco|m||muñeca
+salvaje|mf
+amiguito|m||amiguita
+tejado|m
+embarazo|m
+japonés|m||japonesa
+liberación|f
+bahía|f
+tara|f
+ópera|f
+doña|f
+pintor|m||pintora
+torneo|m
+precaución|f
+tomate|m
+nuez|f
+cuadra|f
+anfitrión|m||anfitriona
+trofeo|m
+misa|f
+condesa|f
+quirófano|m
+mejilla|f
+volante|m
+equilibrio|m
+jabón|m
+certeza|f
+bodega|f
+vapor|m
+patria|f
+presidenta|f
+aterrizaje|m
+láser|m
+cosecha|f
+perla|f
+periodo|m
+envío|m
+tabaco|m
+fruto|m
+reflejo|m
+talla|f
+oficio|m
+cortesía|f
+campus|m|campus
+crucero|m
+bingo|m
+detención|f
+concentración|f
+paloma|f
+hacha|f
+terapeuta|mf
+ajedrez|m
+transferencia|f
+votación|f
+estadio|m
+democracia|f
+entero|m
+supervisor|m||supervisora
+varón|m
+papeleo|m
+mezcla|f
+invasión|f
+maldad|f
+águila|f
+prima|f
+núcleo|m
+enfermería|f
+funcionario|m||funcionaria
+suite|f
+chaleco|m
+vestuario|m
+ciclo|m
+gorra|f
+carbón|m
+agallas|f
+jugada|f
+atracción|f
+sustancia|f
+medicación|f
+desaparecido|m||desaparecida
+kit|m|kits
+automóvil|m
+seguidor|m||seguidora
+flash|m
+jazz|m
+pijama|f
+billetera|f
+fórmula|f
+física|f
+ahorro|m
+dinosaurio|m
+ego|m
+asesor|m||asesora
+vela|f
+puñado|m
+factor|m
+puesta|f
+visitante|mf
+ritual|m
+terremoto|m
+vínculo|m
+bus|m
+escondite|m
+depresión|f
+afueras|f
+mito|m
+protesta|f
+ayuntamiento|m
+furia|f
+insulto|m
+química|f
+virtud|f
+fragmento|m
+sobra|f
+bandeja|f
+manga|f
+astronauta|mf
+renta|f
+ladrillo|m
+marine|mf
+filosofía|f
+lira|f
+simple|mf
+veredicto|m
+revisión|f
+granero|m
+italiano|m||italiana
+órbita|f
+araña|f
+supermercado|m
+manada|f
+yate|m
+cebolla|f
+institución|f
+armada|f
+subasta|f
+cualidad|f
+convención|f
+voluntario|m||voluntaria
+categoría|f
+armadura|f
+operador|m||operadora
+complejo|m
+corrección|f
+queda|f
+especialidad|f
+refresco|m
+curioso|m||curiosa
+césped|m
+choque|m
+garra|f
+danza|f
+caravana|f
+tambor|m
+secuestrador|m||secuestradora
+solar|m
+pacto|m
+rincón|m
+inocencia|f
+novato|m||novata
+submarino|m
+enlace|m
+febrero|m
+niñita|f
+acontecimiento|m
+acabo|m
+fundación|f
+zapatilla|f
+descuento|m
+cangrejo|m
+paro|m
+ideal|m
+filete|m
+antigüedad|f
+cobertura|f
+escáner|m
+tijera|f
+tranquilidad|f
+goma|f
+cepillo|m
+ficción|f
+pis|m
+rencor|m
+sabio|m||sabia
+competición|f
+fibra|f
+falla|f
+farmacia|f
+coordenada|f
+gris|m
+hormiga|f
+enfermo|m||enferma
+aprobación|f
+jamón|m
+inspiración|f
+rebelde|mf
+hambriento|m||hambrienta
+político|m||política
+plaga|f
+polis|f
+pulgar|m
+won|m
+cardenal|m
+gripe|f
+fusión|f
+pop|m|pops
+denuncia|f
+bloqueo|m
+tutor|m||tutora
+contento|m
+claridad|f
+soledad|f
+set|m|sets
+bate|m
+evaluación|f
+ingrediente|m
+muebles|m
+adicto|m||adicta
+derrota|f
+puñetazo|m
+billón|m
+atleta|mf
+perímetro|m
+contenedor|m
+certificado|m
+limón|m
+artefacto|m
+quemadura|f
+consulta|f
+hockey|m|hockey
+jinete|mf
+disciplina|f
+sensor|m
+panel|m
+barro|m
+dulzura|f
+aplicación|f
+diamantes|m
+tapa|f
+cereal|m
+tronco|m
+calendario|m
+importe|m
+dong|m|dongs
+paisaje|m
+flujo|m
+común|m
+ruptura|f
+bando|m
+francotirador|m||francotiradora
+salvación|f
+baloncesto|m
+cruce|m
+obsesión|f
+vientre|m
+hostia|f
+pausa|f
+extraterrestre|mf
+sabiduría|f
+obispo|m||obispa
+residente|mf
+ansiedad|f
+síndrome|m
+expectativa|f
+escopeta|f
+pulgada|f
+algodón|m
+táctica|f
+persecución|f
+parado|m||parada
+jet|m|jets
+pesca|f
+explosivo|m
+esencia|f
+cuna|f
+postura|f
+apodo|m
+significado|m
+promedio|m
+coma|f
+agradecimiento|m
+corporación|f
+soborno|m
+buena|f
+ardilla|f
+infarto|m
+cómic|m|cómics
+informante|mf
+dominio|m
+donación|f
+continente|m
+bienestar|m
+fiscalía|f
+profeta|m||profetisa
+sustituto|m||sustituta
+langosta|f
+famoso|m||famosa
+hongo|m
+coco|m
+guardaespaldas|mf|guardaespaldas
+vagón|m
+campesino|m||campesina
+monitor|m
+escoria|f
+ano|m
+contador|m
+exceso|m
+nevera|f
+peluca|f
+maletero|m
+aborto|m
+contenido|m
+verdura|f
+cápsula|f
+melodía|f
+franco|m
+crecimiento|m
+mantenimiento|m
+televisor|m
+fractura|f
+comerciante|mf
+ballet|m|ballets
+literatura|f
+vagabundo|m||vagabunda
+nieta|f
+establo|m
+tortura|f
+jungla|f
+maya|mf
+sermón|m
+misericordia|f
+morgue|f
+gol|m
+triunfo|m
+chicle|m
+cajero|m||cajera
+revólver|m
+asilo|m
+grey|f
+demostración|f
+doncella|f
+habitante|mf
+reparación|f
+buzón|m
+entusiasmo|m
+bocadillo|m
+gancho|m
+gemelo|m||gemela
+normalidad|f
+cuervo|m
+legado|m
+frasco|m
+ingeniería|f
+milord|m|milores
+ficha|f
+navaja|f
+camello|m||camella
+pala|f
+acusado|m||acusada
+provisión|f
+luchador|m||luchadora
+cretino|m||cretina
+documental|m
+efectivo|m
+tubería|f
+neumático|m
+burro|m||burra
+vaquero|m
+barrera|f
+celebridad|f
+ex|mf|ex
+ferrocarril|m
+sudor|m
+vago|m||vaga
+valla|f
+lentes|mf
+maniobra|f
+halcón|m
+raya|f
+griego|m||griega
+velada|f
+gorila|m
+alboroto|m
+homosexual|mf
+sobreviviente|m
+ninja|mf
+vestíbulo|m
+polo|m
+pito|m
+pobreza|f
+portada|f
+escape|m
+regimiento|m
+out|m|outs
+violín|m
+bastón|m
+reja|f
+británico|m||británica
+aficionado|m||aficionada
+chispa|f
+cuchara|f
+brillo|m
+arbusto|m
+seda|f
+uva|f
+cha|m
+consentimiento|m
+perfección|f
+soga|f
+corto|m
+administrador|m||administradora
+apertura|f
+ciega|f
+psicólogo|m||psicóloga
+ejecutivo|m||ejecutiva
+condicional|m
+presente|m
+latín|m
+delta|f
+comprador|m||compradora
+adopción|f
+inspección|f
+moral|f
+orquesta|f
+like|m
+orfanato|m
+pascua|f
+integridad|f
+arquitecto|m||arquitecta
+promoción|f
+entretenimiento|m
+decepción|f
+colchón|m
+zanahoria|f
+trueno|m
+portal|m
+iniciativa|f
+pub|m|pubs
+empresario|m||empresaria
+recomendación|f
+baúl|m
+plástico|m
+portátil|m
+boxeo|m
+contrabando|m
+yoga|m
+cocodrilo|m||cocodrila
+murciélago|m||murciélaga
+mérito|m
+penique|m
+comisionado|m||comisionada
+gallo|m||gallina
+eco|m
+carné|m
+fraternidad|f
+localización|f
+mecanismo|m
+banquete|m
+parecido|m
+sentir|m
+mula|f
+balcón|m
+recorrido|m
+camilla|f
+motocicleta|f
+granada|f
+gángster|m
+congresista|mf
+expedición|f
+carruaje|m
+lote|m
+gemela|f
+evolución|f
+pelotón|m
+romano|m||romana
+diagnóstico|m
+espectro|m
+bendito|m
+desesperación|f
+cuaderno|m
+preparación|f
+adoro|m
+palomita|f
+huracán|m
+desperdicio|m
+brandy|m|brandys
+tira|f
+cuadrado|m
+nudo|m
+olla|f
+intervención|f
+juzgado|m
+gratitud|f
+mejora|f
+independencia|f
+sobredosis|f|sobredosis
+parto|m
+diseñador|m||diseñadora
+santuario|m
+estrado|m
+sordo|m||sorda
+representación|f
+lavandería|f
+paja|f
+buque|m
+farsa|f
+pícnic|m|pícnics
+entorno|m
+vera|f
+arteria|f
+calibre|m
+calabaza|f
+ciervo|m||cierva
+rompecabezas|m|rompecabezas
+separación|f
+suposición|f
+tasa|f
+esperma|mf
+rodeo|m
+trapo|m
+excursión|f
+email|m|emails
+cordón|m
+corrupción|f
+zorro|m||zorra
+primera|f
+rol|m
+tripa|f
+emboscada|f
+viajero|m||viajera
+aparcamiento|m
+satisfacción|f
+botín|m
+cooperación|f
+villano|m||villana
+organismo|m
+zumo|m
+peste|f
+pendejo|m||pendeja
+complicación|f
+tentación|f
+dorada|f
+soda|f
+estafador|m||estafadora
+cacería|f
+selección|f
+honestidad|f
+género|m
+amabilidad|f
+náusea|f
+escondidas|f
+antepasado|m||antepasada
+reactor|m
+residuo|m
+reno|m
+masacre|f
+madrugada|f
+recado|m
+donante|mf
+champagne|m
+igual|mf
+hermandad|f
+marea|f
+banquero|m||banquera
+basurero|m||basurera
+bufete|m
+temporal|m
+grieta|f
+verónica|f
+espina|f
+aparición|f
+cargamento|m
+tablero|m
+bombardeo|m
+gen|m
+tomo|m
+animador|m||animadora
+inquilino|m||inquilina
+suéter|m
+chisme|m
+volcán|m
+taberna|f
+alucinación|f
+tinta|f
+estreno|m
+concejal|mf||concejala
+definición|f
+banana|f
+cucaracha|f
+remordimiento|m
+invento|m
+martini|m
+antorcha|f
+exhibición|f
+pirámide|f
+muslo|m
+barbacoa|f
+finanza|f
+retirada|f
+delantera|f
+lógica|f
+conserje|mf
+participación|f
+mayordomo|m||mayordoma
+variedad|f
+élite|f
+hipoteca|f
+cosquillas|f
+fanático|m||fanática
+brazalete|m
+español|m||española
+interpretación|f
+chantaje|m
+poste|m
+pulsera|f
+resumen|m|resúmenes
+mandíbula|f
+consuelo|m
+refugiado|m||refugiada
+esclava|f
+labor|f
+plomo|m
+limusina|f
+videojuego|m
+ancestro|m||ancestra
+dorado|m
+dinamita|f
+acoso|m
+vómito|m
+cuota|f
+tostada|f
+vigilante|mf
+top|m|tops
+guarda|mf
+titular|m
+jersey|m|jerséis
+activo|m
+dueña|f
+bóveda|f
+esqueleto|m
+gramo|m
+parlamento|m
+postal|f
+horizonte|m
+terrorismo|m
+crack|m|cracks
+decano|m||decana
+pólvora|f
+yen|m
+intimidad|f
+bobo|m||boba
+consideración|f
+morfina|f
+ocupación|f
+proveedor|m||proveedora
+defensor|m||defensora
+post|m|post
+aperitivo|m
+punk|m|punks
+capilla|f
+codo|m
+pezón|m
+formulario|m
+palanca|f
+comparación|f
+indicio|m
+ajuste|m
+vacuna|f
+vivienda|f
+fresa|f
+karma|m
+hurra|f
+aroma|m
+ferri|m
+look|m|looks
+tocino|m
+notas|mf|notas
+federación|f
+crítico|m||crítica
+conducto|m
+leña|f
+veterano|m||veterana
+software|m
+creador|m||creadora
+caballería|f
+obrero|m||obrera
+fideo|m
+sostén|m
+psicología|f
+calzoncillo|m
+altar|m
+ramera|f
+sendero|m
+provincia|f
+menta|f
+tendencia|f
+admirador|m||admiradora
+generador|m
+artillería|f
+profecía|f
+salmón|m
+espectador|m||espectadora
+seso|m
+federal|m
+calabozo|m
+delfín|m
+margarita|f
+terraza|f
+marrón|m
+jardinero|m||jardinera
+mánager|mf|mánager
+aspirina|f
+éxtasis|m|éxtasis
+caminata|f
+soplón|m||soplona
+escolta|f
+suma|f
+enfoque|m
+sillón|m
+explorador|m||exploradora
+estándar|m
+máximo|m
+folleto|m
+ácido|m
+tacón|m
+mueble|m
+aislamiento|m
+manifestación|f
+incumbencia|f
+extensión|f
+talón|m
+resfriado|m
+acompañante|mf
+batallón|m
+carbono|m
+maní|m
+caña|f
+samurái|m
+semestre|m
+orgasmo|m
+hacienda|f
+estafa|f
+valentía|f
+was|m|was
+brisa|f
+escalón|m
+seguimiento|m
+discreción|f
+comprensión|f
+vitamina|f
+cultivo|m
+convento|m
+gabinete|m
+blusa|f
+frijol|m
+redada|f
+monumento|m
+mostrador|m
+precisión|f
+manicomio|m
+daga|f
+maestra|f
+picante|m
+enseñanza|f
+nazi|mf
+desconocido|m||desconocida
+domicilio|m
+calificación|f
+gimnasia|f
+ajo|m
+correa|f
+confirmación|f
+taxista|mf
+clic|m|clics
+adicción|f
+ocho|m
+estadística|f
+cesta|f
+injusticia|f
+bolígrafo|m
+bailarín|m||bailarina
+llanto|m
+chatarra|f
+ring|m|rings
+dron|m
+facilidad|f
+molino|m
+pescador|m||pescadora
+plátano|m
+cintura|f
+atajo|m
+sincronización|f
+barriga|f
+tenedor|m
+régimen|m|regímenes
+cera|f
+protector|m||protectora
+pedo|m
+esfera|f
+paraguas|m|paraguas
+sonda|f
+afecto|m
+paradero|m
+gasolinera|f
+suceso|m
+válvula|f
+liderazgo|m
+disturbio|m
+irlandés|m||irlandesa
+luca|f
+topo|m
+trío|m
+atraco|m
+estancia|f
+rasguño|m
+matanza|f
+espuma|f
+humillación|f
+cuarentena|f
+plegaria|f
+peón|m
+cancha|f
+bocado|m
+protagonista|mf
+demócrata|mf
+record|m|records
+antena|f
+bombón|m
+billar|m
+nasa|f
+característica|f
+matemática|f
+encuesta|f
+paramédico|m||paramédica
+torpedo|m
+interferencia|f
+suspiro|m
+alien|m|aliens
+jeep|m|jeeps
+terminal|mf
+revelación|f
+duende|m
+pinza|f
+frita|f
+resaca|f
+santidad|f
+blues|m
+criada|f
+mínimo|m
+anteojos|m
+pino|m
+trastorno|m
+sinvergüenza|mf
+anomalía|f
+gordo|m||gorda
+escolar|mf
+lunar|m
+comunista|mf
+asociado|m||asociada
+boxeador|m||boxeadora
+maldito|m
+respiro|m
+mendigo|m||mendiga
+inversor|m||inversora
+letrero|m
+aprendiz|m||aprendiz
+rebelión|f
+sede|f
+ava|mf|ava
+reparto|m
+acantilado|m
+cartero|m||cartera
+porción|f
+proteína|f
+torno|m
+burdel|m
+niebla|f
+trasplante|m
+ceja|f
+surf|m
+bofetada|f
+trigo|m
+diálogo|m
+paracaídas|m|paracaídas
+yanqui|mf
+rezo|m
+intruso|m||intrusa
+erección|f
+nerd|mf|nerds
+desacuerdo|m
+estanque|m
+suegro|m||suegra
+oponente|mf
+atentado|m
+provecho|m
+ironía|f
+pingüino|m||pingüina
+blog|m|blogs
+imitación|f
+evacuación|f
+comodidad|f
+scout|mf|scouts
+country|m
+casamiento|m
+congelado|m||congelada
+pinta|f
+alojamiento|m
+bacteria|f
+culpabilidad|f
+pasto|m
+pimienta|f
+pendiente|m
+angustia|f
+ida|f
+polla|f
+esquí|m
+acera|f
+porcentaje|m
+mosquito|m
+recorte|m
+fabricante|mf
+panda|f
+recta|f
+documentación|f
+víbora|f
+hood|m|hoods
+rupia|f
+amuleto|m
+harina|f
+alergia|f
+padrastro|m||madrastra
+manejo|m
+inmigración|f
+lanza|f
+búfalo|m||búfala
+marioneta|f
+insignia|f
+líquido|m
+decoración|f
+restricción|f
+testículo|m
+desprecio|m
+triángulo|m
+hormona|f
+lodo|m
+librería|f
+olvido|m
+ye|f
+ametralladora|f`,
+A:`mejor|mejor||mejores
+mayor|mayor||mayores
+joven||jóvenes|jóvenes
+peor|peor||peores
+menor|menor||menores
+superior|superior||superiores
+gay||gais|gais
+anterior|anterior||anteriores
+español|española||españolas
+exterior|exterior||exteriores
+interior|interior||interiores
+inferior|inferior||inferiores
+café||café|café
+posterior|posterior||posteriores
+cool||cool|cool
+virgen||vírgenes|vírgenes
+marrón|marrón||marrones`};
+// grammar wiki (prototypes/data/grammar-wiki.json): id → [term, short, first paragraph]
+const WIKI={"noun":["Noun","A word that names a person, place, thing or idea.","A noun names something: a person (madre), a place (ciudad), a thing (mesa) or an idea (amor). Nouns are what you can put 'the' or 'a' in front of."],"verb":["Verb","A word for an action or state: to eat, to be, to have.","A verb says what someone does or is: comer (to eat), ser (to be), tener (to have). Most sentences need one."],"adjective":["Adjective","A word that describes a noun: big, red, good.","An adjective describes a noun: a big house, a good friend. In Spanish it must match the noun in gender and number: 'casa blanca', 'casas blancas', 'libro blanco'."],"adverb":["Adverb","A word that says how, when, where or how much; it never changes form.","An adverb adds detail to a verb, an adjective or another adverb: how (bien), when (hoy), where (aquí), how much (muy). It never changes for gender or number."],"preposition":["Preposition","A small word linking a noun to the rest of the sentence: in, to, with, for.","A preposition is a small word that links a noun to the rest of the sentence, usually showing place, time or relation: 'en la mesa' (on the table), 'a las tres' (at three), 'con mi madre' (with my mother). It always comes before its noun."],"conjunction":["Conjunction","A word that joins words or parts of a sentence: and, but, because.","A conjunction joins words or whole parts of a sentence: y (and), o (or), pero (but), porque (because), que (that), si (if)."],"pronoun":["Pronoun","A word that stands in for a noun: I, you, he, it, them.","A pronoun replaces a noun so you do not repeat it: yo (I), tú (you), él (he), ella (she), nosotros (we), ellos (they). Others are objects of the action: 'lo', 'me', 'se'."],"determiner":["Determiner","A small word before a noun saying which one or how many: the, this, my, some.","A determiner sits before a noun and pins it down: which one (este libro, that book), whose (mi libro, my book), how many (muchos libros, many books), or just 'the/a' (the **article**)."],"article":["Article","The tiny words for 'the' (el, la) and 'a' (un, una); they match the noun's gender.","Articles are the small words 'the' and 'a'."],"number":["Number","A word for an amount or position: one, two, first.","Numbers give an amount (uno, dos, tres: cardinals) or a position (primero, segundo, tercero: ordinals)."],"interjection":["Interjection","A short exclamation that stands on its own: hello, oh, wow.","An interjection is a word that expresses a feeling or a greeting and does not link to the rest of a sentence: ¡hola! (hello), ¡ay! (ouch, oh no), ¡vaya! (wow, well), ¡ojalá! (I hope so)."],"gender":["Gender (masculine / feminine)","Every Spanish noun is masculine or feminine, and words around it match.","Every noun is either masculine or feminine, even things: 'el libro' (m), 'la mesa' (f). Gender is a label of the word, not of the thing."],"plural":["Plural","The 'more than one' form: add -s after a vowel, -es after a consonant.","Plural means more than one. Add -s to words ending in a vowel (casa, casas) and -es to words ending in a consonant (ciudad, ciudades). Words ending in -z change to -ces: luz, luces."],"conjugation":["Conjugation","The changing forms of a verb for who does it and when.","Conjugating a verb means giving it the ending that fits the person (I, you, he, we, they) and the time. Take hablar (to speak): hablo, hablas, habla, hablamos, hablan."],"tense":["Tense","The time a verb refers to: now (present), earlier (past), later (future).","Tense shows when something happens. Present: hablo (I speak). Past: hablé or hablaba (I spoke). Future: hablaré (I will speak)."],"participle":["Participle","A verb form ending in -ado or -ido, used with 'haber' or as an adjective.","The participle is the verb form ending in -ado (for -ar verbs) or -ido (for -er and -ir verbs): hablado, comido, vivido. Irregular ones exist: hecho, dicho, visto."],"gerund":["Gerund","The -ando / -iendo form of a verb, for an action in progress.","The gerund ends in -ando (for -ar verbs) or -iendo (for -er and -ir verbs): hablando, comiendo, viviendo. Its main use is with 'estar' to say something is happening right now: 'estoy comiendo' (I am eating)."],"stem-changing-verb":["Stem-changing verb","A verb whose vowel changes in most forms: poder becomes puedo.","In these verbs a vowel in the middle of the word changes when it carries the stress: e becomes ie (querer: quiero), o becomes ue (poder: puedo), e becomes i (pedir: pido)."],"irregular-verb":["Irregular verb","A verb that does not follow the usual endings; learn its forms by heart.","Most verbs follow a regular pattern for their endings. Irregular verbs break it, so their forms must be learned one by one: ser becomes soy, eres, es; ir becomes voy, vas, va; tener becomes tengo, tienes."],"imperative":["Imperative","The verb form for commands and requests: come, speak, wait.","The imperative gives a command or instruction. For a friend (tú) the form often equals the 'he/she' form: 'habla' (speak), 'come' (eat). For a polite 'usted', use 'hable', 'coma'."],"subjunctive":["Subjunctive","A verb form for wishes, doubts and things that are not (yet) fact.","The subjunctive is a set of verb forms used when the speaker is not stating plain fact: a wish, a request, a doubt, an emotion. It usually follows 'que': 'Quiero que vengas' (I want you to come)."]};
+// the word page's forms: regular rules, then the Wiktionary exceptions above; a cell that differs from the rule is marked
+const VE={ar:{p:"o as a amos áis an",t:"é aste ó amos asteis aron",i:"aba abas aba ábamos abais aban",s:"e es e emos éis en"},
+  er:{p:"o es e emos éis en",t:"í iste ió imos isteis ieron",i:"ía ías ía íamos íais ían",s:"a as a amos áis an"},
+  ir:{p:"o es e imos ís en",t:"í iste ió imos isteis ieron",i:"ía ías ía íamos íais ían",s:"a as a amos áis an"}};
+const VF="é ás á emos éis án".split(" ");
+function regConj(inf){const c=inf.endsWith("ír")?"ir":inf.slice(-2),st=inf.slice(0,-2),E=VE[c]||VE.ar,o={};
+  for(const T of"ptis")E[T].split(" ").forEach((e,j)=>o[T+(j+1)]=st+e);
+  VF.forEach((e,j)=>o["f"+(j+1)]=inf.replace(/ír$/,"ir")+e);
+  o.g=st+(c==="ar"?"ando":"iendo");o.d=st+(c==="ar"?"ado":"ido");return o}
+const impOf=(inf,o)=>({m2:o.p3,m3:o.s3,m4:o.s4,m5:inf.replace(/ír$/,"ir").slice(0,-1)+"d",m6:o.s6});  // commands come from the finished present and subjunctive
+const deacc=s=>s.replace(/[áéíóú]/g,c=>"aeiou"["áéíóú".indexOf(c)]);
+const regPlural=w=>/[aeiouáéó]$/.test(w)?w+"s":/z$/.test(w)?w.slice(0,-1)+"ces":/[áéíóú][ns]$/.test(w)?deacc(w)+"es":w+"es";
+const regAdj=w=>{const f=/o$/.test(w)?w.slice(0,-1)+"a":/(or|ón|án|ín|és)$/.test(w)?deacc(w)+"a":w;return{f,mp:regPlural(w),fp:regPlural(f)}};
+const IV=new Map(INFL.V.split("\n").map(l=>{const[w,c,e]=l.split("|");return[w,{c,e:e?e.split(",").map(x=>x.split("=")):[]}]}));
+const IN=new Map(INFL.N.split("\n").map(l=>{const[w,g,pl,fe]=l.split("|");return[w,{g,pl,fe}]}));
+const IA=new Map(INFL.A.split("\n").map(l=>{const[w,f,mp,fp]=l.split("|");return[w,{f,mp,fp}]}));
+function conjOf(w){if(w.pos!=="verb"||!/(ar|er|ir|ír)$/.test(w.w))return null;const inf=w.w,x=IV.get(inf)||{c:"",e:[]},reg=regConj(inf),o={...reg};
+  x.e.forEach(([k,v])=>{if(k[0]!=="m")o[k]=v});Object.assign(o,impOf(inf,o));x.e.forEach(([k,v])=>{if(k[0]==="m")o[k]=v});
+  const rim=impOf(inf,reg),irr=new Set(Object.keys(o).filter(k=>o[k]!==(k[0]==="m"?rim[k]:reg[k])));return{o,irr,c:x.c}}
+function nounForms(w){const n=IN.get(w.w);if(!n&&!w.art)return null;const g=n?n.g:w.art==="la"||w.art==="las"?"f":"m",pl=n&&n.pl||regPlural(w.w);
+  const sg=g==="f"?(ELF.has(w.w)?"el":"la"):g==="mf"?"el / la":"el",pa=g==="f"?"las":g==="mf"?"los / las":"los";
+  const r=[[sg,w.w,pa,pl,!!(n&&n.pl)]];if(n&&n.fe)r.push(["la",n.fe,"las",regPlural(n.fe),false]);return{g,r}}
+function adjForms(w){const a=IA.get(w.w)||{},r=regAdj(w.w);return{f:a.f||r.f,mp:a.mp||r.mp,fp:a.fp||(a.f?regPlural(a.f):r.fp),x:a}}
+const POSW={verb:"verb",noun:"noun",adj:"adjective",adv:"adverb",conj:"conjunction",prep:"preposition",pron:"pronoun",det:"determiner",art:"article",num:"number",interj:"interjection"};
 
 // =====================================================================
 // KNOWLEDGE (per device; keyed by lemma, never by rank)
@@ -5516,8 +8867,9 @@ function msg(t){clearTimeout(msgT);$("covt").innerHTML=t;msgT=setTimeout(()=>{ms
 // one-time hints: bit n shown once ever
 const TIP=["Two words are on the board. Click one — or press <kbd>space</kbd>.","Green means yours. Make the other one yours too, then type the sentence they make.","Every green word opens a sentence; its words appear around it. Pick any tile, or press <kbd>space</kbd> and the board picks for you.","A hollow tile is due: recall it and it fills again."];
 if(matchMedia("(hover:none)").matches){TIP[0]="Two words are on the board. Tap one, or tap <kbd>▸ begin</kbd>.";TIP[2]="Every green word opens a sentence; its words appear around it. Tap any tile, or tap <kbd>▸</kbd> and the board picks for you."}  // touch wording
-function showTip(n){if(tips&(1<<n))return;tips|=1<<n;hint.innerHTML=TIP[n];hint.classList.add("on");save()}
-function hideTip(){hint.classList.remove("on")}
+function showTip(n){if(tips&(1<<n))return;tips|=1<<n;hint.innerHTML=TIP[n];hint.classList.add("on");save();syncHint()}
+function hideTip(){hint.classList.remove("on");syncHint()}
+function syncHint(){fhint.innerHTML=hint.classList.contains("on")?hint.innerHTML:""}  // on the focus page the hint sits at the top, between the way back and the minimap
 
 // =====================================================================
 // LAYOUT + DRAW: only the hundred-blocks you have touched, in rank order, auto-fitted (zoom 0 = everything found on one screen)
@@ -5549,7 +8901,7 @@ function setZoom(z,ai,sy){
   if(ai==null||ai<0){ai=sel>=0&&isVisible(sel)?sel:hit(L.W/2,sc.scrollTop+L.vh/3)}
   const c=ai>=0?cellXY(ai):null;if(sy==null&&c)sy=c.y-sc.scrollTop;
   layout();const c2=ai>=0?cellXY(ai):null;if(c2&&sy!=null)sc.scrollTop=c2.y-sy;save();
-  draw();if(pop.classList.contains("on"))place();
+  draw();
 }
 function zoomStep(d){const np=L.p*(d>0?1.25:.8);setZoom(np<=fitP(L.W,L.vh,Math.max(1,order.length),L.M)?0:zOfP(np))}
 
@@ -5617,6 +8969,7 @@ function draw(){
   if(hov>=0&&hov!==sel){const bx=box(hov);if(bx){ctx.strokeStyle=C.o1;ctx.lineWidth=1;ctx.strokeRect(bx[0]+.5,bx[1]+.5,bx[2]-1,bx[2]-1)}}
   if(sel>=0&&K(sel).vis){const bx=box(sel);if(bx){ctx.lineWidth=2;ctx.strokeStyle=C.crust;ctx.strokeRect(bx[0]+1,bx[1]+1,bx[2]-2,bx[2]-2);ctx.strokeStyle=C.text;ctx.strokeRect(bx[0]-1,bx[1]-1,bx[2]+2,bx[2]+2)}}
   if(anims.size||appear.size||glide.size)req();
+  drawMini();
 }
 
 // =====================================================================
@@ -5625,44 +8978,83 @@ function draw(){
 const live=$("live");
 function isVisible(i){const c=cellXY(i);if(!c)return false;const y=c.y-sc.scrollTop;return y>=0&&y+L.p<=L.vh}
 function ensureVisible(i,smooth){
-  const c=cellXY(i);if(!c)return;const y=c.y,s=sc.scrollTop,top=narrow()&&pop.classList.contains("on")?L.vh*.38:L.vh;
+  const c=cellXY(i);if(!c)return;const y=c.y,s=sc.scrollTop,top=L.vh;
   let t=null;if(y<s+8)t=y-Math.min(L.vh*.3,120);else if(y+L.p>s+top-8)t=y+L.p-top+Math.min(top*.3,120);
   if(t!=null)sc.scrollTo({top:t,behavior:smooth&&!RM?"smooth":"auto"});
 }
 function select(i,smooth){
   if(i<0||i>=N)return;sel=i;const k=K(i);
   live.textContent=words[i].w+", "+(k.green?"yours":k.claimed?"claimed":k.S>0?"learning":"new")+(due[i]?", due":"");
-  req();ensureVisible(i,smooth);if(pop.classList.contains("on"))place();
+  req();ensureVisible(i,smooth);
 }
-let side=null;
-function place(){
-  if(narrow()){pop.style.cssText="";return}
-  const c=cellXY(sel);if(!c)return;
-  const r=sc.getBoundingClientRect(),cx=r.left+c.x,cy=r.top+c.y-sc.scrollTop,p=L.p,vw=innerWidth,vh=innerHeight,pw=pop.offsetWidth,ph=pop.offsetHeight,g=10,m=8;
-  const C2={r:cx+p+g,l:cx-g-pw};
-  const ok=k=>C2[k]>=m&&C2[k]+pw<=vw-m;
-  if(!(side&&ok(side)))side=["r","l"].find(ok)||null;
-  const top=r.top+m;let px,py;
-  if(side){px=C2[side];py=Math.max(top,Math.min(vh-ph-m,cy+p/2-ph*.3))}
-  else{px=Math.max(m,Math.min(vw-pw-m,cx+p/2-pw/2));py=cy+p+g;if(py+ph>vh-m)py=Math.max(top,cy-ph-g)}
-  pop.style.left=px+"px";pop.style.top=py+"px";
-  const ar=pop.querySelector("#arr");if(!ar)return;const ay=Math.max(10,Math.min(ph-20,cy+p/2-py-5));
-  if(side==="r")ar.style.cssText="left:-6px;top:"+ay+"px;transform:rotate(-45deg)";
-  else if(side)ar.style.cssText="right:-6px;top:"+ay+"px;transform:rotate(135deg)";
-  else ar.style.cssText="display:none";
+// ---------- the minimap: only the found cards, in the board's own compact rank order (it never shows what is still in the fog), the open word ringed ----------
+const mx=mm.getContext("2d");let ML={n:-1};
+function miniLayout(){
+  const n=Math.max(1,order.length),nar=narrow(),vw=innerWidth;
+  const W=nar?Math.round(Math.min(150,vw*.38)):Math.round(Math.max(140,Math.min(420,vw*.105))),H=nar?56:Math.round(Math.max(90,Math.min(280,vw*.07)));
+  let s=nar?11:Math.round(Math.max(11,Math.min(28,vw*.0078))),g=0,c=1;
+  for(;s>=1;s--){g=s>=6?Math.max(2,Math.round(s*.22)):s>=3?1:0;const fit=Math.max(1,Math.floor((W+g)/(s+g)));
+    c=Math.min(n,fit,Math.max(1,Math.ceil(Math.sqrt(n*2.2))));if(Math.ceil(n/c)*(s+g)-g<=H)break;c=Math.min(n,fit);if(Math.ceil(n/c)*(s+g)-g<=H||s===1)break}
+  s=Math.max(1,s);const pad=Math.max(3,Math.round(s*.45)),cw=c*(s+g)-g+2*pad,ch=Math.ceil(n/c)*(s+g)-g+2*pad,dp=Math.min(2,devicePixelRatio||1);
+  if(ML.cw!==cw||ML.ch!==ch||ML.dp!==dp){mm.width=cw*dp;mm.height=ch*dp;mm.style.width=cw+"px";mm.style.height=ch+"px"}
+  ML={n:order.length,vw,s,g,c,pad,cw,ch,dp};
 }
-// soft keyboard: the sheet rides on the visual viewport, and its field (with the button under it) stays in view
+function drawMini(){
+  if(!pop.classList.contains("on"))return;
+  if(ML.n!==order.length||ML.vw!==innerWidth)miniLayout();
+  const{s,g,c,pad,cw,ch,dp}=ML,now=performance.now(),cur=step?step.i:sel;let cx=-1,cy=0;
+  mx.setTransform(dp,0,0,dp,0,0);mx.clearRect(0,0,cw,ch);
+  for(let k=0;k<order.length;k++){const i=order[k],x=pad+(k%c)*(s+g),y=pad+Math.floor(k/c)*(s+g);if(i===cur){cx=x;cy=y}
+    const ts=appear.get(i);
+    if(ts!==undefined){const t=(now-ts)/APPEAR_MS;if(t<0)continue;
+      if(t<1){const a=Math.min(1,t*2.5),z=RM?1:(.75+.25*a)+.14*Math.sin(Math.PI*t),cs=s*z;  // the board's pop-in, at minimap scale
+        mx.globalAlpha=a;mx.fillStyle=COL[bk[i]];mx.fillRect(x+(s-cs)/2,y+(s-cs)/2,cs,cs);
+        if(!RM){const off=1+pad*.8*t;mx.globalAlpha=(1-t)*.9;mx.strokeStyle=C.lav;mx.lineWidth=1;mx.strokeRect(x-off+.5,y-off+.5,s+2*off-1,s+2*off-1)}
+        mx.globalAlpha=1;continue}
+      appear.delete(i)}
+    mx.fillStyle=COL[bk[i]];mx.fillRect(x,y,s,s);
+    if(due[i]&&s>=5){const r=Math.max(1,Math.round(s*.2));mx.fillStyle=C.crust;mx.fillRect(x+r,y+r,s-2*r,s-2*r)}}
+  if(cx<0)mmc.style.display="none";
+  else{const b=s>=6?2:1;mmc.style.cssText="display:block;left:"+(cx-b-1)+"px;top:"+(cy-b-1)+"px;width:"+(s+2*b+2)+"px;height:"+(s+2*b+2)+"px;border-width:"+b+"px";mmc.classList.toggle("on",!!(cur>=0&&K(cur).green))}
+}
+function miniHit(e){const r=mm.getBoundingClientRect(),{s,g,c,pad}=ML,x=e.clientX-r.left-pad,y=e.clientY-r.top-pad,col=Math.floor((x+g/2)/(s+g)),row=Math.floor((y+g/2)/(s+g));
+  if(col<0||col>=c||row<0)return-1;const k=row*c+col;return k<order.length?order[k]:-1}
+mm.addEventListener("pointermove",e=>{if(e.pointerType==="touch")return;const i=miniHit(e);if(i<0)tip.style.display="none";else showHover(i,e.clientX,e.clientY,false)});
+mm.addEventListener("pointerleave",()=>{tip.style.display="none"});
+mm.addEventListener("click",e=>{const i=miniHit(e);tip.style.display="none";if(i>=0&&step&&i!==step.i)goWord(i)});
+// ---------- into and out of focus: the page grows from the tile it belongs to (≈250 ms; none under reduced motion) ----------
+let leaving=null,closing=0;
+function tileOrigin(i){const c=i>=0?cellXY(i):null;if(!c||!L.p)return"50% 40%";const r=sc.getBoundingClientRect();
+  return Math.round(Math.max(0,Math.min(innerWidth,r.left+c.x+L.p/2)))+"px "+Math.round(Math.max(0,Math.min(innerHeight,r.top+c.y-sc.scrollTop+L.p/2)))+"px"}
+function foOpen(i){if(leaving){leaving.cancel();leaving=null;pop.classList.remove("leaving")}document.body.classList.add("fx");if(pop.classList.contains("on"))return;
+  pop.classList.add("on");ML.n=-1;if(RM||!pop.animate||auto)return;pop.style.transformOrigin=tileOrigin(i);
+  pop.animate([{opacity:0,transform:"scale(.3)"},{opacity:1,transform:"none"}],{duration:250,easing:"cubic-bezier(.2,.8,.2,1)"})}
+// branching inside focus (a word in a sentence, a chip, the minimap): remember where you came from, so Esc steps back
+let trail=[];
+function goWord(x){if(step&&step.i!==x)trail.push(step.i);if(trail.length>50)trail.shift();if(walk)stopWalk();openStep(x,null,false)}
+function back(){if(trail.length){const p=trail.pop();if(walk)stopWalk();openStep(p,null,false);return}if(walk)stopWalk();else closePop();sc.focus({preventScroll:true})}
+// soft keyboard: the focus page rides on the visual viewport, and its field (with the button under it) stays in view
 const VV=window.visualViewport;
 function vvSync(){if(!VV)return;const de=document.documentElement,kb=VV.scale>1.01?0:Math.max(0,Math.round(innerHeight-VV.height-VV.offsetTop));  // pinch-zoomed: leave it
   de.style.setProperty("--vvh",Math.round(VV.height)+"px");de.style.setProperty("--kb",kb+"px");de.classList.toggle("kbo",kb>60);
   if(!kb&&scrollY)scrollTo(0,0);  // iOS can leave the page panned after the keyboard closes
   keepInput()}
 function keepInput(){if(!narrow()||!pop.classList.contains("on"))return;const ai=pop.querySelector("[data-ans]");if(!ai)return;
-  const end=pop.querySelector(".ck,.yn,.acc")||ai,want=end.offsetTop+end.offsetHeight+12-pop.clientHeight,cap=ai.offsetTop-8;
-  const t=Math.max(0,Math.min(want,cap));if(pop.scrollTop<t||pop.scrollTop>cap)pop.scrollTop=t}
+  const pr=pop.getBoundingClientRect(),top=el=>el.getBoundingClientRect().top-pr.top+pop.scrollTop,ends=pop.querySelectorAll(".ck,.yn,.acc"),end=ends.length?ends[ends.length-1]:ai;
+  const want=top(end)+end.offsetHeight+12-pop.clientHeight,cap=top(ai)-8,t=Math.max(0,Math.min(want,cap));if(pop.scrollTop<t||pop.scrollTop>cap)pop.scrollTop=t}
 if(VV){VV.addEventListener("resize",vvSync);VV.addEventListener("scroll",vvSync)}
-let popKey="";  // a new card or phase starts at the top of the sheet
-function closePop(){pop.classList.remove("on");pop.innerHTML="";popKey="";side=null;step=null;link.clear();fresh.clear();req();updateGo()}
+let popKey="";  // a new card or phase starts at the top of the page
+// closing waits one frame: a branch that closes and reopens (stop the walk, open a word) never flickers through the atlas
+function closePop(){popKey="";step=null;link.clear();fresh.clear();tip.style.display="none";if(pop.contains(document.activeElement))sc.focus({preventScroll:true});
+  if(pop.classList.contains("on")&&!closing&&!leaving){closing=1;requestAnimationFrame(()=>{closing=0;if(step||!pop.classList.contains("on"))return;
+    trail=[];shownFor=-1;document.body.classList.remove("fx");
+    const end=()=>{const a=leaving;leaving=null;pop.classList.remove("on","leaving","pg");if(a)a.cancel();foL.innerHTML=foC.innerHTML=foR.innerHTML=foF.innerHTML=""};
+    if(RM||!pop.animate||auto){end();return}
+    pop.style.transformOrigin=tileOrigin(sel);pop.classList.add("leaving");
+    leaving=pop.animate([{opacity:1,transform:"none"},{opacity:0,transform:"scale(.3)"}],{duration:200,easing:"cubic-bezier(.4,0,1,1)",fill:"forwards"});leaving.onfinish=end})}
+  req();updateGo()}
+$("back").onclick=()=>back();
+$("home").onclick=()=>{trail=[];if(walk)stopWalk();else closePop();sc.focus({preventScroll:true})};
 
 // =====================================================================
 // THE WALK + STEPS: one engine; clicking a cell opens the step its state calls for
@@ -5716,9 +9108,9 @@ function finishProbe(){
 const CUE={word:"word → meaning",cloze:"fill the gap"};
 function openStep(i,kind,inWalk){
   const k=K(i);hideTip();fresh.clear();
-  if(!kind)kind=k.claimed?"verify":k.green?(due[i]?"due":"browse"):k.S>0?(due[i]?"due":"again"):"new";
+  if(!kind)kind=k.claimed?"verify":k.green?"page":k.S>0?(due[i]?"due":"again"):"new";  // a word that is yours opens its page; it is reviewed only when due, from the page or in the Walk
   const s=kind==="probe"?null:bestSent(i),learn=kind!=="probe"&&kind!=="verify"&&!k.green&&!k.claimed;  // not yours yet → the learn card
-  step={kind,i,phase:kind==="probe"?"probe":learn?"guess":kind==="browse"?"closed":"ask",learn,miss:0,guess:"",sent:s,gap:s?gapOf(s,i):[],typed:"",verdict:null,inWalk:!!inWalk,opened:null,cue:"word"};
+  step={kind,i,phase:kind==="probe"?"probe":kind==="page"?"page":learn?"guess":"ask",learn:learn&&kind!=="page",wiki:null,miss:0,guess:"",sent:s,gap:s?gapOf(s,i):[],typed:"",verdict:null,inWalk:!!inWalk,opened:null,cue:"word"};
   if(kind==="due"&&!learn&&s&&!step.gap.length)step.cue="cloze";
   sel=i;link.clear();if(s)s.ids.forEach(x=>{if(x!==i&&K(x).vis)link.add(x)});
   if(!auto){render();select(i,true)}
@@ -5775,126 +9167,181 @@ function answer(r){
   render();if(!seeded&&k.green&&(i===HOLA||i===MUNDO))showTip(1);
 }
 function openSentence(){step={kind:"sentence",i:MUNDO,phase:"spell",sent:SEED0,gap:[],typed:"",verdict:null,inWalk:!!walk,opened:null};sel=MUNDO;link.clear();SEED0.ids.forEach(x=>link.add(x));render();select(MUNDO,true)}
-function continueStep(){if(!step)return;if(step.inWalk&&walk){next();return}closePop();sc.focus()}
-function claimWord(i){const k=K(i);if(k.green||k.claimed)return;k.claimed=1;repaint(i);const op=branch(i);stats();save();if(step&&step.i===i){step.kind="browse";step.phase="open";step.opened=op?[op]:null;render()}}
+function continueStep(){if(!step)return;if(step.inWalk&&walk){next();return}const nx=nextUp(false);if(nx&&nx.i>=0){trail=[];openStep(nx.i,null,false);return}closePop();sc.focus()}
+function claimWord(i){const k=K(i);if(k.green||k.claimed)return;k.claimed=1;repaint(i);const op=branch(i);stats();save();if(step&&step.i===i){step.kind="page";step.phase="page";step.learn=false;step.opened=op?[op]:null;render()}}
 
 // =====================================================================
 // THE CARD
 // =====================================================================
 const head=w=>(w.art?'<i>'+w.art+' </i>':'')+esc(w.w);
-const field=(ph,lang)=>'<input class="ans" data-ans placeholder="'+ph+'" lang="'+lang+'" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="go">';
+const field=(ph,lang,cls)=>'<input class="ans'+(cls?' '+cls:'')+'" data-ans placeholder="'+ph+'" aria-label="'+ph+'" lang="'+lang+'" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="go">';
+const GAP='<input class="gap" data-ans aria-label="the missing word" lang="es" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="go">';
 const ACC='<div class="acc" role="group" aria-label="Accented letters">'+[..."áéíóúñü"].map(c=>'<button type="button" tabindex="-1" data-ch="'+c+'">'+c+'</button>').join("")+'</div>';
-const CHECK='<button class="big ck" data-act="check">check<small>enter</small></button>';
+const CHECK='<div class="acts"><button class="fb pri ck" data-act="check">check<small>enter</small></button></div>';
 const POSN={verb:"verb",noun:"noun",adj:"adjective",adv:"adverb",conj:"conjunction",prep:"preposition",pron:"pronoun",det:"determiner",art:"article",num:"number",interj:"interjection"};
-const posLabel=w=>(POSN[w.pos]||w.pos)+(w.pos==="noun"&&w.art?" · "+(w.art==="el"?"m":"f"):"");
-function sentHTML(s,target,mode){ // "ask" (target lit) · "cloze" (target blanked) · "plain"
+const posLabel=w=>(POSN[w.pos]||w.pos)+(w.pos==="noun"&&w.art?" · "+(w.art==="el"&&!ELF.has(w.w)?"m":"f"):"");
+const lemmaOf=x=>(words[x].art?words[x].art+" ":"")+words[x].w;
+function sentHTML(s,target,mode){ // "ask" (target lit) · "gap" (target is the answer field) · "ok" (target green) · "plain". Hover = the lemma of a word on the board, never a gloss.
   return s.parts.map(p=>{
     if(!p.alts)return esc(p.t);
     if(!p.alts.length)return'<span class="tk off">'+esc(p.t)+'</span>';
     const ids=p.alts.flat().filter(x=>typeof x==="number"),isT=ids.includes(target);
-    if(mode==="cloze"&&isT)return'<b>____</b>';
-    let c="tk";if(isT&&mode==="ask")c+=" tg";else if(!p.alts.every(a=>a.some(yours)))c+=" unk";
-    return'<span class="'+c+'" data-ids="'+ids.join(",")+'">'+esc(p.t)+'</span>';
+    if(mode==="gap"&&isT)return GAP;
+    const lv=isT?undefined:ids.find(x=>K(x).vis);
+    let c="tk";if(isT&&mode==="ask")c+=" tg";else if(isT&&mode==="ok")c+=" ok";else if(lv===undefined)c+=" fogw";else if(!p.alts.every(a=>a.some(yours)))c+=" unk";
+    return'<span class="'+c+'" data-ids="'+ids.join(",")+'"'+(lv!==undefined?' data-l="'+esc(lemmaOf(lv))+'"':'')+'>'+esc(p.t)+'</span>';
   }).join("");
 }
 function rateRow(i,sug){const S=K(i).S||0;const iv=r=>{if(r===1)return"10m";const s=S?S*(1+15*Math.pow(S,-.1)*(Math.exp(1-R(i))-1)*[0,0,.6,1,1.5][r]):S0[r];return fmtIv(ivlOf(s))};
   return'<div class="rate" role="group" aria-label="Rate">'+["again","hard","good","easy"].map((n,j)=>'<button data-r="'+(j+1)+'" class="'+(sug===j+1?"sug":"")+'">'+n+'<small>'+(j+1)+' · '+iv(j+1)+'</small></button>').join("")+'</div>'}
-function openedHTML(list){if(!list||!list.length)return'';return list.map(o=>'<div class="open"><div class="lab">opened</div><div class="sn">'+sentHTML(o.s,-1,"plain")+(readable(o.s)?'<span class="en">'+esc(o.s.en)+'</span>':'')+'</div>'+(o.nw.length?'<div class="chips">'+o.nw.map(x=>'<button class="chip new" data-go="'+x+'">'+esc(words[x].w)+'</button>').join("")+'<span class="chip" style="border:0;background:none;color:var(--overlay0)">new on the board</span></div>':'<div class="q" style="margin-top:4px">its words were already on the board</div>')+'</div>').join("")}
+const enOf=new Map();  // English shown on request (word page): sentence key → text
+function sentLine(o,i,mode){const ok=enOK(o,i);if(!ok)enOf.set(o.key,o.en);
+  return'<div class="sn">'+sentHTML(o,i,mode)+(ok?'<span class="en">'+esc(o.en)+'</span>':'<button class="enb" data-en="'+o.key+'">English</button>')+'</div>'}
+function openedBody(list){return list.map(o=>'<div class="sn">'+sentHTML(o.s,-1,"plain")+(readable(o.s)?'<span class="en">'+esc(o.s.en)+'</span>':'')+
+  (o.nw.length?'<div class="chips">'+o.nw.map(x=>'<button class="chip new" data-go="'+x+'">'+esc(words[x].w)+'</button>').join("")+'<span class="cap">new on the board</span></div>':'<p class="sm">its words were already on the board</p>')+'</div>').join("")}
+// Enter after a card goes on without the atlas: a word this card just opened, else the rest of its sentence, else (after a review) the next due word, else the best new word
+function nextUp(dry){
+  const cur=step.i,ok=x=>x!==cur&&K(x).vis&&!yours(x);
+  for(const o of step.opened||[]){const c=o.nw.filter(ok).sort((a,b)=>a-b);if(c.length)return{i:c[0]}}
+  if(step.sent&&step.kind!=="sentence"){const c=gapOf(step.sent,cur).filter(ok).sort((a,b)=>a-b);if(c.length)return{i:c[0]}}
+  const P=plan();
+  if(!step.learn&&step.kind!=="sentence"){let best=-1,bs=-1;P.due.forEach(x=>{if(x===cur)return;const s=share(x)*(1-R(x));if(s>bs){bs=s;best=x}});if(best>=0)return{i:best,rev:1}}
+  let c=P.cands.filter(x=>x!==cur);if(!c.length){if(dry)return P.newQ>0?{i:-1}:null;revealFrontier(6);stats();save();c=candidates().filter(x=>x!==cur)}
+  if(!c.length)return null;let best=-1,bs=-1;c.forEach(x=>{const s=bestSent(x),g=s?gapOf(s,x).length:9,sc=share(x)*(g<=1?2:g===2?1.3:1);if(sc>bs){bs=sc;best=x}});return{i:best}}
+// the word page walks the words that are yours, in board order
+function nextLearned(d){const g=order.filter(x=>K(x).green);if(!g.length)return-1;const j=g.indexOf(step.i);return g[((j<0?(d>0?-1:0):j)+d+g.length)%g.length]}
+let shownKeys=new Set(),shownFor=-1,tense=0;
 function render(){
-  if(!step)return;const{kind,i,phase}=step,w=words[i],k=K(i),s=step.sent;
-  let h='<div class="arr" id="arr"></div><button class="x" aria-label="Close">×</button>';
-  const KL={new:"new",verify:"you said you know this · verify",due:"due",again:"again",browse:k.green?"yours":k.claimed?"claimed":"learning",probe:"finding your frontier",sentence:"your first sentence"};
-  const gapNote=s&&kind!=="probe"&&kind!=="sentence"&&phase!=="after"?(step.gap.length?step.gap.length+' more to go in this sentence':'every other word is yours'):'';
-  h+='<div class="cl"><span>'+(step.learn?(phase==="after"&&k.green?"yours":k.S>0?"learning":"new word"):KL[kind])+(kind==="probe"?' · '+(probe.n+1):'')+'</span>'+(gapNote?'<i>'+gapNote+'</i>':'')+'</div>';
+  if(!step)return;const{kind,i,phase}=step,w=words[i],k=K(i),s=step.sent,v=step.verdict;
+  if(shownFor!==i){shownKeys=new Set();shownFor=i}
+  const keys=new Set();let nIt=0;
+  const item=(key,h4,body,cls)=>{keys.add(key);const keep=shownKeys.has(key);return'<div class="it'+(cls?' '+cls:'')+(keep?' keep':'')+'"'+(keep?'':' style="animation-delay:'+(90*nIt++)+'ms"')+'>'+(h4?'<h4>'+h4+'</h4>':'')+body+'</div>'};
+  const Lm=[],Rm=[];let c='',ft='';
+  const KL={new:"new",verify:"you said you know this · verify",due:"due",again:"again",page:k.green?"yours":k.claimed?"claimed":"learning",probe:"finding your frontier",sentence:"your first sentence"};
+  const gapNote=s&&kind!=="probe"&&kind!=="sentence"&&kind!=="page"&&phase!=="after"?(step.gap.length?step.gap.length+' more to go in this sentence':'every other word is yours'):kind==="page"&&due[i]?'due':'';
+  const done=phase==="after"&&(kind==="sentence"||k.green&&step.r>1);
+  c+='<div class="flab'+(done||kind==="page"&&k.green?' g':'')+'"><span>'+(step.learn?(phase==="after"&&k.green?"yours":k.S>0?"learning":"new word"):KL[kind])+(kind==="probe"?' · '+(probe.n+1):'')+'</span>'+(gapNote?'<i>'+gapNote+'</i>':'')+'</div>';
+  const enItem=x=>x&&enOK(x,i)?item("en","in English",'<p>'+esc(x.en)+'</p>'):'';
+  const grItem=()=>w.g?item("gr","grammar",'<p>'+esc(w.g)+'</p>'):'';
   const hideWord=phase==="spell"||phase==="recall"||(phase==="ask"&&step.cue==="cloze");
-  if(kind==="sentence")h+='<div class="ph"><h2>'+esc(SEED0.en)+'</h2></div>';
-  else h+='<div class="ph">'+(hideWord?'<h2 class="hid">'+esc(w.t)+'</h2>':'<h2>'+head(w)+'</h2>')+'<small>'+posLabel(w)+'</small></div>';
-  if(phase==="probe"){h+='<div class="q">Do you know what this means?</div><div class="yn"><button data-r="1">don’t<small>1</small></button><button data-r="2">know<small>2</small></button></div>'}
-  else if(phase==="closed"){h+='<div class="q">Recall the meaning before you look.</div><button class="big" data-act="reveal">reveal<small>space</small></button>'}
+  const sentMode=phase==="guess"||phase==="meet"||phase==="miss"||phase==="reveal"||phase==="rate"||(phase==="ask"&&step.cue!=="cloze")?"ask":hideWord?"gap":phase==="after"?(k.green&&step.r>1?"ok":"ask"):null;
+  const showS=s&&kind!=="sentence"&&kind!=="probe"&&kind!=="page"&&sentMode;
+  if(kind==="page")c+=pageHTML(w,k,item,Lm,Rm);
+  else if(kind==="sentence")c+=phase==="after"?'<div class="sx">'+sentHTML(SEED0,-1,"ok").replace(/class="tk"/g,'class="tk ok"')+'</div>':'<div class="sx cueen">'+esc(SEED0.en)+'</div>';
+  else if(hideWord)c+='<div class="hd cue">'+esc(w.t)+'<small>'+posLabel(w)+'</small></div>';
+  else c+='<div class="hd'+(showS?'':' solo')+'">'+head(w)+'<small>'+posLabel(w)+'</small></div>';
+  if(showS)c+='<div class="sx">'+sentHTML(s,i,sentMode)+(phase==="ask"&&step.cue==="cloze"?'<span class="en">'+esc(s.en)+'</span>':'')+'</div>';
+  if(phase==="probe")c+='<div class="nt">Do you know what this means?</div><div class="acts"><div class="yn"><button class="fb" data-r="1">don’t<small>1</small></button><button class="fb pri" data-r="2">know<small>2</small></button></div></div>';
   else if(phase==="guess"){
-    if(s)h+='<div class="cue">'+sentHTML(s,i,"ask")+'</div>';
-    h+='<div class="q">'+(s?'What might the lit word mean?':'What might it mean?')+' Guess before you look — a wrong guess still helps it stick.</div>'+field("your guess, in English","en")+'<div class="yn"><button data-act="skip">no idea</button><button data-act="guess">guess<small>enter</small></button></div>';
+    c+='<div class="nt">'+(s?'What might the lit word mean?':'What might it mean?')+' Guess before you look — a wrong guess still helps it stick.</div>'+field("your guess, in English","en")+'<div class="acts"><div class="yn"><button class="fb" data-act="skip">no idea</button><button class="fb pri" data-act="guess">guess<small>enter</small></button></div></div>';
+    let l='';if(!k.S&&!walk)l+='<button class="lnk" data-act="claim">I already know this</button>';
+    if(!seeded&&!probed&&i===HOLA)l+='<button class="lnk" data-act="probe">I already know some Spanish → find my frontier</button>';
+    if(l)c+='<div class="lnks">'+l+'</div>';
   }
   else if(phase==="meet"||phase==="miss"){
-    h+='<div class="tr">'+esc(w.t)+'</div>';
-    if(phase==="meet"&&step.guess){const ok=guessClose(step.guess,w.t);h+='<div class="gs'+(ok?' ok':'')+'">'+(ok?'✓ ':'')+'you guessed <b>'+esc(step.guess)+'</b></div>'}
-    if(phase==="miss")h+='<div class="vd bad">✗ you wrote <b>'+esc(step.typed)+'</b> — it is <b>'+esc(s?surfaceOf(s,i):w.w)+'</b></div>';
-    if(s)h+='<div class="cue" style="font-size:16px;margin-top:6px">'+sentHTML(s,i,"ask")+(enOK(s,i)?'<span class="en">'+esc(s.en)+'</span>':'')+'</div>';
-    if(w.g)h+='<div class="gr">'+esc(w.g)+'</div>';
-    h+='<button class="big" data-act="recall">'+(phase==="miss"?'try again':'now recall it')+'<small>enter</small></button>';
+    c+='<div class="mean">'+esc(w.t)+'</div>';
+    if(phase==="meet"&&step.guess){const ok=guessClose(step.guess,w.t);c+='<div class="gs'+(ok?' ok':'')+'">'+(ok?'✓ ':'')+'you guessed <b>'+esc(step.guess)+'</b></div>'}
+    if(phase==="miss")c+='<div class="vd bad">✗ you wrote <b>'+esc(step.typed)+'</b> — it is <b>'+esc(s?surfaceOf(s,i):w.w)+'</b></div>';
+    Lm.push(enItem(s));Rm.push(grItem());
+    c+='<div class="acts"><button class="fb pri" data-act="recall">'+(phase==="miss"?'try again':'now recall it')+'<small>enter</small></button></div>';
   }
   else if(phase==="ask"){
-    if(step.cue==="cloze"){h+='<div class="cue">'+sentHTML(s,i,"cloze")+'<span class="en">'+esc(s.en)+'</span></div>'+field("type the missing word — or just think it","es")+ACC}
-    else if(s){h+='<div class="cue">'+sentHTML(s,i,"ask")+'</div><div class="q">Read it. Recall the lit word, then reveal.</div>'}
-    else h+='<div class="q">Recall the meaning, then reveal.</div>';
-    h+='<button class="big" data-act="reveal">reveal<small>space</small></button>';
+    if(step.cue==="cloze")c+='<div class="nt">Type the missing word — or just think it.</div>'+ACC;
+    else c+='<div class="nt">'+(s?'Read it. Recall the lit word, then reveal.':'Recall the meaning, then reveal.')+'</div>';
+    c+='<div class="acts"><button class="fb pri" data-act="reveal">reveal<small>space</small></button></div>';
   }
   else if(phase==="spell"||phase==="recall"){
-    if(kind==="sentence"){h+='<div class="q">You know every word of your first sentence. Type it in Spanish — punctuation optional.</div>'+(step.wrong?'<div class="vd bad">not quite — <b>'+esc(SEED0.es)+'</b></div>':'')+field("type the sentence","es")+ACC+CHECK}
-    else{h+=(s?'<div class="cue">'+sentHTML(s,i,"cloze")+(enOK(s,i)?'<span class="en">'+esc(s.en)+'</span>':'')+'</div>':'')+'<div class="q">'+(phase==="recall"?'Now type the Spanish from memory.':'Spell it from memory.')+'</div>'+field("type it","es")+ACC+CHECK}
+    if(kind==="sentence")c+='<div class="nt">You know every word of your first sentence. Type it in Spanish — punctuation optional.</div>'+(step.wrong?'<div class="vd bad">not quite — <b>'+esc(SEED0.es)+'</b></div>':'')+field("type the sentence","es","wide")+ACC+CHECK;
+    else{if(!s)c+=field("type it","es");c+='<div class="nt">'+(phase==="recall"?'Now type the Spanish from memory.':'Spell it from memory.')+'</div>'+ACC+CHECK;Lm.push(enItem(s))}
   }
-  else{ // reveal · rate · after · open
-    const v=step.verdict;
-    if(phase!=="after"||kind!=="sentence")h+='<div class="tr">'+esc(w.t)+'</div>';
-    if(s&&(phase==="reveal"||phase==="rate"))h+='<div class="cue" style="font-size:16px;margin-top:6px">'+sentHTML(s,i,"ask")+(enOK(s,i)?'<span class="en">'+esc(s.en)+'</span>':'')+'</div>';
-    if(w.g&&phase!=="after")h+='<div class="gr">'+esc(w.g)+'</div>';
+  else if(phase!=="page"){ // reveal · rate · after
+    if(phase!=="after"||kind!=="sentence")c+='<div class="mean">'+esc(w.t)+'</div>';
+    if(s&&kind!=="sentence")Lm.push(enItem(s));
+    if(kind==="sentence")Lm.push(item("en","in English",'<p>'+esc(SEED0.en)+'</p>'));
+    if(kind!=="sentence")Rm.push(grItem());
     if(v&&(phase==="rate"||(phase==="reveal"&&step.cue==="cloze"))){
-      if(v.ok&&v.acc)h+='<div class="vd">✓ nearly — mind the accent: <b>'+esc(s?surfaceOf(s,i):w.w)+'</b></div>';
-      else if(v.ok)h+='<div class="vd ok">✓ '+esc(step.typed)+'</div>';
-      else h+='<div class="vd bad">✗ you wrote <b>'+esc(step.typed)+'</b> — it is <b>'+esc(s?surfaceOf(s,i):w.w)+'</b></div>'}
-    if(phase==="reveal"){
-      if(kind==="due"&&step.cue==="word"||kind==="due"&&step.cue==="cloze")h+=rateRow(i,suggested());
-      else h+='<button class="big" data-act="spell">spell it<small>enter</small></button>';
-    }
-    else if(phase==="rate")h+=rateRow(i,suggested());
-    else if(phase==="after"){
-      if(kind==="sentence")h+='<div class="open ok"><b>✓ '+esc(SEED0.es)+'</b> — your first sentence is readable, and both words opened sentences of their own.</div>'+openedHTML(step.opened);
-      else{
-        if(k.green&&step.r>1)h+='<div class="open ok"><b>✓ '+esc(w.w)+'</b> is yours'+(step.readNew>0?' · <b>+'+step.readNew+'</b> sentence'+(step.readNew>1?'s':'')+' readable':'')+'.</div>';
-        else if(step.r===1)h+='<div class="open">Not yet — '+(step.inWalk&&walk?'it comes back in a few steps.':'it stays on the board as learning; try it again any time.')+'</div>';
-        else if(step.readNew>0)h+='<div class="open ok">+<b>'+step.readNew+'</b> sentence'+(step.readNew>1?'s':'')+' readable.</div>';
-        h+=openedHTML(step.opened);
-        if(k.green&&!step.opened&&step.r>1){const other=i===HOLA?MUNDO:i===MUNDO?HOLA:-1;h+=!seeded&&other>=0&&!K(other).green?'<div class="q">Now the other one: <button class="chip new" data-go="'+other+'">'+esc(words[other].w)+'</button> — then you will type your first sentence.</div>':'<div class="q">No new sentence this time.</div>'}
-      }
-      h+='<button class="big" data-act="cont">'+(step.inWalk&&walk?'continue':'close')+'<small>enter</small></button>';
-    }
-    else{ // open: the browsing card of a yours / learning word
-      h+='<div class="sched">'+(k.S>0?'stable '+fmtD(k.S)+' · '+(due[i]?'due now':'due in '+Math.max(1,Math.ceil(ivlOf(k.S)-(day-k.last)))+' d')+' · '+k.reps+' review'+(k.reps===1?'':'s')+(k.lapses?' · '+k.lapses+' slip'+(k.lapses>1?'s':''):''):k.claimed?'claimed · the walk will verify it':'not yet yours')+'</div>';
-      if(step.opened)h+=openedHTML(step.opened);
-      else if(k.opened.length)h+='<div class="open"><div class="lab">sentences you opened from here</div>'+k.opened.map(key=>{const o=SK.get(key);return o?'<div class="sn">'+sentHTML(o,-1,"plain")+(readable(o)?'<span class="en">'+esc(o.en)+'</span>':'')+'</div>':''}).join("")+'</div>';
-      if(k.green||k.claimed){const more=(INV.get(i)||[]).some(x=>!openedS.has(x.key)&&sentScore(x,i)!=null);h+='<button class="lnk" data-act="branch"'+(more?'':' disabled style="opacity:.5"')+'>'+(more?'open another sentence · b':'no more sentences here yet')+'</button>'}
-      if(k.S>0||k.claimed)h+='<button class="lnk" data-act="test">test me · space</button>';
+      if(v.ok&&v.acc)c+='<div class="vd">✓ nearly — mind the accent: <b>'+esc(s?surfaceOf(s,i):w.w)+'</b></div>';
+      else if(v.ok)c+='<div class="vd ok">✓ '+esc(step.typed)+'</div>';
+      else c+='<div class="vd bad">✗ you wrote <b>'+esc(step.typed)+'</b> — it is <b>'+esc(s?surfaceOf(s,i):w.w)+'</b></div>'}
+    if(phase==="reveal")c+='<div class="acts">'+(kind==="due"?rateRow(i,suggested()):'<button class="fb pri" data-act="spell">spell it<small>enter</small></button>')+'</div>';
+    else if(phase==="rate")c+='<div class="acts">'+rateRow(i,suggested())+'</div>';
+    else{ // after
+      if(kind==="sentence")c+='<div class="nt ok"><b>✓</b> your first sentence is readable, and both words opened sentences of their own.</div>';
+      else if(k.green&&step.r>1)c+='<div class="nt ok"><b>✓ '+esc(w.w)+'</b> is yours'+(step.readNew>0?' · <b>+'+step.readNew+'</b> sentence'+(step.readNew>1?'s':'')+' readable':'')+'.</div>';
+      else if(step.r===1)c+='<div class="nt">Not yet — '+(step.inWalk&&walk?'it comes back in a few steps.':'it stays on the board as learning; try it again any time.')+'</div>';
+      else if(step.readNew>0)c+='<div class="nt ok">+<b>'+step.readNew+'</b> sentence'+(step.readNew>1?'s':'')+' readable.</div>';
+      if(step.opened)Rm.push(item("op","opened",openedBody(step.opened)));
+      if(kind!=="sentence"&&k.green&&!step.opened&&step.r>1){const other=i===HOLA?MUNDO:i===MUNDO?HOLA:-1;c+=!seeded&&other>=0&&!K(other).green?'<div class="nt">Now the other one: <button class="chip new" data-go="'+other+'">'+esc(words[other].w)+'</button> — then you will type your first sentence.</div>':'<div class="nt">No new sentence this time.</div>'}
+      const nx=step.inWalk&&walk?null:nextUp(true);step.nx=nx;
+      c+='<div class="acts"><button class="fb pri" data-act="cont">'+(step.inWalk&&walk?'continue':nx?(nx.rev?'next review':'next word'):'back to atlas')+'<small>enter</small></button></div>';
     }
   }
-  if(phase==="guess"&&!k.S&&!walk)h+='<button class="lnk" data-act="claim">I already know this</button>';
-  if(phase==="guess"&&!seeded&&!probed&&i===HOLA)h+='<button class="lnk" data-act="probe">I already know some Spanish → find my frontier</button>';
-  h+='<div class="kb">'+(kind==="probe"?'<kbd>1</kbd> don’t · <kbd>2</kbd> know · <kbd>esc</kbd> stop':phase==="ask"||phase==="closed"?'<kbd>space</kbd> reveal · <kbd>esc</kbd> '+(walk?'stop':'close'):phase==="rate"||(phase==="reveal"&&kind==="due")?'<kbd>1–4</kbd> rate · <kbd>enter</kbd> '+["","again","hard","good","easy"][suggested()]+' · <kbd>esc</kbd> '+(walk?'stop':'close'):phase==="reveal"?'<kbd>enter</kbd> spell it':phase==="spell"||phase==="recall"?'<kbd>enter</kbd> check':phase==="guess"?'<kbd>enter</kbd> guess — empty is no idea · <kbd>esc</kbd> '+(walk?'stop':'close'):phase==="meet"||phase==="miss"?'<kbd>enter</kbd> '+(phase==="miss"?'try again':'recall it'):phase==="after"?'<kbd>enter</kbd> '+(step.inWalk&&walk?'continue':'close'):'<kbd>←→</kbd> move · <kbd>esc</kbd> close')+'</div>';
-  pop.innerHTML=h;pop.classList.add("on");wire(w,k);if(needLayout)layout();place();if(popKey!==i+":"+phase){popKey=i+":"+phase;pop.scrollTop=0;keepInput()}tip.style.display="none";req();
+  // footer: the keys
+  const esc_=trail.length?'back':walk?'stop':'atlas';
+  ft='<span class="kbh">'+(kind==="probe"?'<kbd>1</kbd> don’t · <kbd>2</kbd> know · <kbd>esc</kbd> stop':kind==="page"?'<kbd>←</kbd> <kbd>→</kbd> words that are yours · <kbd>enter</kbd> next'+(due[i]?' · <kbd>space</kbd> review now':'')+' · <kbd>b</kbd> open another sentence · <kbd>esc</kbd> '+esc_:phase==="ask"?'<kbd>space</kbd> reveal · <kbd>esc</kbd> '+esc_:phase==="rate"||(phase==="reveal"&&kind==="due")?'<kbd>1–4</kbd> rate · <kbd>enter</kbd> '+["","again","hard","good","easy"][suggested()]+' · <kbd>esc</kbd> '+esc_:phase==="reveal"?'<kbd>enter</kbd> spell it':phase==="spell"||phase==="recall"?'<kbd>enter</kbd> check · <kbd>esc</kbd> '+esc_:phase==="guess"?'<kbd>enter</kbd> guess — empty is no idea · <kbd>esc</kbd> '+esc_:phase==="meet"||phase==="miss"?'<kbd>enter</kbd> '+(phase==="miss"?'try again':'recall it'):phase==="after"?'<kbd>enter</kbd> '+(step.inWalk&&walk?'continue':step.nx&&step.nx.i>=0?(step.nx.rev?'next review · ':'next word · ')+'<b>'+esc(words[step.nx.i].w)+'</b>':step.nx?'next word':'back to atlas')+' · <kbd>esc</kbd> '+esc_:'')+'</span>';
+  foOpen(i);
+  pop.classList.toggle("pg",kind==="page");
+  $("backt").textContent=trail.length?"← "+words[trail[trail.length-1]].w:walk?"stop":"atlas";$("home").hidden=!trail.length;
+  foL.innerHTML=Lm.join("");foC.innerHTML=c;foR.innerHTML=Rm.join("");foF.innerHTML=ft;shownKeys=keys;syncHint();
+  wire(w,k);if(needLayout)layout();
+  if(popKey!==i+":"+phase){popKey=i+":"+phase;pop.scrollTop=0;keepInput()}
+  tip.style.display="none";drawMini();req();
 }
+// the word page: a word that is yours is no longer practised here; the page shows it, its forms and the sentences it lives in, and every word in them leads on
+function pageHTML(w,k,item,Lm,Rm){const i=w.i;let c='<div class="hd solo">'+head(w)+'</div><div class="gl">'+esc(w.t)+'</div>';
+  const cj=conjOf(w),nf=w.pos==="noun"?nounForms(w):null,tags=[[POSW[w.pos]||"",POSN[w.pos]||w.pos]];
+  if(nf)tags.push(["gender",nf.g==="f"?"feminine":nf.g==="mf"?"masculine or feminine":"masculine"]);
+  if(cj&&cj.c==="i")tags.push(["irregular-verb","irregular"]);else if(cj&&cj.c==="s")tags.push(["stem-changing-verb","stem-changing"]);
+  c+='<div class="tags">'+tags.map(([id,t])=>WIKI[id]?'<button class="tag'+(step.wiki===id?' on':'')+'" data-wiki="'+id+'" title="'+esc(WIKI[id][1])+'">'+esc(t)+'</button>':'<span class="tag">'+esc(t)+'</span>').join("")+'</div>';
+  if(cj){const T=["present","preterite","imperfect","future","subjunctive","command"],TK="ptifsm",P=["yo","tú","él · usted","nosotros","vosotros","ellos · ustedes"];
+    c+='<div class="forms"><div class="tz" role="tablist">'+T.map((t,j)=>'<button data-tz="'+j+'" class="'+(tense===j?'on':'')+'">'+t+'</button>').join("")+'</div>';
+    c+='<table class="cj" data-s="'+tense+'"><thead><tr><th></th>'+T.map((t,j)=>'<th data-t="'+j+'">'+t+'</th>').join("")+'</tr></thead><tbody>'+P.map((p,r)=>'<tr><th scope="row">'+p+'</th>'+[...TK].map((t,j)=>{const key=t+(r+1),f=cj.o[key];return'<td data-t="'+j+'"'+(cj.irr.has(key)?' class="x"':'')+'>'+(t==="m"&&r===0?'':esc(f||""))+'</td>'}).join("")+'</tr>').join("")+'</tbody></table>';
+    c+='<div class="vx"><span>gerund <b'+(cj.irr.has("g")?' class="x"':'')+'>'+esc(cj.o.g)+'</b></span><span>participle <b'+(cj.irr.has("d")?' class="x"':'')+'>'+esc(cj.o.d)+'</b></span></div></div>'}
+  else if(nf)c+='<div class="forms"><div class="nf">'+nf.r.map(([a,sg,pa,pl,x])=>'<span><i>'+a+'</i> '+esc(sg)+'</span><span'+(x?' class="x"':'')+'><i>'+pa+'</i> '+esc(pl)+'</span>').join("")+'</div></div>';
+  else if(w.pos==="adj"){const a=adjForms(w);c+='<div class="forms"><div class="nf">'+(a.f===w.w?'<span>'+esc(w.w)+'</span><span'+(a.x.mp?' class="x"':'')+'>'+esc(a.mp)+'</span>':'<span>'+esc(w.w)+'</span><span'+(a.x.mp?' class="x"':'')+'>'+esc(a.mp)+'</span><span'+(a.x.f?' class="x"':'')+'>'+esc(a.f)+'</span><span'+(a.x.fp?' class="x"':'')+'>'+esc(a.fp)+'</span>')+'</div></div>'}
+  if(due[i])c+='<div class="acts"><button class="fb quiet" data-act="review">review now<small>space</small></button></div>';
+  // left: what the grammar wiki says, the grammar line, memory
+  if(step.wiki&&WIKI[step.wiki]){const e=WIKI[step.wiki];Lm.push(item("wk"+step.wiki,esc(e[0]),'<p>'+esc(e[1])+'</p><p class="sm">'+esc(e[2]).replace(/\*\*(.+?)\*\*/g,"<b>$1</b>")+'</p>'))}
+  if(w.g)Lm.push(item("gr","grammar",'<p>'+esc(w.g)+'</p>'));
+  if(k.S>0)Lm.push(item("mem","memory",'<p class="sm">stable '+fmtD(k.S)+' · '+(due[i]?'due now':'next review in '+Math.max(1,Math.ceil(ivlOf(k.S)-(day-k.last)))+' d')+' · '+k.reps+' review'+(k.reps===1?'':'s')+'</p>'));
+  else if(k.claimed)Lm.push(item("mem","memory",'<p class="sm">claimed · the walk will verify it</p>'));
+  // right: every sentence it is in — the ones you opened first, a just-opened one on top with its new words
+  const op=step.opened||[],opK=new Set(op.map(o=>o.s.key)),all=(INV.get(i)||[]).filter(o=>!opK.has(o.key)).sort((a,b)=>(openedS.has(b.key)-openedS.has(a.key))||a.n-b.n);
+  const cap=step.allS?all.length:8;
+  let r=op.length?openedBody(op):'';r+=all.slice(0,cap).map(o=>sentLine(o,i,"ok")).join("");
+  if(all.length>cap)r+='<button class="lnk" data-act="alls">all '+all.length+' sentences</button>';
+  const more=(k.green||k.claimed)&&(INV.get(i)||[]).some(x=>!openedS.has(x.key)&&sentScore(x,i)!=null);
+  if(more)r+='<div><button class="lnk" data-act="branch">open another sentence · b</button></div>';
+  if(r)Rm.push(item("sl",op.length?"opened · in sentences":"in sentences",r));
+  return c}
 function wire(w,k){
   const d=pop;
-  d.querySelector(".x").onclick=()=>{if(walk)stopWalk();else closePop();sc.focus()};
   d.querySelectorAll("[data-r]").forEach(b=>b.onclick=()=>answer(+b.dataset.r));
   d.querySelectorAll("[data-act]").forEach(b=>b.onclick=()=>{const a=b.dataset.act;
     if(a==="reveal")reveal();else if(a==="spell")toSpell();else if(a==="cont")continueStep();
     else if(a==="guess")commitGuess();else if(a==="skip"){const ai=d.querySelector("[data-ans]");if(ai)ai.value="";commitGuess()}else if(a==="recall")toRecall();
     else if(a==="check"){if(step.phase==="spell")spelled();else if(step.phase==="recall")recalled()}
-    else if(a==="test"){openStep(step.i,k.green||k.claimed?"due":"again",false)}
+    else if(a==="review")openStep(step.i,"due",false);
+    else if(a==="alls"){step.allS=1;render()}
     else if(a==="claim")claimWord(step.i);else if(a==="probe")startProbe();
-    else if(a==="branch"){const op=branch(step.i);if(op){reorder();layout();stats();save();step.opened=[op];render()}}});
-  d.querySelectorAll("[data-go]").forEach(b=>b.onclick=e=>{e.stopPropagation();if(walk)stopWalk();openStep(+b.dataset.go,null,false)});
+    else if(a==="branch")branchHere()});
+  d.querySelectorAll("[data-go]").forEach(b=>b.onclick=e=>{e.stopPropagation();goWord(+b.dataset.go)});
+  d.querySelectorAll("[data-wiki]").forEach(b=>b.onclick=()=>{step.wiki=step.wiki===b.dataset.wiki?null:b.dataset.wiki;render()});
+  d.querySelectorAll("[data-tz]").forEach(b=>b.onclick=()=>{tense=+b.dataset.tz;render()});
+  d.querySelectorAll("[data-en]").forEach(b=>b.onclick=()=>{const t=enOf.get(b.dataset.en);if(t==null)return;const sp=document.createElement("span");sp.className="en";sp.textContent=t;b.replaceWith(sp)});
   const ai=d.querySelector("[data-ans]");
   d.querySelectorAll("[data-ch]").forEach(b=>{const keep=e=>e.preventDefault();b.addEventListener("pointerdown",keep);b.addEventListener("mousedown",keep);  // keep the field focused: the soft keyboard stays up
-    b.onclick=()=>{if(!ai)return;const a=document.activeElement===ai?ai.selectionStart:ai.value.length,z=document.activeElement===ai?ai.selectionEnd:a;ai.setRangeText(b.dataset.ch,a,z,"end");ai.focus({preventScroll:true})}});
+    b.onclick=()=>{if(!ai)return;const a=document.activeElement===ai?ai.selectionStart:ai.value.length,z=document.activeElement===ai?ai.selectionEnd:a;ai.setRangeText(b.dataset.ch,a,z,"end");ai.dispatchEvent(new Event("input"));ai.focus({preventScroll:true})}});
   if(ai){ai.addEventListener("focus",()=>{keepInput();setTimeout(keepInput,350)});
-    ai.addEventListener("keydown",e=>{e.stopPropagation();if(e.key==="Enter"||e.keyCode===13){e.preventDefault();if(step.phase==="spell")spelled();else if(step.phase==="guess")commitGuess();else if(step.phase==="recall")recalled();else reveal()}if(e.key==="Escape"){e.preventDefault();if(walk)stopWalk();else closePop()}});
+    if(ai.classList.contains("gap"))ai.addEventListener("input",()=>{ai.style.width=Math.max(4,ai.value.length*.62+1.4)+"em"});
+    ai.addEventListener("keydown",e=>{e.stopPropagation();if(!step)return;if(e.key==="Enter"||e.keyCode===13){e.preventDefault();if(step.phase==="spell")spelled();else if(step.phase==="guess")commitGuess();else if(step.phase==="recall")recalled();else reveal()}if(e.key==="Escape"){e.preventDefault();back()}});
     // touch: the keyboard opens by itself only where typing is the step (recall, spell) and a tap led here; the guess keeps "no idea" one tap away
-    if(!matchMedia("(hover:none)").matches)ai.focus();
+    if(!matchMedia("(hover:none)").matches)ai.focus({preventScroll:true});
     else if((step.phase==="recall"||step.phase==="spell")&&(!navigator.userActivation||navigator.userActivation.isActive))ai.focus({preventScroll:true})}
   d.querySelectorAll(".tk[data-ids]").forEach(t=>{const ids=t.dataset.ids.split(",").map(Number);
-    t.addEventListener("mouseenter",()=>{const x=ids.find(x=>K(x).vis);if(x!==undefined){hov=x;req()}});t.addEventListener("mouseleave",()=>{hov=-1;req()});
-    t.onclick=e=>{e.stopPropagation();if(ids.includes(step.i))return;const x=ids.find(x=>K(x).vis)??ids[0];if(!K(x).vis)return;if(walk)stopWalk();openStep(x,null,false)}});
+    t.onclick=e=>{e.stopPropagation();if(ids.includes(step.i))return;const x=ids.find(x=>K(x).vis);if(x===undefined)return;goWord(x)}});
 }
+function branchHere(){if(!step)return;const op=branch(step.i);if(op){reorder();layout();stats();save();step.opened=[op];render()}}
 function updateGo(){
   go.classList.remove("on","done");
   if(walk){go.textContent="■ stop";simText();return}
@@ -5960,7 +9407,7 @@ cv.addEventListener("touchend",e=>{
   tt=null;
 },{passive:false});
 sc.addEventListener("wheel",e=>{if(!(e.ctrlKey||e.metaKey))return;e.preventDefault();const[x,y]=local(e);let i=hit(x,y);if(i<0)i=hit(L.W/2,y);const c=i>=0?cellXY(i):null;setZoom(zoom-e.deltaY*(e.deltaMode?0.05:0.0016),i,c?c.y-sc.scrollTop:null)},{passive:false});
-sc.addEventListener("scroll",()=>{req();if(pop.classList.contains("on")&&!narrow())place()},{passive:true});
+sc.addEventListener("scroll",req,{passive:true});
 document.addEventListener("pointerdown",e=>{if(pop.classList.contains("on")&&!walk&&!pop.contains(e.target)&&e.target!==cv&&!e.target.closest(".bar")&&!e.target.closest(".sim"))closePop()});
 new ResizeObserver(()=>{if(sc.clientWidth===L.W&&sc.clientHeight===L.vh)return;const a=sel>=0&&isVisible(sel)?sel:null;setZoom(zoom,a);stats()}).observe(sc);
 $("zm").onclick=()=>zoomStep(-1);$("zp").onclick=()=>zoomStep(1);$("z0").onclick=()=>setZoom(0);
@@ -5974,21 +9421,28 @@ function moveSel(d){ // over the found cards: ←→ by rank, ↑↓ by row of t
 document.addEventListener("keydown",e=>{
   const t=e.target;if(t===fq||t.tagName==="INPUT"||t.tagName==="TEXTAREA")return;
   if(e.ctrlKey||e.metaKey||e.altKey)return;
-  const k=e.key,open=pop.classList.contains("on");
+  const k=e.key,open=pop.classList.contains("on")&&!!step;
   const arrow={ArrowLeft:"L",ArrowRight:"R",ArrowUp:"U",ArrowDown:"D"}[k];
   if(k==="`"){$("sim").classList.toggle("on");setTimeout(()=>setZoom(zoom),0);return}
+  // the word page: ← → and Enter step through the words that are yours; Space reviews a due one; b opens another sentence
+  if(open&&step.kind==="page"){
+    const onBtn=t.tagName==="BUTTON"&&t.closest("#pop");
+    if(k==="ArrowRight"||k==="ArrowLeft"||(k==="Enter"&&!onBtn)){e.preventDefault();const x=nextLearned(k==="ArrowLeft"?-1:1);if(x>=0&&x!==step.i)openStep(x,null,false);return}
+    if(k==="ArrowUp"||k==="ArrowDown"){e.preventDefault();return}
+    if(k===" "&&!onBtn){e.preventDefault();if(due[step.i])openStep(step.i,"due",false);return}
+    if(k==="b"){e.preventDefault();branchHere();return}
+  }
   if(arrow){e.preventDefault();if(step&&step.kind==="probe")return;moveSel(arrow);return}
-  if(k==="Escape"){e.preventDefault();hideTip();if(walk)stopWalk();else if(open)closePop();sc.focus();return}
+  if(k==="Escape"){e.preventDefault();hideTip();if(open)back();else{if(walk)stopWalk();sc.focus()}return}
   if(k==="g"||k==="G"){e.preventDefault();autoLearn(k==="g"?1:10);return}
   if(step&&open){
     const ph=step.phase;
     if(step.kind==="probe"){if(k==="1"||k==="2")answer(+k);return}
-    if(k===" "||k==="Enter"){if(t.closest&&t.closest(".pop")&&t.tagName==="BUTTON"&&k==="Enter")return;e.preventDefault();
+    if(k===" "||k==="Enter"){if(t.closest&&t.closest("#pop")&&t.tagName==="BUTTON"&&k==="Enter")return;e.preventDefault();
       if(ph==="guess")commitGuess();else if(ph==="meet"||ph==="miss")toRecall();else if(ph==="recall")recalled();
-      else if(ph==="ask"||ph==="closed")reveal();else if(ph==="reveal"){if(step.kind==="due")answer(suggested());else toSpell()}else if(ph==="rate")answer(suggested());else if(ph==="after")continueStep();else if(ph==="open"&&k===" ")openStep(step.i,K(step.i).green||K(step.i).claimed?"due":"again",false);return}
+      else if(ph==="ask"||ph==="closed")reveal();else if(ph==="reveal"){if(step.kind==="due")answer(suggested());else toSpell()}else if(ph==="rate")answer(suggested());else if(ph==="after")continueStep();return}
     if(/^[1-4]$/.test(k)&&(ph==="rate"||(ph==="reveal"&&step.kind==="due"))){e.preventDefault();answer(+k);return}
     if(k==="k"&&!walk&&ph==="guess"&&!K(step.i).S){e.preventDefault();claimWord(step.i);return}
-    if(k==="b"&&ph==="open"){e.preventDefault();const op=branch(step.i);if(op){reorder();layout();stats();save();step.opened=[op];render()}return}
     if(walk)return;
   }
   switch(k){
@@ -6046,7 +9500,7 @@ else if(seedDone())openSentence();
 else if(!nYours&&!probed)showTip(0);
 draw();sc.focus({preventScroll:true});
 {const ai=pop.querySelector("[data-ans]");if(ai&&!matchMedia("(hover:none)").matches)ai.focus()}  // a card opened at load (reload mid-ritual, ?open) keeps its input focused
-window.__fog={L:()=>L,cellXY,hit,sc,surfaceOf,setZoom,draw,N,words,K,IDX,bank,step:()=>step,walk:()=>walk,startWalk,answer,reveal,toSpell,spelled,commitGuess,toRecall,recalled,continueStep,openStep,autoLearn,advance,select,stats,candidates,order:()=>order,fresh,appear,glide,yours,gapOf,day:()=>day,nRead:()=>nRead,openedS,branch,startProbe,probe:()=>probe};
+window.__fog={revealCell,reorder,repaint,flushAppear,goWord,back,trail:()=>trail,nextLearned,nextUp,ML:()=>ML,L:()=>L,cellXY,hit,sc,surfaceOf,setZoom,draw,N,words,K,IDX,bank,step:()=>step,walk:()=>walk,startWalk,answer,reveal,toSpell,spelled,commitGuess,toRecall,recalled,continueStep,openStep,autoLearn,advance,select,stats,candidates,order:()=>order,fresh,appear,glide,yours,gapOf,day:()=>day,nRead:()=>nRead,openedS,branch,startProbe,probe:()=>probe};
 </script>
 </body>
 </html>
