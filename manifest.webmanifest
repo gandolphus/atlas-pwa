@@ -1,7 +1,7 @@
 {
-  "name": "Atlas",
-  "short_name": "Atlas",
-  "description": "A map of Spanish by frequency.",
+  "name": "Sektile",
+  "short_name": "Sektile",
+  "description": "Spanish, one tile at a time.",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#11111b",
@@ -9,23 +9,8 @@
   "start_url": "./",
   "scope": "./",
   "icons": [
-    {
-      "src": "icons/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icons/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icons/icon-maskable-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
-    }
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }
