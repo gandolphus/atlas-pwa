@@ -1,9 +1,9 @@
-// Sektile service worker, generated at build time (vite.config.ts). Version: 9303ce5dc6d3
-const CACHE = 'sektile-9303ce5dc6d3';
+// Sektile service worker, generated at build time (vite.config.ts). Version: 750e29224326
+const CACHE = 'sektile-750e29224326';
 const PRECACHE = [
  "./",
- "assets/index-C8e4hkZ-.css",
- "assets/index-LVuw6r4B.js",
+ "assets/index-B7Q_Nv7D.css",
+ "assets/index-DKM2-w78.js",
  "content/forms.791f5da063.json",
  "content/index.json",
  "content/sentences.b8b29446ad.json",
