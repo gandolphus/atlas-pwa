@@ -1,5 +1,5 @@
-// Sektile service worker, generated at build time (vite.config.ts). Version: 06a67868456c
-const CACHE = 'sektile-06a67868456c';
+// Sektile service worker, generated at build time (vite.config.ts). Version: 35cb923a08ec
+const CACHE = 'sektile-35cb923a08ec';
 const PRECACHE = [
  "./",
  ".git/COMMIT_EDITMSG",
@@ -54,6 +54,7 @@ const PRECACHE = [
  ".git/objects/1f/886facf0322c34daf40f486126c2379645e4a4",
  ".git/objects/1f/c8fe7361c49b4aa29184455bdf95059ebd0ec8",
  ".git/objects/20/06ce139f6314268913c57831265e93ec39fed0",
+ ".git/objects/22/4345c07a7c3578ec50679445e786488abdc0ae",
  ".git/objects/24/ac00d9218e186d94b7354e739246e2451ccf6c",
  ".git/objects/25/6b3fd02c8339c9cbab5063c5961555fe1a1c44",
  ".git/objects/26/bc5aae94133945b5b133cfbc1ee093a3734c50",
@@ -67,6 +68,7 @@ const PRECACHE = [
  ".git/objects/2f/c2fd6d800ea30e2fe78b649000d7ce32ec910a",
  ".git/objects/31/7c21adae33d8e5c2bcd0a59b6a3fbe6c69f4dc",
  ".git/objects/31/de6f54410ac25ddc565d77d817ea3215cc9ade",
+ ".git/objects/32/55d03fb9f72f75380fbf5cc333ec7514595655",
  ".git/objects/34/403d79bfe1f91a152dcadc452cd10c64ed2121",
  ".git/objects/34/4f5778e0b5bafbd84e40ce84bb408076c27023",
  ".git/objects/36/14e0cf7b023acb52dd7a07853deb4d86afce25",
@@ -89,6 +91,7 @@ const PRECACHE = [
  ".git/objects/43/652ebee82fe996eb146e87f6fa2267d6d54d7f",
  ".git/objects/45/e1ea3ce85da2cc7cf9d0bd70aef315a3006dec",
  ".git/objects/46/933ecf7a93c22b7d3ca8032a5613b05b303317",
+ ".git/objects/46/b8b3325caae54f2723add3700fc8ae6c53f618",
  ".git/objects/46/ea315927a886db3df53126b1efa018a86d02cd",
  ".git/objects/47/5ee4c359eb9df5d4bd2e93dff2314262e911f1",
  ".git/objects/49/3d2c81f0f4da38a83e2dba983380b46a09fcbd",
@@ -144,6 +147,7 @@ const PRECACHE = [
  ".git/objects/82/b761d130bd5e9971d3000aa6c8f0547adf4269",
  ".git/objects/85/3643c14154980f55c37ef70b3edb845e80da4d",
  ".git/objects/89/244ea59c03e95f9b286ae247c0d197780bec17",
+ ".git/objects/8e/c747da4db4ae74324e3803a77cba5e14bfe235",
  ".git/objects/90/001ef48edde9f45b0124d4f8b0c9e8d094cc18",
  ".git/objects/90/88766c3457f1b7cf8dd5045b235db3cc0e851c",
  ".git/objects/91/fcd297384765420939f4bd8867b86196564251",
@@ -273,8 +277,8 @@ const PRECACHE = [
  "README.md",
  "app/index.html",
  "app/sw.js",
- "assets/index-DiXtvF-Z.css",
- "assets/index-DnTy5OKV.js",
+ "assets/index-BlLhKoYo.css",
+ "assets/index-CKJkZhMR.js",
  "build.mjs",
  "cards/a-morph/README.md",
  "cards/a-morph/index.html",
